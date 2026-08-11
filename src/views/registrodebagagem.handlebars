@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0b1220" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>ExactBag • Registro de Bagagem</title>
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f0f2f5; color: #1a1a2e; line-height: 1.5;
+  min-height: 100vh; min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== HEADER ========== */
+.header {
+  background: #0b1220; color: #fff; padding: 16px 20px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-left { flex: 1; display: flex; align-items: center; gap: 12px; }
+.header-icon { height: 48px; width: auto; border-radius: 8px; }
+.header-name { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+.header-sub { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+/* Language toggle */
+.lang-toggle { display: flex; gap: 6px; }
+.lang-btn {
+  background: transparent; border: 2px solid rgba(255,255,255,0.25); border-radius: 6px;
+  padding: 4px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  transition: all 0.2s; color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 600;
+}
+.lang-btn img { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; }
+.lang-btn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+.lang-btn.active { border-color: #0f62fe; background: rgba(15,98,254,0.2); color: #fff; }
+
+/* ========== CONTAINER ========== */
+.container { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+/* ========== PROGRESS BAR ========== */
+.progress-bar { display: flex; gap: 4px; margin-bottom: 20px; }
+.progress-step {
+  flex: 1; height: 4px; border-radius: 2px; background: #d1d5db;
+  transition: background 0.3s;
+}
+.progress-step.active { background: #0f62fe; }
+.progress-step.done { background: #16a34a; }
+.step-label { font-size: 12px; color: #6b7280; text-align: center; margin-bottom: 12px; font-weight: 500; }
+
+/* ========== CARD ========== */
+.card {
+  background: #fff; border-radius: 12px; padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px;
+}
+.card-title { font-size: 16px; font-weight: 700; color: #0f62fe; margin-bottom: 14px; }
+
+/* ========== FORM ELEMENTS ========== */
+.field { margin-bottom: 16px; }
+.field label {
+  display: block; font-size: 13px; font-weight: 600; color: #374151;
+  margin-bottom: 4px;
+}
+.field label .required { color: #dc2626; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 12px 14px; border: 1.5px solid #d1d5db;
+  border-radius: 8px; font-size: 16px; background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none; appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: #0f62fe;
+  box-shadow: 0 0 0 3px rgba(15,98,254,0.12);
+}
+.field input.error, .field select.error { border-color: #dc2626; }
+.field .error-msg { font-size: 12px; color: #dc2626; margin-top: 4px; display: none; }
+.field .error-msg.visible { display: block; }
+.field .hint { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+/* Phone country selector */
+.phone-wrapper{position:relative;display:flex;align-items:stretch}
+.phone-country-btn{display:flex;align-items:center;gap:4px;padding:0 10px;border:1.5px solid #d1d5db;border-right:none;border-radius:8px 0 0 8px;background:#f9fafb;cursor:pointer;font-size:14px;white-space:nowrap;min-width:90px}
+.phone-country-btn .flag-img{width:22px;height:16px;border-radius:2px;object-fit:cover;vertical-align:middle}
+.ci-flag .flag-img{width:22px;height:16px;border-radius:2px;object-fit:cover;vertical-align:middle}
+.phone-country-btn:hover{background:#f0f2f5}
+.phone-input-with-country{border-radius:0 8px 8px 0!important;flex:1;min-width:0}
+.country-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:200;background:#fff;border:1.5px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);margin-top:4px;max-height:260px;overflow:hidden}
+.country-dropdown.open{display:block}
+.country-search{width:100%;padding:10px 12px;border:none;border-bottom:1px solid #e5e7eb;font-size:14px;outline:none}
+.country-list{max-height:210px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.country-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;font-size:14px;transition:background 0.15s}
+.country-item:hover,.country-item.highlighted{background:#f0f4ff}
+.country-item .ci-flag{font-size:20px;line-height:1}
+.country-item .ci-name{flex:1;color:#1a1a2e}
+.country-item .ci-code{color:#6b7280;font-size:13px}
+
+/* Select arrow */
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7280' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* Radio / Checkbox groups */
+.radio-group, .checkbox-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.radio-option, .checkbox-option {
+  flex: 1; min-width: 90px; position: relative;
+}
+.radio-option input, .checkbox-option input { position: absolute; opacity: 0; }
+.radio-option label, .checkbox-option label {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
+  font-size: 14px; cursor: pointer; transition: all 0.2s; text-align: center;
+  font-weight: 500;
+}
+.radio-option input:checked + label, .checkbox-option input:checked + label {
+  border-color: #0f62fe; background: #eef4ff; color: #0f62fe;
+}
+
+/* ========== PHOTO UPLOAD ========== */
+.photo-upload-zone {
+  border: 2px dashed #d1d5db; border-radius: 12px; padding: 24px;
+  text-align: center; cursor: pointer; transition: all 0.2s;
+  background: #fafbfc; min-height: 160px; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.photo-upload-zone:hover, .photo-upload-zone.dragover {
+  border-color: #0f62fe; background: #eef4ff;
+}
+.photo-upload-zone .icon { font-size: 36px; margin-bottom: 8px; }
+.photo-upload-zone .text { font-size: 14px; color: #6b7280; }
+.photo-upload-zone .text strong { color: #0f62fe; }
+.photo-preview { position: relative; margin-top: 12px; }
+.photo-preview img {
+  max-width: 100%; max-height: 200px; border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+.photo-preview .remove-btn {
+  position: absolute; top: -8px; right: -8px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #dc2626; color: #fff; border: none;
+  font-size: 16px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ========== TERMS ========== */
+.terms-box {
+  background: #f9fafb; border: 1px solid #d1d5db; border-radius: 12px;
+  padding: 20px; max-height: 320px; overflow-y: auto;
+  font-size: 14px; color: #374151; line-height: 1.8; margin-bottom: 16px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+.terms-box::-webkit-scrollbar { width: 6px; }
+.terms-box::-webkit-scrollbar-track { background: transparent; }
+.terms-box::-webkit-scrollbar-thumb { background: #c4c4c4; border-radius: 3px; }
+.terms-section { margin-bottom: 16px; }
+.terms-section:last-child { margin-bottom: 0; }
+.terms-section-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1f2937; font-size: 15px; margin-bottom: 4px; }
+.terms-section-title .icon { font-size: 18px; }
+.terms-section p { margin: 0; color: #4b5563; }
+.terms-footer { text-align: center; padding-top: 12px; border-top: 1px solid #e5e7eb; margin-top: 16px; font-weight: 600; color: #1f2937; font-size: 14px; }
+.terms-check { display: flex; align-items: center; gap: 12px; background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.terms-check:has(input:checked) { border-color: #0f62fe; background: #dbeafe; }
+.terms-check input[type="checkbox"] {
+  width: 24px; height: 24px; min-width: 24px; margin: 0; accent-color: #0f62fe;
+  -webkit-appearance: auto; appearance: auto; cursor: pointer;
+}
+.terms-check label { font-size: 14px; color: #1f2937; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.terms-expand-btn { display: block; width: 100%; padding: 10px; margin-bottom: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; color: #0f62fe; font-weight: 600; font-size: 14px; cursor: pointer; text-align: center; transition: background 0.2s; }
+.terms-expand-btn:hover { background: #dbeafe; }
+.terms-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 16px; }
+.terms-modal-overlay.open { display: flex; }
+.terms-modal { background: #fff; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+.terms-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
+.terms-modal-header h3 { margin: 0; font-size: 18px; color: #1f2937; }
+.terms-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 4px 8px; border-radius: 8px; }
+.terms-modal-close:hover { background: #f3f4f6; color: #1f2937; }
+.terms-modal-body { padding: 20px; overflow-y: auto; flex: 1; font-size: 14px; line-height: 1.8; color: #374151; }
+
+/* ========== BUTTONS ========== */
+.btn-row { display: flex; gap: 10px; margin-top: 20px; }
+.btn {
+  flex: 1; padding: 14px; border: none; border-radius: 10px;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.btn-primary {
+  background: #0f62fe; color: #fff;
+  box-shadow: 0 2px 8px rgba(15,98,254,0.3);
+}
+.btn-primary:hover { background: #0b4fd4; }
+.btn-primary:disabled { background: #93b4fd; cursor: not-allowed; box-shadow: none; }
+.btn-secondary {
+  background: #fff; color: #374151; border: 1.5px solid #d1d5db;
+}
+.btn-secondary:hover { background: #f3f4f6; }
+
+/* ========== SUCCESS SCREEN ========== */
+.success-screen { text-align: center; padding: 40px 20px; }
+.success-icon { font-size: 64px; margin-bottom: 16px; }
+.success-title { font-size: 20px; font-weight: 700; color: #16a34a; margin-bottom: 8px; }
+.success-cpv {
+  background: #eef4ff; border: 2px solid #0f62fe;
+  border-radius: 10px; padding: 16px; margin: 20px 0; display: inline-block;
+}
+.success-cpv .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+.success-cpv .number { font-size: 22px; font-weight: 700; color: #0f62fe; letter-spacing: 2px; margin-top: 4px; }
+.success-msg { font-size: 14px; color: #6b7280; max-width: 320px; margin: 0 auto; }
+
+/* ========== LOADING OVERLAY ========== */
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(11,18,32,0.7);
+  display: none; align-items: center; justify-content: center; z-index: 1000;
+}
+.loading-overlay.active { display: flex; }
+.loading-box {
+  background: #fff; border-radius: 16px; padding: 32px;
+  text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.spinner {
+  width: 40px; height: 40px; border: 4px solid #e5e7eb;
+  border-top-color: #0f62fe; border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: #374151; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 380px) {
+  .container { padding: 10px; }
+  .card { padding: 16px; }
+  .radio-group { flex-direction: column; }
+  .radio-option { min-width: unset; }
+}
+@media (max-width: 600px) {
+  .terms-box { max-height: 260px; padding: 16px; font-size: 13px; }
+  .terms-section-title { font-size: 14px; }
+  .terms-check { padding: 12px 14px; gap: 10px; }
+  .terms-check label { font-size: 13px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <img src="/native/icon-eb.png" alt="ExactBag" class="header-icon" />
+    <div>
+      <div class="header-name">ExactBag</div>
+      <div class="header-sub" id="headerSub">Registro de Bagagem — Serviço Digital</div>
+    </div>
+  </div>
+  <div class="lang-toggle">
+    <button type="button" class="lang-btn active" data-lang="pt" onclick="setLang('pt')">
+      <img src="https://flagcdn.com/w40/br.png" alt="PT" /> PT
+    </button>
+    <button type="button" class="lang-btn" data-lang="en" onclick="setLang('en')">
+      <img src="https://flagcdn.com/w40/us.png" alt="EN" /> EN
+    </button>
+  </div>
+</div>
+
+<div class="container" id="formContainer">
+
+  <!-- PROGRESS -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-step active" data-step="1"></div>
+    <div class="progress-step" data-step="2"></div>
+    <div class="progress-step" data-step="3"></div>
+    <div class="progress-step" data-step="4"></div>
+  </div>
+  <div class="step-label" id="stepLabel">Etapa 1 de 4 — Dados Pessoais</div>
+
+  <form id="registrationForm" novalidate>
+    <input type="hidden" id="saleId" name="saleId" value="{{saleId}}" />
+
+    <!-- ============ STEP 1: Dados Pessoais ============ -->
+    <div class="step" data-step="1">
+      <div class="card">
+        <div class="card-title" id="cardPassenger">Dados do Passageiro</div>
+
+        <div class="field">
+          <label><span id="labelName">Nome Completo</span> <span class="required">*</span></label>
+          <input type="text" id="passengerName" name="passengerName" autocomplete="name" required placeholder="Ex: Ana Carolina Silva" value="{{customerName}}" />
+          <div class="error-msg" id="passengerName-error"></div>
+        </div>
+
+        <div class="field">
+          <label><span id="labelCpf">CPF</span> <span class="required">*</span></label>
+          <input type="tel" id="passengerCpf" name="passengerCpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
+          <div class="error-msg" id="passengerCpf-error"></div>
+        </div>
+
+        <div class="field">
+          <label><span id="labelPhone">Telefone (WhatsApp)</span> <span class="required">*</span></label>
+          <div class="phone-wrapper">
+            <button type="button" class="phone-country-btn" id="countryBtn" onclick="toggleCountryDropdown()">
+              <span id="countryFlag"><img src="https://flagcdn.com/w40/br.png" class="flag-img" alt="BR" /></span>
+              <span id="countryCode">+55</span>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="#6b7280"><path d="M1 1l4 4 4-4" stroke="#6b7280" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+            </button>
+            <input type="tel" id="passengerPhone" name="passengerPhone" inputmode="tel" autocomplete="tel" placeholder="11 99999-9999" class="phone-input-with-country" value="{{customerPhone}}" />
+            <div class="country-dropdown" id="countryDropdown">
+              <input type="text" class="country-search" id="countrySearch" placeholder="Buscar país..." autocomplete="off" />
+              <div class="country-list" id="countryList"></div>
+            </div>
+          </div>
+          <div class="error-msg" id="passengerPhone-error"></div>
+        </div>
+
+        <div class="field">
+          <label><span id="labelEmail">E-mail</span> <span class="required">*</span></label>
+          <input type="email" id="passengerEmail" name="passengerEmail" autocomplete="email" required placeholder="exemplo@email.com" value="{{customerEmail}}" />
+          <div class="error-msg" id="passengerEmail-error"></div>
+        </div>
+
+        <div class="field">
+          <label><span id="labelEmailConfirm">Confirme o E-mail</span> <span class="required">*</span></label>
+          <input type="email" id="emailConfirmation" name="emailConfirmation" autocomplete="off" placeholder="Repita o e-mail" value="{{customerEmail}}" />
+          <div class="error-msg" id="emailConfirmation-error"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary btn-next" onclick="nextStep()">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- ============ STEP 2: Dados da Viagem ============ -->
+    <div class="step" data-step="2" style="display:none;">
+      <div class="card">
+        <div class="card-title" id="cardTrip">Dados da Viagem</div>
+
+        <div class="field">
+          <label><span id="labelTransport">Tipo de Transporte</span> <span class="required">*</span></label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" name="transportType" id="transport-aereo" value="aereo" checked />
+              <label for="transport-aereo" id="labelTransportAir">✈️ Aéreo</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" name="transportType" id="transport-maritimo" value="maritimo" />
+              <label for="transport-maritimo" id="labelTransportSea">🚢 Marítimo</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" name="transportType" id="transport-terrestre" value="terrestre" />
+              <label for="transport-terrestre" id="labelTransportLand">🚌 Terrestre</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label><span id="labelOrigin">Origem da Viagem</span> <span class="required">*</span></label>
+          <input type="text" id="origin" name="origin" placeholder="Ex: São Paulo - GRU (Aeroporto Internacional)" list="airports-list" />
+          <div class="error-msg" id="origin-error"></div>
+        </div>
+
+        <div class="field">
+          <label><span id="labelDest">Destino da Viagem</span> <span class="required">*</span></label>
+          <input type="text" id="destination" name="destination" placeholder="Ex: Lisboa - LIS (Aeroporto Humberto)" list="airports-list" />
+          <div class="error-msg" id="destination-error"></div>
+        </div>
+
+        <div class="field">
+          <label id="labelAirline">Companhia Aérea</label>
+          <input type="text" id="airline" name="airline" placeholder="Ex: LATAM Airlines" list="airlines-list" />
+          <div class="hint" id="hintAirline">Se não estiver na lista, digite o nome manualmente</div>
+        </div>
+
+        <div class="field">
+          <label id="labelTripType">Tipo de Viagem</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" name="tripType" id="tripRoundTrip" value="roundtrip" {{#if roundTrip}}checked{{/if}} />
+              <label for="tripRoundTrip" id="labelRoundTrip">Ida e Volta</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" name="tripType" id="tripOneWay" value="oneway" {{#unless roundTrip}}checked{{/unless}} />
+              <label for="tripOneWay" id="labelOneWay">Somente Ida</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label id="labelOutDate">Data de Ida</label>
+          <input type="date" id="outboundDate" name="outboundDate" value="{{outboundDateInput}}" />
+        </div>
+
+        <div class="field" id="returnDateField" {{#unless roundTrip}}style="display:none;"{{/unless}}>
+          <label id="labelRetDate">Data de Volta</label>
+          <input type="date" id="returnDate" name="returnDate" value="{{returnDateInput}}" />
+        </div>
+
+        <div class="field">
+          <label id="labelGps">Possui rastreador GPS na bagagem?</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" name="hasGpsTracker" id="gps-no" value="false" checked />
+              <label for="gps-no" id="labelGpsNo">Não</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" name="hasGpsTracker" id="gps-yes" value="true" />
+              <label for="gps-yes" id="labelGpsYes">Sim</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary btn-back" onclick="prevStep()">← Voltar</button>
+        <button type="button" class="btn btn-primary btn-next" onclick="nextStep()">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- ============ STEP 3: Bagagem ============ -->
+    <div class="step" data-step="3" style="display:none;">
+      <div class="card">
+        <div class="card-title" id="cardBaggage">Informações da Bagagem</div>
+
+        <div class="field">
+          <label><span id="labelQty">Quantidade de Bagagens</span> <span class="required">*</span></label>
+          <select id="baggageQty" name="baggageQty" data-prefilled-qty="{{baggageQty}}">
+            <option value="1" selected>1 bagagem</option>
+            <option value="2">2 bagagens</option>
+            <option value="3">3 bagagens</option>
+            <option value="4">4 bagagens</option>
+            <option value="5">5 bagagens</option>
+          </select>
+        </div>
+
+        <div id="baggageItemsContainer">
+          <!-- Gerado dinamicamente -->
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary btn-back" onclick="prevStep()">← Voltar</button>
+        <button type="button" class="btn btn-primary btn-next" onclick="nextStep()">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- ============ STEP 4: Termos & Envio ============ -->
+    <div class="step" data-step="4" style="display:none;">
+      <div class="card">
+        <div class="card-title" id="cardTerms">Termos de Uso e Envio</div>
+
+        <button type="button" class="terms-expand-btn" id="termsExpandBtn" onclick="openTermsModal()">📄 Ver Termos Completos</button>
+
+        <div class="terms-box" id="termsBox">
+        </div>
+
+        <div class="terms-check">
+          <input type="checkbox" id="termsAccepted" name="termsAccepted" />
+          <label for="termsAccepted" id="termsAcceptLabel">Li e aceito os <strong>Termos de Uso</strong> do Serviço Digital ExactBag <span class="required">*</span></label>
+        </div>
+        <div class="error-msg" id="termsAccepted-error" style="margin-top:4px;"></div>
+
+        <!-- Summary -->
+        <div id="summaryPreview" style="margin-top: 20px;"></div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary btn-back" onclick="prevStep()">← Voltar</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Registrar Bagagem ✓</button>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- ============ SUCCESS ============ -->
+  <div id="successScreen" style="display:none;">
+    <div class="card success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title" id="successTitle">Registro Concluído!</div>
+      <div class="success-cpv">
+        <div class="label" id="successCpvLabel">Seu CPV</div>
+        <div class="number" id="cpvNumberDisplay">—</div>
+      </div>
+      <p class="success-msg" id="successMsg">O Certificado de Propriedade de Volume será enviado para seu e-mail e WhatsApp em instantes.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- TERMS MODAL -->
+<div class="terms-modal-overlay" id="termsModalOverlay" onclick="closeTermsModal(event)">
+  <div class="terms-modal" onclick="event.stopPropagation()">
+    <div class="terms-modal-header">
+      <h3 id="termsModalTitle">Termos de Serviço — ExactBag</h3>
+      <button type="button" class="terms-modal-close" onclick="closeTermsModal()">&times;</button>
+    </div>
+    <div class="terms-modal-body" id="termsModalBody"></div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Processando registro...</div>
+  </div>
+</div>
+
+<!-- Datalists for autocomplete -->
+<datalist id="airports-list">
+  <option value="Abidjan - ABJ (Aeroporto Internacional Félix Houphouët-Boigny)">
+  <option value="Addis Ababa - ADD (Aeroporto Internacional de Bole)">
+  <option value="Adelaide - ADL (Aeroporto de Adelaide)">
+  <option value="Ahmedabad - AMD (Aeroporto Internacional Sardar Vallabhbhai Patel)">
+  <option value="Alghero - AHO (Aeroporto de Alghero-Fertilia)">
+  <option value="Alta Floresta - AFL (Aeroporto Piloto Osvaldo Marques Dias)">
+  <option value="Altamira - ATM (Aeroporto de Altamira)">
+  <option value="Amã - AMM (Aeroporto Internacional Rainha Alia)">
+  <option value="Amsterdã - AMS (Aeroporto de Schiphol)">
+  <option value="Ancona - AOI (Aeroporto de Ancona-Falconara)">
+  <option value="Aracaju - AJU (Aeroporto Internacional Santa Maria)">
+  <option value="Araguaína - AUX (Aeroporto de Araguaína)">
+  <option value="Araxá - AAX (Aeroporto Romeu Zema)">
+  <option value="Argel - ALG (Aeroporto Internacional Houari Boumediene)">
+  <option value="Atenas - ATH (Aeroporto Internacional de Atenas)">
+  <option value="Atlanta - ATL (Aeroporto Internacional Hartsfield–Jackson)">
+  <option value="Auckland - AKL (Aeroporto Internacional de Auckland)">
+  <option value="Austin - AUS (Aeroporto Internacional de Austin-Bergstrom)">
+  <option value="Bagé - BGX (Aeroporto Internacional Comandante Gustavo Kraemer)">
+  <option value="Baltimore - BWI (Aeroporto Internacional de Baltimore-Washington)">
+  <option value="Bangkok - BKK (Aeroporto Internacional Suvarnabhumi)">
+  <option value="Barcelona - BCN (Aeroporto de El Prat)">
+  <option value="Barra do Garças - BPG (Aeroporto de Barra do Garças)">
+  <option value="Barreiras - BRA (Aeroporto Dom Ricardo Weberberger)">
+  <option value="Barreirinhas (MA)">
+  <option value="Bauru - BAU (Aeroporto de Bauru)">
+  <option value="Bauru/Arealva - JTC (Aeroporto Moussa Nakhl Tobias)">
+  <option value="Beja - BYJ (Aeroporto de Beja)">
+  <option value="Belém - BEL (Aeroporto Internacional de Belém/Val de Cans)">
+  <option value="Belgrado - BEG (Aeroporto Nikola Tesla)">
+  <option value="Belo Horizonte - CNF (Aeroporto Internacional Tancredo Neves)">
+  <option value="Belo Horizonte - PLU (Aeroporto da Pampulha)">
+  <option value="Bengaluru - BLR (Aeroporto Internacional de Kempegowda)">
+  <option value="Bérgamo - BGY (Aeroporto Internacional de Orio al Serio)">
+  <option value="Bloemfontein - BFN (Aeroporto Internacional Bram Fischer)">
+  <option value="Blumenau - BNU (Aeroporto de Blumenau)">
+  <option value="Boa Vista - BVB (Aeroporto Internacional de Boa Vista)">
+  <option value="Bogotá - BOG (Aeroporto Internacional El Dorado)">
+  <option value="Bolonha - BLQ (Aeroporto Internacional Guglielmo Marconi)">
+  <option value="Boston - BOS (Aeroporto Internacional Logan)">
+  <option value="Brasília - BSB (Aeroporto Internacional de Brasília)">
+  <option value="Brindisi - BDS (Aeroporto Papola Casale)">
+  <option value="Brisbane - BNE (Aeroporto de Brisbane)">
+  <option value="Bruxelas - BRU (Aeroporto de Bruxelas)">
+  <option value="Budapeste - BUD (Aeroporto Internacional de Budapeste-Ferenc Liszt)">
+  <option value="Buenos Aires - EZE (Aeroporto Internacional Ministro Pistarini)">
+  <option value="Cabo Frio - CFB (Aeroporto de Cabo Frio)">
+  <option value="Cagliari - CAG (Aeroporto Internacional de Cagliari-Elmas)">
+  <option value="Cairo - CAI (Aeroporto Internacional do Cairo)">
+  <option value="Calgary - YYC (Aeroporto Internacional de Calgary)">
+  <option value="Campina Grande - CPV (Aeroporto João Suassuna)">
+  <option value="Campinas - VCP (Aeroporto Internacional de Viracopos)">
+  <option value="Campo Grande - CGR (Aeroporto Internacional de Campo Grande)">
+  <option value="Campos dos Goytacazes - CAW (Aeroporto Bartolomeu Lysandro)">
+  <option value="Caracaraí - CIC (Aeroporto de Caracaraí)">
+  <option value="Caruaru - CCU (Aeroporto de Caruaru)">
+  <option value="Casablanca - CMN (Aeroporto Internacional Mohammed V)">
+  <option value="Cascavel - CAC (Aeroporto de Cascavel)">
+  <option value="Catania - CTA (Aeroporto Internacional de Catania-Fontanarossa)">
+  <option value="Caxias do Sul - CXJ (Aeroporto Hugo Cantergiani)">
+  <option value="Chapecó - XAP (Aeroporto Serafin Enoss Bertaso)">
+  <option value="Charlotte - CLT (Aeroporto Internacional Charlotte Douglas)">
+  <option value="Chengdu - TFU (Aeroporto Internacional Tianfu)">
+  <option value="Chennai - MAA (Aeroporto Internacional de Chennai)">
+  <option value="Chicago - ORD (Aeroporto Internacional O'Hare)">
+  <option value="Christchurch - CHC (Aeroporto Internacional de Christchurch)">
+  <option value="Cidade do Cabo - CPT (Aeroporto Internacional da Cidade do Cabo)">
+  <option value="Cidade do México - MEX (Aeroporto Internacional Benito Juárez)">
+  <option value="Colombo - CMB (Aeroporto Internacional Bandaranaike)">
+  <option value="Copenhague - CPH (Aeroporto de Copenhague)">
+  <option value="Corumbá - CMG (Aeroporto Internacional de Corumbá)">
+  <option value="Cruzeiro do Sul - CZS (Aeroporto Internacional de Cruzeiro do Sul)">
+  <option value="Cuiabá - CGB (Aeroporto Internacional Marechal Rondon)">
+  <option value="Curitiba - CWB (Aeroporto Internacional Afonso Pena)">
+  <option value="Dakar - DSS (Aeroporto Internacional Blaise Diagne)">
+  <option value="Dallas - DFW (Aeroporto Internacional Dallas/Fort Worth)">
+  <option value="Dar es Salaam - DAR (Aeroporto Internacional Julius Nyerere)">
+  <option value="Denver - DEN (Aeroporto Internacional de Denver)">
+  <option value="Detroit - DTW (Aeroporto Metropolitano de Detroit)">
+  <option value="Dhaka - DAC (Aeroporto Internacional Hazrat Shahjalal)">
+  <option value="Diamantina - DTI (Aeroporto de Diamantina)">
+  <option value="Doha - DOH (Aeroporto Internacional Hamad)">
+  <option value="Dourados - DOU (Aeroporto Francisco de Matos Pereira)">
+  <option value="Dubai - DXB (Aeroporto Internacional de Dubai)">
+  <option value="Dublin - DUB (Aeroporto de Dublin)">
+  <option value="Durban - DUR (Aeroporto Internacional King Shaka)">
+  <option value="East London - ELS (Aeroporto de East London)">
+  <option value="Edmonton - YEG (Aeroporto Internacional de Edmonton)">
+  <option value="Entebbe - EBB (Aeroporto Internacional de Entebbe)">
+  <option value="Estância - EST (Aeroporto de Estância)">
+  <option value="Estocolmo - ARN (Aeroporto de Estocolmo-Arlanda)">
+  <option value="Faro - FAO (Aeroporto de Faro)">
+  <option value="Filadélfia - PHL (Aeroporto Internacional de Filadélfia)">
+  <option value="Florença - FLR (Aeroporto Amerigo Vespucci)">
+  <option value="Florianópolis - FLN (Aeroporto Internacional Hercílio Luz)">
+  <option value="Flores - FLW (Aeroporto das Flores)">
+  <option value="Fortaleza - FOR (Aeroporto Internacional Pinto Martins)">
+  <option value="Foz do Iguaçu - IGU (Aeroporto Internacional Cataratas)">
+  <option value="Frankfurt - FRA (Aeroporto de Frankfurt)">
+  <option value="Funchal - FNC (Aeroporto da Madeira / Cristiano Ronaldo)">
+  <option value="Genebra - GVA (Aeroporto Internacional de Genebra)">
+  <option value="George - GRJ (Aeroporto de George)">
+  <option value="Goiânia - GYN (Aeroporto Internacional Santa Genoveva)">
+  <option value="Gold Coast - OOL (Aeroporto de Gold Coast)">
+  <option value="Governador Valadares - GVN (Aeroporto de Governador Valadares)">
+  <option value="Guangzhou - CAN (Aeroporto Internacional de Baiyun)">
+  <option value="Guarapuava - GPB (Aeroporto de Guarapuava)">
+  <option value="Halifax - YHZ (Aeroporto Internacional de Halifax Stanfield)">
+  <option value="Hanói - HAN (Aeroporto Internacional de Noi Bai)">
+  <option value="Helsinque - HEL (Aeroporto de Helsinque-Vantaa)">
+  <option value="Ho Chi Minh - SGN (Aeroporto Internacional Tan Son Nhat)">
+  <option value="Hong Kong - HKG (Aeroporto Internacional de Hong Kong)">
+  <option value="Horta - HOR (Aeroporto da Horta)">
+  <option value="Houston - IAH (Aeroporto Intercontinental George Bush)">
+  <option value="Hyderabad - HYD (Aeroporto Internacional Rajiv Gandhi)">
+  <option value="Ilhéus - IOS (Aeroporto Jorge Amado)">
+  <option value="Ipatinga - IPN (Aeroporto da Usiminas)">
+  <option value="Islamabad - ISB (Aeroporto Internacional de Islamabad)">
+  <option value="Istambul - IST (Aeroporto de Istambul)">
+  <option value="Istambul - SAW (Aeroporto Internacional Sabiha Gökçen)">
+  <option value="Jacarta - CGK (Aeroporto Internacional Soekarno-Hatta)">
+  <option value="Jeddah - JED (Aeroporto Internacional Rei Abdulaziz)">
+  <option value="Ji-Paraná - JPR (Aeroporto de Ji-Paraná)">
+  <option value="João Pessoa - JPA (Aeroporto Internacional Presidente Castro Pinto)">
+  <option value="Joanesburgo - JNB (Aeroporto Internacional OR Tambo)">
+  <option value="Joinville - JOI (Aeroporto de Joinville)">
+  <option value="Juazeiro do Norte - JDO (Aeroporto Orlando Bezerra de Menezes)">
+  <option value="Juiz de Fora - JDF (Aeroporto Francisco Álvares de Assis)">
+  <option value="Karachi - KHI (Aeroporto Internacional Jinnah)">
+  <option value="Kathmandu - KTM (Aeroporto Internacional Tribhuvan)">
+  <option value="Kolkata - CCU (Aeroporto Internacional Netaji Subhas Chandra Bose)">
+  <option value="Kuala Lumpur - KUL (Aeroporto Internacional de Kuala Lumpur)">
+  <option value="Kuwait - KWI (Aeroporto Internacional do Kuwait)">
+  <option value="Lahore - LHE (Aeroporto Internacional Allama Iqbal)">
+  <option value="Lamezia Terme - SUF (Aeroporto Internacional de Lamezia Terme)">
+  <option value="Las Vegas - LAS (Aeroporto Internacional Harry Reid)">
+  <option value="Lavras - LVR (Aeroporto de Lavras)">
+  <option value="Lima - LIM (Aeroporto Internacional Jorge Chávez)">
+  <option value="Lisboa - LIS (Aeroporto Humberto Delgado)">
+  <option value="Londres - LHR (Aeroporto de Heathrow)">
+  <option value="Londrina - LDB (Aeroporto de Londrina)">
+  <option value="Los Angeles - LAX (Aeroporto Internacional de Los Angeles)">
+  <option value="Luanda - LAD (Aeroporto Internacional Quatro de Fevereiro)">
+  <option value="Macaé - MEA (Aeroporto de Macaé)">
+  <option value="Macapá - MCP (Aeroporto Internacional de Macapá/Alberto Alcolumbre)">
+  <option value="Maceió - MCZ (Aeroporto Internacional Zumbi dos Palmares)">
+  <option value="Madri - MAD (Aeroporto Adolfo Suárez Madrid-Barajas)">
+  <option value="Manaus - MAO (Aeroporto Internacional Eduardo Gomes)">
+  <option value="Manila - MNL (Aeroporto Internacional Ninoy Aquino)">
+  <option value="Marabá - MAB (Aeroporto de Marabá)">
+  <option value="Maringá - MGF (Aeroporto Regional de Maringá)">
+  <option value="Melbourne - MEL (Aeroporto de Melbourne)">
+  <option value="Miami - MIA (Aeroporto Internacional de Miami)">
+  <option value="Milão - LIN (Aeroporto de Milão-Linate)">
+  <option value="Milão - MXP (Aeroporto Internacional de Milão-Malpensa)">
+  <option value="Minneapolis - MSP (Aeroporto Internacional Minneapolis–St. Paul)">
+  <option value="Montes Claros - MOC (Aeroporto de Montes Claros)">
+  <option value="Montreal - YUL (Aeroporto Internacional Pierre Elliott Trudeau)">
+  <option value="Mossoró - MVF (Aeroporto Dix-sept Rosado)">
+  <option value="Mumbai - BOM (Aeroporto Internacional Chhatrapati Shivaji Maharaj)">
+  <option value="Munique - MUC (Aeroporto de Munique-Franz Josef Strauss)">
+  <option value="Muscat - MCT (Aeroporto Internacional de Muscat)">
+  <option value="Nairóbi - NBO (Aeroporto Internacional Jomo Kenyatta)">
+  <option value="Nápoles - NAP (Aeroporto Internacional de Nápoles-Capodichino)">
+  <option value="Nashville - BNA (Aeroporto Internacional de Nashville)">
+  <option value="Natal - NAT (Aeroporto Internacional Aluízio Alves)">
+  <option value="Navegantes - NVT (Aeroporto Internacional de Navegantes)">
+  <option value="Newark - EWR (Aeroporto Internacional de Newark Liberty)">
+  <option value="Nova Délhi - DEL (Aeroporto Internacional Indira Gandhi)">
+  <option value="Nova York - JFK (Aeroporto Internacional John F. Kennedy)">
+  <option value="Orlando - MCO (Aeroporto Internacional de Orlando)">
+  <option value="Osaka - ITM (Aeroporto Internacional de Osaka-Itami)">
+  <option value="Osaka - KIX (Aeroporto Internacional de Kansai)">
+  <option value="Oslo - OSL (Aeroporto de Oslo-Gardermoen)">
+  <option value="Ottawa - YOW (Aeroporto Internacional de Ottawa Macdonald-Cartier)">
+  <option value="Palermo - PMO (Aeroporto Internacional de Palermo – Punta Raisi)">
+  <option value="Palmas - PMW (Aeroporto Brigadeiro Lysias Rodrigues)">
+  <option value="Paris - CDG (Aeroporto Charles de Gaulle)">
+  <option value="Parma - PMF (Aeroporto Giuseppe Verdi)">
+  <option value="Parnaíba - PHB (Aeroporto Internacional de Parnaíba)">
+  <option value="Parintins - PIN (Aeroporto Júlio Belém)">
+  <option value="Passo Fundo - PFB (Aeroporto Lauro Kurtz)">
+  <option value="Patos de Minas - POJ (Aeroporto Pedro Pereira dos Santos)">
+  <option value="Paulo Afonso - PAV (Aeroporto de Paulo Afonso)">
+  <option value="Pelotas - PET (Aeroporto de Pelotas)">
+  <option value="Pequim - PEK (Aeroporto Internacional da Capital)">
+  <option value="Perth - PER (Aeroporto de Perth)">
+  <option value="Perugia - PEG (Aeroporto San Francesco d'Assisi – Umbria)">
+  <option value="Pescara - PSR (Aeroporto Internacional d'Abruzzo)">
+  <option value="Petrolina - PNZ (Aeroporto Senador Nilo Coelho)">
+  <option value="Phnom Penh - PNH (Aeroporto Internacional de Phnom Penh)">
+  <option value="Phoenix - PHX (Aeroporto Internacional Sky Harbor)">
+  <option value="Pico - PIX (Aeroporto do Pico)">
+  <option value="Pisa - PSA (Aeroporto Internacional Galileo Galilei)">
+  <option value="Ponta Delgada - PDL (Aeroporto João Paulo II)">
+  <option value="Ponta Porã - PMG (Aeroporto Internacional de Ponta Porã)">
+  <option value="Port Elizabeth - PLZ (Aeroporto Internacional Chief Dawid Stuurman)">
+  <option value="Portland - PDX (Aeroporto Internacional de Portland)">
+  <option value="Porto - OPO (Aeroporto Francisco Sá Carneiro)">
+  <option value="Porto Alegre - POA (Aeroporto Internacional Salgado Filho)">
+  <option value="Porto Santo - PXO (Aeroporto de Porto Santo)">
+  <option value="Porto Velho - PVH (Aeroporto Internacional Governador Jorge Teixeira)">
+  <option value="Praga - PRG (Aeroporto Václav Havel)">
+  <option value="Presidente Prudente - PPB (Aeroporto de Presidente Prudente)">
+  <option value="Punta Cana - PUJ (Aeroporto Internacional de Punta Cana)">
+  <option value="Quito - UIO (Aeroporto Internacional Mariscal Sucre)">
+  <option value="Recife - REC (Aeroporto Internacional do Recife/Guararapes)">
+  <option value="Reggio Calabria - REG (Aeroporto Tito Minniti)">
+  <option value="Reykjavik - KEF (Aeroporto Internacional de Keflavík)">
+  <option value="Ribeirão Preto - RAO (Aeroporto de Ribeirão Preto)">
+  <option value="Riade - RUH (Aeroporto Internacional King Khalid)">
+  <option value="Rio Branco - RBR (Aeroporto Internacional Plácido de Castro)">
+  <option value="Rio de Janeiro - GIG (Aeroporto Internacional do Rio de Janeiro/Galeão)">
+  <option value="Rio de Janeiro - RIO (Aeroporto de Jacarepaguá – Roberto Marinho)">
+  <option value="Rio de Janeiro - SDU (Aeroporto Santos Dumont)">
+  <option value="Roma - FCO (Aeroporto Leonardo da Vinci – Fiumicino)">
+  <option value="Rondonópolis - ROO (Aeroporto Maestro Marinho Franco)">
+  <option value="Salvador - SSA (Aeroporto Internacional de Salvador)">
+  <option value="San Diego - SAN (Aeroporto Internacional de San Diego)">
+  <option value="San Juan - SJU (Aeroporto Internacional Luis Muñoz Marín)">
+  <option value="Santa Maria - SMA (Aeroporto de Santa Maria)">
+  <option value="Santarém - STM (Aeroporto Internacional de Santarém - Maestro Wilson Fonseca)">
+  <option value="Santiago - SCL (Aeroporto Internacional Comodoro Arturo Merino Benítez)">
+  <option value="São Carlos - QSC (Aeroporto Internacional de São Carlos)">
+  <option value="São Francisco - SFO (Aeroporto Internacional de São Francisco)">
+  <option value="São José do Rio Preto - SJP (Aeroporto de São José do Rio Preto)">
+  <option value="São José dos Campos - SJK (Aeroporto Professor Urbano Ernesto Stumpf)">
+  <option value="São Luís - SLZ (Aeroporto Internacional de São Luís)">
+  <option value="São Paulo - CGH (Aeroporto de Congonhas)">
+  <option value="São Paulo - GRU (Aeroporto Internacional de São Paulo/Guarulhos)">
+  <option value="São Paulo - MAE (Aeroporto de Campo de Marte)">
+  <option value="Seattle - SEA (Aeroporto Internacional de Seattle-Tacoma)">
+  <option value="Seul - ICN (Aeroporto Internacional de Incheon)">
+  <option value="Singapura - SIN (Aeroporto de Changi)">
+  <option value="Sinop - OPS (Aeroporto Presidente João Figueiredo)">
+  <option value="Sofia - SOF (Aeroporto de Sofia)">
+  <option value="Sydney - SYD (Aeroporto Kingsford Smith)">
+  <option value="Tabatinga - TBT (Aeroporto Internacional de Tabatinga)">
+  <option value="Taipé - TPE (Aeroporto Internacional de Taiwan Taoyuan)">
+  <option value="Tampa - TPA (Aeroporto Internacional de Tampa)">
+  <option value="Taranto/Grottaglie - TAR (Aeroporto Arlotta)">
+  <option value="Tefé - TFF (Aeroporto de Tefé)">
+  <option value="Teixeira de Freitas - TXF (Aeroporto 9 de Maio)">
+  <option value="Tel Aviv - TLV (Aeroporto Internacional Ben Gurion)">
+  <option value="Teófilo Otoni - TFL (Aeroporto de Teófilo Otoni)">
+  <option value="Terceira (Lajes) - TER (Aeroporto das Lajes)">
+  <option value="Teresina - THE (Aeroporto Senador Petrônio Portella)">
+  <option value="Tóquio - HND (Aeroporto Internacional de Haneda)">
+  <option value="Toronto - YYZ (Aeroporto Internacional Pearson)">
+  <option value="Trapani - TPS (Aeroporto Vincenzo Florio – Trapani-Birgi)">
+  <option value="Três Lagoas - TJL (Aeroporto Plínio Alarcom)">
+  <option value="Trieste - TRS (Aeroporto Friuli Venezia Giulia)">
+  <option value="Tunis - TUN (Aeroporto Internacional de Túnis-Cártago)">
+  <option value="Turim - TRN (Aeroporto Internacional de Turim-Caselle)">
+  <option value="Uberaba - UBA (Aeroporto Mário de Almeida Franco)">
+  <option value="Uberlândia - UDI (Aeroporto Internacional de Uberlândia)">
+  <option value="Vancouver - YVR (Aeroporto Internacional de Vancouver)">
+  <option value="Varsóvia - WAW (Aeroporto de Varsóvia-Chopin)">
+  <option value="Veneza - VCE (Aeroporto Internacional Marco Polo)">
+  <option value="Verona - VRN (Aeroporto Internacional Valerio Catullo)">
+  <option value="Viena - VIE (Aeroporto Internacional de Viena)">
+  <option value="Vitória - VIX (Aeroporto de Vitória)">
+  <option value="Vitória da Conquista - VDC (Aeroporto Glauber Rocha)">
+  <option value="Washington - IAD (Aeroporto Internacional Washington Dulles)">
+  <option value="Xangai - PVG (Aeroporto Internacional de Pudong)">
+  <option value="Yangon - RGN (Aeroporto Internacional de Yangon)">
+  <option value="Zagreb - ZAG (Aeroporto Internacional de Zagreb)">
+  <option value="Zona da Mata - IZA (Aeroporto Presidente Itamar Franco)">
+  <option value="Zurique - ZRH (Aeroporto de Zurique)">
+</datalist>
+<datalist id="airlines-list">
+  <option value="ANA (All Nippon Airways)">
+  <option value="Aer Lingus">
+  <option value="Aeroflot">
+  <option value="Aerolíneas Argentinas">
+  <option value="Aeroméxico">
+  <option value="Air Canada">
+  <option value="Air China">
+  <option value="Air Europa">
+  <option value="Air France">
+  <option value="Air India">
+  <option value="Air New Zealand">
+  <option value="AirAsia">
+  <option value="Alaska Airlines">
+  <option value="Alitalia (ITA Airways)">
+  <option value="Allegiant Air">
+  <option value="American Airlines">
+  <option value="Andes Líneas Aéreas">
+  <option value="Arajet">
+  <option value="Aruba Airlines">
+  <option value="Asiana Airlines">
+  <option value="Austrian Airlines">
+  <option value="Avelo Airlines">
+  <option value="Avianca">
+  <option value="Azul Linhas Aéreas">
+  <option value="Bamboo Airways">
+  <option value="British Airways">
+  <option value="Brussels Airlines">
+  <option value="Cathay Pacific">
+  <option value="Cebu Pacific">
+  <option value="China Airlines">
+  <option value="China Eastern Airlines">
+  <option value="China Southern Airlines">
+  <option value="Conviasa">
+  <option value="Copa Airlines">
+  <option value="Czech Airlines">
+  <option value="Delta Air Lines">
+  <option value="EVA Air">
+  <option value="EasyJet">
+  <option value="EgyptAir">
+  <option value="Emirates">
+  <option value="Etihad Airways">
+  <option value="Eurowings">
+  <option value="Fiji Airways">
+  <option value="Flair Airlines">
+  <option value="Frontier Airlines">
+  <option value="GOL Linhas Aéreas">
+  <option value="Gulf Air">
+  <option value="Hawaiian Airlines">
+  <option value="Iberia">
+  <option value="IndiGo">
+  <option value="Japan Airlines">
+  <option value="JetBlue Airways">
+  <option value="Jetsmart">
+  <option value="KLM Royal Dutch Airlines">
+  <option value="Kenya Airways">
+  <option value="Korean Air">
+  <option value="Kuwait Airways">
+  <option value="LASER Airlines">
+  <option value="LATAM Airlines">
+  <option value="LOT Polish Airlines">
+  <option value="LUXAIR">
+  <option value="Lufthansa">
+  <option value="Lynx Air">
+  <option value="Malaysia Airlines">
+  <option value="Nepal Airlines">
+  <option value="Nok Air">
+  <option value="Norwegian Air Shuttle">
+  <option value="Oman Air">
+  <option value="Pakistan International Airlines">
+  <option value="Paranair">
+  <option value="Peach Aviation">
+  <option value="Philippine Airlines">
+  <option value="Porter Airlines">
+  <option value="Qantas Airways">
+  <option value="Qatar Airways">
+  <option value="Royal Air Maroc">
+  <option value="Royal Jordanian">
+  <option value="RwandAir">
+  <option value="Ryanair">
+  <option value="SAS Scandinavian Airlines">
+  <option value="Saudia">
+  <option value="Scoot">
+  <option value="Sky Airline">
+  <option value="South African Airways">
+  <option value="Southwest Airlines">
+  <option value="Spirit Airlines">
+  <option value="SriLankan Airlines">
+  <option value="Sun Country Airlines">
+  <option value="Swiss International Air Lines">
+  <option value="TAAG Angola Airlines">
+  <option value="TAG Airlines">
+  <option value="TAP Air Portugal">
+  <option value="Thai Airways">
+  <option value="Transavia">
+  <option value="Turkish Airlines">
+  <option value="United Airlines">
+  <option value="VietJet Air">
+  <option value="Vietnam Airlines">
+  <option value="Viva Aerobus">
+  <option value="Viva Air Colombia">
+  <option value="Volaris">
+  <option value="Volotea">
+  <option value="Vueling">
+  <option value="WestJet">
+  <option value="Wizz Air">
+</datalist>
+
+<script>
+(function() {
+  'use strict';
+
+  // ========== I18N TRANSLATIONS ==========
+  const LANG = {
+    pt: {
+      pageTitle: 'ExactBag • Registro de Bagagem',
+      headerSub: 'Registro de Bagagem — Serviço Digital',
+      step1Label: 'Etapa 1 de 4 — Dados Pessoais',
+      step2Label: 'Etapa 2 de 4 — Viagem',
+      step3Label: 'Etapa 3 de 4 — Bagagem',
+      step4Label: 'Etapa 4 de 4 — Termos e Envio',
+      cardPassenger: 'Dados do Passageiro',
+      labelName: 'Nome Completo',
+      phName: 'Ex: Ana Carolina Silva',
+      labelCpf: 'CPF',
+      phCpf: '000.000.000-00',
+      labelPhone: 'Telefone (WhatsApp)',
+      labelEmail: 'E-mail',
+      phEmail: 'exemplo@email.com',
+      labelEmailConfirm: 'Confirme o E-mail',
+      phEmailConfirm: 'Repita o e-mail',
+      searchCountry: 'Buscar país...',
+      cardTrip: 'Dados da Viagem',
+      labelTransport: 'Tipo de Transporte',
+      transportAir: '✈️ Aéreo',
+      transportSea: '🚢 Marítimo',
+      transportLand: '🚌 Terrestre',
+      labelOrigin: 'Origem da Viagem',
+      phOrigin: 'Ex: São Paulo - GRU (Aeroporto Internacional)',
+      labelDest: 'Destino da Viagem',
+      phDest: 'Ex: Lisboa - LIS (Aeroporto Humberto)',
+      labelAirline: 'Companhia Aérea',
+      phAirline: 'Ex: LATAM Airlines',
+      hintAirline: 'Se não estiver na lista, digite o nome manualmente',
+      labelTripType: 'Tipo de Viagem',
+      tripRoundTrip: 'Ida e Volta',
+      tripOneWay: 'Somente Ida',
+      labelOutDate: 'Data de Ida',
+      labelRetDate: 'Data de Volta',
+      labelGps: 'Possui rastreador GPS na bagagem?',
+      gpsNo: 'Não',
+      gpsYes: 'Sim',
+      cardBaggage: 'Informações da Bagagem',
+      labelQty: 'Quantidade de Bagagens',
+      qty1: '1 bagagem',
+      qty2: '2 bagagens',
+      qty3: '3 bagagens',
+      qty4: '4 bagagens',
+      qty5: '5 bagagens',
+      baggageN: 'Bagagem',
+      labelType: 'Tipo',
+      optSelect: 'Selecione...',
+      optSuitcase: 'Mala',
+      optBackpack: 'Mochila',
+      optBag: 'Bolsa',
+      optOther: 'Outro',
+      labelColor: 'Cor predominante',
+      phColor: 'Ex: Preta, Azul marinho',
+      labelBrand: 'Marca',
+      phBrand: 'Ex: Samsonite, American Tourister',
+      labelPhotoExt: 'Foto exterior da bagagem',
+      photoZoneText: '<strong>Toque para tirar foto</strong> da bagagem',
+      photoZoneTextAdmin: '<strong>Clique para anexar foto</strong> ou arraste o arquivo',
+      hintPhotoExt: 'Foto clara do exterior da bagagem, fechada e pronta para viagem',
+      labelPhotoAlt: 'Foto de outro ângulo',
+      photoZone2Text: '<strong>Toque para tirar outra foto</strong> de ângulo diferente',
+      photoZone2TextAdmin: '<strong>Clique para anexar outra foto</strong> de ângulo diferente',
+      hintPhotoAlt: 'Foto de outro ângulo evidenciando a bagagem de forma clara',
+      cardTerms: 'Termos de Uso e Envio',
+      termsExpandBtn: '📄 Ver Termos Completos',
+      termsModalTitle: 'Termos de Serviço — ExactBag',
+      termsContent: '<div class="terms-section"><div class="terms-section-title">1. Objeto do Contrato</div><p>O presente Termo de Serviço regula a contratação do serviço digital oferecido pela EXACTBAG, que consiste no registro informativo de bagagens por meio de fotografias e dados fornecidos pelo CONTRATANTE, com o objetivo de auxiliar na identificação e comprovação de propriedade dos volumes em caso de extravio, dano ou furto durante viagens.</p></div><div class="terms-section"><div class="terms-section-title">2. Descrição do Serviço</div><p>O serviço inclui: (a) Registro fotográfico e descritivo das bagagens do CONTRATANTE; (b) Emissão do CPV — Certificado de Propriedade de Volume, documento digital que comprova o conteúdo e estado das bagagens no momento do registro; (c) Armazenamento seguro dos dados e imagens em plataforma digital; (d) Suporte ao CONTRATANTE em caso de necessidade de comprovação junto a companhias aéreas, seguradoras ou autoridades.</p></div><div class="terms-section"><div class="terms-section-title">3. Obrigações da EXACTBAG</div><p>A EXACTBAG se compromete a: (a) Manter os dados e imagens do CONTRATANTE em sigilo e segurança, conforme a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018); (b) Disponibilizar o CPV em formato digital ao CONTRATANTE após a conclusão do registro; (c) Prestar suporte ao CONTRATANTE durante o período de vigência do serviço; (d) Não compartilhar os dados do CONTRATANTE com terceiros, exceto quando exigido por lei ou autoridade competente.</p></div><div class="terms-section"><div class="terms-section-title">4. Obrigações do CONTRATANTE</div><p>O CONTRATANTE se compromete a: (a) Fornecer informações verdadeiras e precisas sobre suas bagagens; (b) Realizar o registro fotográfico de forma clara e legível; (c) Não utilizar o serviço para fins ilícitos ou fraudulentos; (d) Manter seus dados de contato atualizados.</p></div><div class="terms-section"><div class="terms-section-title">5. Limitação de Responsabilidade</div><p>A EXACTBAG <strong>não se responsabiliza</strong> por: (a) Perda, furto, dano ou extravio de bagagens, sendo o serviço de natureza exclusivamente informativa e probatória; (b) Decisões tomadas por companhias aéreas, seguradoras ou terceiros com base no CPV; (c) Uso indevido do CPV pelo CONTRATANTE ou terceiros; (d) Falhas de conexão, dispositivos ou serviços de terceiros que impeçam o acesso ao sistema.</p></div><div class="terms-section"><div class="terms-section-title">6. CPV — Certificado de Propriedade de Volume</div><p>Ao concluir o registro, será gerado automaticamente um CPV contendo os dados fornecidos e foto(s) da bagagem. O CPV será enviado ao e-mail e WhatsApp informados e constitui prova digital do registro realizado, podendo ser utilizado pelo CONTRATANTE junto a companhias aéreas, seguradoras e autoridades competentes.</p></div><div class="terms-section"><div class="terms-section-title">7. Proteção de Dados (LGPD)</div><p>Os dados pessoais coletados serão tratados exclusivamente para a prestação do serviço contratado, conforme a LGPD. O CONTRATANTE poderá solicitar a exclusão de seus dados a qualquer momento através dos canais de atendimento.</p></div><div class="terms-footer">Ao submeter este formulário, o CONTRATANTE declara ter lido e concordado integralmente com os termos acima.<br><br>📄 <a href="https://drive.google.com/file/d/1_rPhfKcAZ-lA7YM98vd7RQAKaAoKh_86/view?usp=sharing" target="_blank" rel="noopener" style="color:#0f62fe">Clique aqui para ver o documento completo dos Termos de Serviço</a></div>',
+      termsAcceptLabel: 'Li e aceito os <strong>Termos de Uso</strong> do Serviço Digital ExactBag',
+      btnSubmit: 'Registrar Bagagem ✓',
+      btnNext: 'Continuar →',
+      btnBack: '← Voltar',
+      errNameReq: 'Nome completo obrigatório (mín. 3 caracteres)',
+      errCpf: 'CPF deve ter 11 dígitos',
+      errPhone: 'Telefone inválido',
+      errEmail: 'E-mail inválido',
+      errEmailMatch: 'E-mails não conferem',
+      errOrigin: 'Origem obrigatória',
+      errDest: 'Destino obrigatório',
+      errTerms: 'Você deve aceitar os termos para continuar',
+      errPhotoExt: 'Adicione a foto exterior da bagagem {n} para continuar.',
+      errPhotoAlt: 'Adicione a foto de outro ângulo da bagagem {n} para continuar.',
+      errImgSize: 'Imagem muito grande (máx. 5MB)',
+      summaryTitle: 'Resumo do Registro:',
+      summaryOut: 'Ida',
+      summaryRet: 'Volta',
+      summaryBags: 'bagagem(ns)',
+      submitInvalidData: 'Dados inválidos:',
+      submitError: 'Erro ao processar registro',
+      submitRetry: 'Falha na conexão. Tentando novamente...',
+      submitProcessing: 'Processando registro...',
+      submitNoConnection: 'Sem conexão com o servidor.\n\nVerifique sua internet e tente novamente.',
+      submitGenericError: 'Tente novamente. Se o problema persistir, entre em contato com contato@exactbag.com.br',
+      successTitle: 'Registro Concluído!',
+      successCpvLabel: 'Seu CPV',
+      successMsg: 'O Certificado de Propriedade de Volume será enviado para seu e-mail e WhatsApp em instantes.',
+      countryBR: 'Brasil', countryAF: 'Afeganistão', countryZA: 'África do Sul',
+      countryAL: 'Albânia', countryDE: 'Alemanha', countryAO: 'Angola',
+      countrySA: 'Arábia Saudita', countryDZ: 'Argélia', countryAR: 'Argentina',
+      countryAM: 'Armênia', countryAU: 'Austrália', countryAT: 'Áustria',
+      countryAZ: 'Azerbaijão', countryBH: 'Bahrein', countryBD: 'Bangladesh',
+      countryBE: 'Bélgica', countryBY: 'Bielorrússia', countryBO: 'Bolívia',
+      countryBA: 'Bósnia e Herzegovina', countryBW: 'Botsuana', countryBN: 'Brunei',
+      countryBG: 'Bulgária', countryCV: 'Cabo Verde', countryCM: 'Camarões',
+      countryKH: 'Camboja', countryCA: 'Canadá', countryQA: 'Catar',
+      countryKZ: 'Cazaquistão', countryCL: 'Chile', countryCN: 'China',
+      countryCY: 'Chipre', countryCO: 'Colômbia', countryCD: 'Congo (RDC)',
+      countryKR: 'Coreia do Sul', countryCR: 'Costa Rica', countryCI: 'Costa do Marfim',
+      countryHR: 'Croácia', countryCU: 'Cuba', countryDK: 'Dinamarca',
+      countryEG: 'Egito', countrySV: 'El Salvador', countryAE: 'Emirados Árabes',
+      countryEC: 'Equador', countrySK: 'Eslováquia', countrySI: 'Eslovênia',
+      countryES: 'Espanha', countryUS: 'Estados Unidos', countryEE: 'Estônia',
+      countryET: 'Etiópia', countryFJ: 'Fiji', countryPH: 'Filipinas',
+      countryFI: 'Finlândia', countryFR: 'França', countryGA: 'Gabão',
+      countryGH: 'Gana', countryGE: 'Geórgia', countryGR: 'Grécia',
+      countryGT: 'Guatemala', countryGN: 'Guiné', countryHN: 'Honduras',
+      countryHK: 'Hong Kong', countryHU: 'Hungria', countryYE: 'Iêmen',
+      countryIN: 'Índia', countryID: 'Indonésia', countryIR: 'Irã',
+      countryIQ: 'Iraque', countryIE: 'Irlanda', countryIS: 'Islândia',
+      countryIL: 'Israel', countryIT: 'Itália', countryJM: 'Jamaica',
+      countryJP: 'Japão', countryJO: 'Jordânia', countryKW: 'Kuwait',
+      countryLA: 'Laos', countryLV: 'Letônia', countryLB: 'Líbano',
+      countryLY: 'Líbia', countryLT: 'Lituânia', countryLU: 'Luxemburgo',
+      countryMK: 'Macedônia do Norte', countryMG: 'Madagáscar', countryMY: 'Malásia',
+      countryML: 'Mali', countryMT: 'Malta', countryMA: 'Marrocos',
+      countryMX: 'México', countryMZ: 'Moçambique', countryMD: 'Moldávia',
+      countryMN: 'Mongólia', countryME: 'Montenegro', countryMM: 'Mianmar',
+      countryNA: 'Namíbia', countryNP: 'Nepal', countryNI: 'Nicarágua',
+      countryNG: 'Nigéria', countryNO: 'Noruega', countryNZ: 'Nova Zelândia',
+      countryOM: 'Omã', countryNL: 'Países Baixos', countryPK: 'Paquistão',
+      countryPA: 'Panamá', countryPG: 'Papua Nova Guiné', countryPY: 'Paraguai',
+      countryPE: 'Peru', countryPL: 'Polônia', countryPT: 'Portugal',
+      countryKG: 'Quirguistão', countryGB: 'Reino Unido', countryDO: 'Rep. Dominicana',
+      countryCZ: 'Rep. Tcheca', countryRO: 'Romênia', countryRW: 'Ruanda',
+      countryRU: 'Rússia', countrySN: 'Senegal', countryRS: 'Sérvia',
+      countrySG: 'Singapura', countrySY: 'Síria', countryLK: 'Sri Lanka',
+      countrySE: 'Suécia', countryCH: 'Suíça', countryTH: 'Tailândia',
+      countryTW: 'Taiwan', countryTZ: 'Tanzânia', countryTT: 'Trinidad e Tobago',
+      countryTN: 'Tunísia', countryTR: 'Turquia', countryUA: 'Ucrânia',
+      countryUG: 'Uganda', countryUY: 'Uruguai', countryUZ: 'Uzbequistão',
+      countryVE: 'Venezuela', countryVN: 'Vietnã', countryZW: 'Zimbábue'
+    },
+    en: {
+      pageTitle: 'ExactBag • Baggage Registration',
+      headerSub: 'Baggage Registration — Digital Service',
+      step1Label: 'Step 1 of 4 — Personal Data',
+      step2Label: 'Step 2 of 4 — Trip',
+      step3Label: 'Step 3 of 4 — Baggage',
+      step4Label: 'Step 4 of 4 — Terms & Submit',
+      cardPassenger: 'Passenger Information',
+      labelName: 'Full Name',
+      phName: 'E.g.: Ana Carolina Silva',
+      labelCpf: 'CPF (Brazilian Tax ID)',
+      phCpf: '000.000.000-00',
+      labelPhone: 'Phone (WhatsApp)',
+      labelEmail: 'Email',
+      phEmail: 'example@email.com',
+      labelEmailConfirm: 'Confirm Email',
+      phEmailConfirm: 'Re-enter your email',
+      searchCountry: 'Search country...',
+      cardTrip: 'Trip Details',
+      labelTransport: 'Transport Type',
+      transportAir: '✈️ Air',
+      transportSea: '🚢 Sea',
+      transportLand: '🚌 Land',
+      labelOrigin: 'Trip Origin',
+      phOrigin: 'E.g.: São Paulo - GRU (International Airport)',
+      labelDest: 'Trip Destination',
+      phDest: 'E.g.: Lisbon - LIS (Humberto Airport)',
+      labelAirline: 'Airline',
+      phAirline: 'E.g.: LATAM Airlines',
+      hintAirline: 'If not listed, type the name manually',
+      labelTripType: 'Trip Type',
+      tripRoundTrip: 'Round Trip',
+      tripOneWay: 'One Way',
+      labelOutDate: 'Departure Date',
+      labelRetDate: 'Return Date',
+      labelGps: 'Do you have a GPS tracker in your baggage?',
+      gpsNo: 'No',
+      gpsYes: 'Yes',
+      cardBaggage: 'Baggage Information',
+      labelQty: 'Number of Bags',
+      qty1: '1 bag',
+      qty2: '2 bags',
+      qty3: '3 bags',
+      qty4: '4 bags',
+      qty5: '5 bags',
+      baggageN: 'Bag',
+      labelType: 'Type',
+      optSelect: 'Select...',
+      optSuitcase: 'Suitcase',
+      optBackpack: 'Backpack',
+      optBag: 'Bag',
+      optOther: 'Other',
+      labelColor: 'Main Color',
+      phColor: 'E.g.: Black, Navy blue',
+      labelBrand: 'Brand',
+      phBrand: 'E.g.: Samsonite, American Tourister',
+      labelPhotoExt: 'Exterior photo of the bag',
+      photoZoneText: '<strong>Tap to take a photo</strong> of the bag',
+      photoZoneTextAdmin: '<strong>Click to attach a photo</strong> or drag the file',
+      hintPhotoExt: 'Clear photo of the bag exterior, closed and travel-ready',
+      labelPhotoAlt: 'Photo from another angle',
+      photoZone2Text: '<strong>Tap to take another photo</strong> from a different angle',
+      photoZone2TextAdmin: '<strong>Click to attach another photo</strong> from a different angle',
+      hintPhotoAlt: 'Photo from another angle clearly showing the bag',
+      cardTerms: 'Terms of Use & Submit',
+      termsExpandBtn: '📄 View Full Terms',
+      termsModalTitle: 'Terms of Service — ExactBag',
+      termsContent: '<div class="terms-section"><div class="terms-section-title">1. Purpose of the Agreement</div><p>This Terms of Service governs the contracting of the digital service offered by EXACTBAG, which consists of the informational registration of baggage through photographs and data provided by the CLIENT, aiming to assist in the identification and proof of ownership of volumes in case of loss, damage, or theft during travel.</p></div><div class="terms-section"><div class="terms-section-title">2. Service Description</div><p>The service includes: (a) Photographic and descriptive registration of the CLIENT\'s baggage; (b) Issuance of the CPV — Volume Property Certificate, a digital document that proves the content and condition of the baggage at the time of registration; (c) Secure storage of data and images on a digital platform; (d) Support to the CLIENT in case of need for proof with airlines, insurers, or authorities.</p></div><div class="terms-section"><div class="terms-section-title">3. EXACTBAG Obligations</div><p>EXACTBAG commits to: (a) Keep the CLIENT\'s data and images confidential and secure, in accordance with Brazilian Data Protection Law (LGPD — Law No. 13,709/2018); (b) Make the CPV available in digital format to the CLIENT after registration is completed; (c) Provide support to the CLIENT during the service period; (d) Not share the CLIENT\'s data with third parties, except when required by law.</p></div><div class="terms-section"><div class="terms-section-title">4. CLIENT Obligations</div><p>The CLIENT commits to: (a) Provide truthful and accurate information about their baggage; (b) Take clear and legible photographic records; (c) Not use the service for illegal or fraudulent purposes; (d) Keep their contact information up to date.</p></div><div class="terms-section"><div class="terms-section-title">5. Limitation of Liability</div><p>EXACTBAG is <strong>not responsible</strong> for: (a) Loss, theft, damage, or misplacement of baggage, as the service is exclusively informational and evidentiary; (b) Decisions made by airlines, insurers, or third parties based on the CPV; (c) Misuse of the CPV by the CLIENT or third parties; (d) Connection failures, devices, or third-party services that prevent access to the system.</p></div><div class="terms-section"><div class="terms-section-title">6. CPV — Volume Property Certificate</div><p>Upon completing the registration, a CPV will be automatically generated containing the provided data and photo(s) of the baggage. The CPV will be sent to the email and WhatsApp provided and constitutes digital proof of the registration performed, which can be used by the CLIENT with airlines, insurers, and competent authorities.</p></div><div class="terms-section"><div class="terms-section-title">7. Data Protection (LGPD)</div><p>Personal data collected will be processed exclusively for the provision of the contracted service, in accordance with LGPD. The CLIENT may request the deletion of their data at any time through the service channels.</p></div><div class="terms-footer">By submitting this form, the CLIENT declares having read and fully agreed to the terms above.<br><br>📄 <a href="https://drive.google.com/file/d/1_rPhfKcAZ-lA7YM98vd7RQAKaAoKh_86/view?usp=sharing" target="_blank" rel="noopener" style="color:#0f62fe">Click here to view the full Terms of Service document</a></div>',
+      termsAcceptLabel: 'I have read and accept the <strong>Terms of Use</strong> of the ExactBag Digital Service',
+      btnSubmit: 'Register Baggage ✓',
+      btnNext: 'Continue →',
+      btnBack: '← Back',
+      errNameReq: 'Full name required (min. 3 characters)',
+      errCpf: 'CPF must have 11 digits',
+      errPhone: 'Invalid phone number',
+      errEmail: 'Invalid email',
+      errEmailMatch: 'Emails do not match',
+      errOrigin: 'Origin required',
+      errDest: 'Destination required',
+      errTerms: 'You must accept the terms to continue',
+      errPhotoExt: 'Add the exterior photo of bag {n} to continue.',
+      errPhotoAlt: 'Add the photo from another angle of bag {n} to continue.',
+      errImgSize: 'Image too large (max. 5MB)',
+      summaryTitle: 'Registration Summary:',
+      summaryOut: 'Departure',
+      summaryRet: 'Return',
+      summaryBags: 'bag(s)',
+      submitInvalidData: 'Invalid data:',
+      submitError: 'Error processing registration',
+      submitRetry: 'Connection failed. Retrying...',
+      submitProcessing: 'Processing registration...',
+      submitNoConnection: 'No connection to server.\n\nCheck your internet and try again.',
+      submitGenericError: 'Try again. If the problem persists, contact contato@exactbag.com.br',
+      successTitle: 'Registration Complete!',
+      successCpvLabel: 'Your CPV',
+      successMsg: 'The Volume Property Certificate will be sent to your email and WhatsApp shortly.',
+      countryBR: 'Brazil', countryAF: 'Afghanistan', countryZA: 'South Africa',
+      countryAL: 'Albania', countryDE: 'Germany', countryAO: 'Angola',
+      countrySA: 'Saudi Arabia', countryDZ: 'Algeria', countryAR: 'Argentina',
+      countryAM: 'Armenia', countryAU: 'Australia', countryAT: 'Austria',
+      countryAZ: 'Azerbaijan', countryBH: 'Bahrain', countryBD: 'Bangladesh',
+      countryBE: 'Belgium', countryBY: 'Belarus', countryBO: 'Bolivia',
+      countryBA: 'Bosnia & Herzegovina', countryBW: 'Botswana', countryBN: 'Brunei',
+      countryBG: 'Bulgaria', countryCV: 'Cape Verde', countryCM: 'Cameroon',
+      countryKH: 'Cambodia', countryCA: 'Canada', countryQA: 'Qatar',
+      countryKZ: 'Kazakhstan', countryCL: 'Chile', countryCN: 'China',
+      countryCY: 'Cyprus', countryCO: 'Colombia', countryCD: 'Congo (DRC)',
+      countryKR: 'South Korea', countryCR: 'Costa Rica', countryCI: 'Ivory Coast',
+      countryHR: 'Croatia', countryCU: 'Cuba', countryDK: 'Denmark',
+      countryEG: 'Egypt', countrySV: 'El Salvador', countryAE: 'United Arab Emirates',
+      countryEC: 'Ecuador', countrySK: 'Slovakia', countrySI: 'Slovenia',
+      countryES: 'Spain', countryUS: 'United States', countryEE: 'Estonia',
+      countryET: 'Ethiopia', countryFJ: 'Fiji', countryPH: 'Philippines',
+      countryFI: 'Finland', countryFR: 'France', countryGA: 'Gabon',
+      countryGH: 'Ghana', countryGE: 'Georgia', countryGR: 'Greece',
+      countryGT: 'Guatemala', countryGN: 'Guinea', countryHN: 'Honduras',
+      countryHK: 'Hong Kong', countryHU: 'Hungary', countryYE: 'Yemen',
+      countryIN: 'India', countryID: 'Indonesia', countryIR: 'Iran',
+      countryIQ: 'Iraq', countryIE: 'Ireland', countryIS: 'Iceland',
+      countryIL: 'Israel', countryIT: 'Italy', countryJM: 'Jamaica',
+      countryJP: 'Japan', countryJO: 'Jordan', countryKW: 'Kuwait',
+      countryLA: 'Laos', countryLV: 'Latvia', countryLB: 'Lebanon',
+      countryLY: 'Libya', countryLT: 'Lithuania', countryLU: 'Luxembourg',
+      countryMK: 'North Macedonia', countryMG: 'Madagascar', countryMY: 'Malaysia',
+      countryML: 'Mali', countryMT: 'Malta', countryMA: 'Morocco',
+      countryMX: 'Mexico', countryMZ: 'Mozambique', countryMD: 'Moldova',
+      countryMN: 'Mongolia', countryME: 'Montenegro', countryMM: 'Myanmar',
+      countryNA: 'Namibia', countryNP: 'Nepal', countryNI: 'Nicaragua',
+      countryNG: 'Nigeria', countryNO: 'Norway', countryNZ: 'New Zealand',
+      countryOM: 'Oman', countryNL: 'Netherlands', countryPK: 'Pakistan',
+      countryPA: 'Panama', countryPG: 'Papua New Guinea', countryPY: 'Paraguay',
+      countryPE: 'Peru', countryPL: 'Poland', countryPT: 'Portugal',
+      countryKG: 'Kyrgyzstan', countryGB: 'United Kingdom', countryDO: 'Dominican Rep.',
+      countryCZ: 'Czech Republic', countryRO: 'Romania', countryRW: 'Rwanda',
+      countryRU: 'Russia', countrySN: 'Senegal', countryRS: 'Serbia',
+      countrySG: 'Singapore', countrySY: 'Syria', countryLK: 'Sri Lanka',
+      countrySE: 'Sweden', countryCH: 'Switzerland', countryTH: 'Thailand',
+      countryTW: 'Taiwan', countryTZ: 'Tanzania', countryTT: 'Trinidad & Tobago',
+      countryTN: 'Tunisia', countryTR: 'Turkey', countryUA: 'Ukraine',
+      countryUG: 'Uganda', countryUY: 'Uruguay', countryUZ: 'Uzbekistan',
+      countryVE: 'Venezuela', countryVN: 'Vietnam', countryZW: 'Zimbabwe'
+    }
+  };
+
+  let currentLang = localStorage.getItem('exactbag_lang') || (navigator.language && navigator.language.startsWith('en') ? 'en' : 'pt');
+
+  function t(key, replacements) {
+    let text = LANG[currentLang][key] || LANG.pt[key] || key;
+    if (replacements) {
+      Object.keys(replacements).forEach(function(k) {
+        text = text.replace('{' + k + '}', replacements[k]);
+      });
+    }
+    return text;
+  }
+
+  function applyLang() {
+    document.title = t('pageTitle');
+    document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
+
+    // Header
+    document.getElementById('headerSub').textContent = t('headerSub');
+
+    // Toggle buttons
+    document.querySelectorAll('.lang-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    });
+
+    // Step 1
+    document.getElementById('cardPassenger').textContent = t('cardPassenger');
+    document.getElementById('labelName').textContent = t('labelName');
+    document.getElementById('passengerName').placeholder = t('phName');
+    document.getElementById('labelCpf').textContent = t('labelCpf');
+    document.getElementById('labelPhone').textContent = t('labelPhone');
+    document.getElementById('labelEmail').textContent = t('labelEmail');
+    document.getElementById('passengerEmail').placeholder = t('phEmail');
+    document.getElementById('labelEmailConfirm').textContent = t('labelEmailConfirm');
+    document.getElementById('emailConfirmation').placeholder = t('phEmailConfirm');
+    document.getElementById('countrySearch').placeholder = t('searchCountry');
+
+    // Step 2
+    document.getElementById('cardTrip').textContent = t('cardTrip');
+    document.getElementById('labelTransport').textContent = t('labelTransport');
+    document.getElementById('labelTransportAir').textContent = t('transportAir');
+    document.getElementById('labelTransportSea').textContent = t('transportSea');
+    document.getElementById('labelTransportLand').textContent = t('transportLand');
+    document.getElementById('labelOrigin').textContent = t('labelOrigin');
+    document.getElementById('origin').placeholder = t('phOrigin');
+    document.getElementById('labelDest').textContent = t('labelDest');
+    document.getElementById('destination').placeholder = t('phDest');
+    document.getElementById('labelAirline').textContent = t('labelAirline');
+    document.getElementById('airline').placeholder = t('phAirline');
+    document.getElementById('hintAirline').textContent = t('hintAirline');
+    document.getElementById('labelTripType').textContent = t('labelTripType');
+    document.getElementById('labelRoundTrip').textContent = t('tripRoundTrip');
+    document.getElementById('labelOneWay').textContent = t('tripOneWay');
+    document.getElementById('labelOutDate').textContent = t('labelOutDate');
+    document.getElementById('labelRetDate').textContent = t('labelRetDate');
+    document.getElementById('labelGps').textContent = t('labelGps');
+    document.getElementById('labelGpsNo').textContent = t('gpsNo');
+    document.getElementById('labelGpsYes').textContent = t('gpsYes');
+
+    // Step 3
+    document.getElementById('cardBaggage').textContent = t('cardBaggage');
+    document.getElementById('labelQty').textContent = t('labelQty');
+    var qtySelect = document.getElementById('baggageQty');
+    qtySelect.options[0].text = t('qty1');
+    qtySelect.options[1].text = t('qty2');
+    qtySelect.options[2].text = t('qty3');
+    qtySelect.options[3].text = t('qty4');
+    qtySelect.options[4].text = t('qty5');
+
+    // Step 4
+    document.getElementById('cardTerms').textContent = t('cardTerms');
+    document.getElementById('termsExpandBtn').textContent = t('termsExpandBtn');
+    document.getElementById('termsModalTitle').textContent = t('termsModalTitle');
+    document.getElementById('termsBox').innerHTML = t('termsContent');
+    document.getElementById('termsModalBody').innerHTML = t('termsContent');
+    document.getElementById('termsAcceptLabel').innerHTML = t('termsAcceptLabel') + ' <span class="required">*</span>';
+    document.getElementById('submitBtn').textContent = t('btnSubmit');
+
+    // Buttons
+    document.querySelectorAll('.btn-next').forEach(function(btn) { btn.textContent = t('btnNext'); });
+    document.querySelectorAll('.btn-back').forEach(function(btn) { btn.textContent = t('btnBack'); });
+
+    // Success
+    document.getElementById('successTitle').textContent = t('successTitle');
+    document.getElementById('successCpvLabel').textContent = t('successCpvLabel');
+    document.getElementById('successMsg').textContent = t('successMsg');
+
+    // Loading
+    document.getElementById('loadingText').textContent = t('submitProcessing');
+
+    // Progress label
+    updateProgress();
+
+    // Re-render dynamic content if visible
+    if (currentStep === 3) renderBaggageItems();
+    if (currentStep === 4) renderSummary();
+
+    // Country list
+    renderCountryList('');
+  }
+
+  window.setLang = function(lang) {
+    currentLang = lang;
+    localStorage.setItem('exactbag_lang', lang);
+    applyLang();
+  };
+
+  // ========== TERMS MODAL ==========
+  window.openTermsModal = function() {
+    document.getElementById('termsModalOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeTermsModal = function(e) {
+    if (e && e.target !== document.getElementById('termsModalOverlay')) return;
+    document.getElementById('termsModalOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  // ========== CONFIG ==========
+  const API_BASE = window.location.origin;
+  const urlParams = new URLSearchParams(window.location.search);
+  const IS_ADMIN = urlParams.get('admin') === '1';
+  const URL_QTY = parseInt(urlParams.get('qty')) || 0;
+  let currentStep = 1;
+  const totalSteps = 4;
+
+  // ========== STEP NAVIGATION ==========
+  window.nextStep = function() {
+    if (!validateCurrentStep()) return;
+    if (currentStep < totalSteps) {
+      showStep(currentStep + 1);
+    }
+  };
+
+  window.prevStep = function() {
+    if (currentStep > 1) {
+      showStep(currentStep - 1);
+    }
+  };
+
+  function showStep(step) {
+    document.querySelectorAll('.step').forEach(function(el) { el.style.display = 'none'; });
+    var target = document.querySelector('.step[data-step="' + step + '"]');
+    if (target) target.style.display = 'block';
+    currentStep = step;
+    updateProgress();
+
+    if (step === 3) renderBaggageItems();
+    if (step === 4) renderSummary();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateProgress() {
+    var labels = [
+      t('step1Label'),
+      t('step2Label'),
+      t('step3Label'),
+      t('step4Label')
+    ];
+    document.getElementById('stepLabel').textContent = labels[currentStep - 1];
+
+    document.querySelectorAll('.progress-step').forEach(function(el) {
+      var s = parseInt(el.dataset.step);
+      el.classList.remove('active', 'done');
+      if (s < currentStep) el.classList.add('done');
+      if (s === currentStep) el.classList.add('active');
+    });
+  }
+
+  // ========== VALIDATION ==========
+  function setError(fieldId, msg) {
+    var input = document.getElementById(fieldId);
+    var errorEl = document.getElementById(fieldId + '-error');
+    if (input) input.classList.add('error');
+    if (errorEl) { errorEl.textContent = msg; errorEl.classList.add('visible'); }
+  }
+
+  function clearError(fieldId) {
+    var input = document.getElementById(fieldId);
+    var errorEl = document.getElementById(fieldId + '-error');
+    if (input) input.classList.remove('error');
+    if (errorEl) { errorEl.textContent = ''; errorEl.classList.remove('visible'); }
+  }
+
+  function clearAllErrors() {
+    document.querySelectorAll('.error-msg').forEach(function(el) { el.textContent = ''; el.classList.remove('visible'); });
+    document.querySelectorAll('.error').forEach(function(el) { el.classList.remove('error'); });
+  }
+
+  function val(id) { return (document.getElementById(id)?.value || '').trim(); }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  function validateCurrentStep() {
+    clearAllErrors();
+    var valid = true;
+
+    if (currentStep === 1) {
+      if (val('passengerName').length < 3) { setError('passengerName', t('errNameReq')); valid = false; }
+
+      var cpf = val('passengerCpf').replace(/\D/g, '');
+      if (cpf.length !== 11) { setError('passengerCpf', t('errCpf')); valid = false; }
+
+      var phone = val('passengerPhone').replace(/\D/g, '');
+      if (phone.length < 7) { setError('passengerPhone', t('errPhone')); valid = false; }
+
+      var email = val('passengerEmail');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('passengerEmail', t('errEmail')); valid = false; }
+
+      if (val('emailConfirmation') !== email) { setError('emailConfirmation', t('errEmailMatch')); valid = false; }
+    }
+
+    if (currentStep === 2) {
+      if (val('origin').length < 2) { setError('origin', t('errOrigin')); valid = false; }
+      if (val('destination').length < 2) { setError('destination', t('errDest')); valid = false; }
+    }
+
+    if (currentStep === 3) {
+      var qty = parseInt(document.getElementById('baggageQty').value) || 1;
+      for (var i = 0; i < qty; i++) {
+        if (!photoDataMap[i]) {
+          alert(t('errPhotoExt', { n: i + 1 }));
+          valid = false;
+          break;
+        }
+        if (!photoDataMap2[i]) {
+          alert(t('errPhotoAlt', { n: i + 1 }));
+          valid = false;
+          break;
+        }
+      }
+    }
+
+    if (currentStep === 4) {
+      if (!document.getElementById('termsAccepted').checked) {
+        setError('termsAccepted', t('errTerms'));
+        valid = false;
+      }
+    }
+
+    return valid;
+  }
+
+  // ========== CPF MASK ==========
+  document.getElementById('passengerCpf').addEventListener('input', function(e) {
+    var v = e.target.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+    else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    e.target.value = v;
+  });
+
+  // ========== PHONE COUNTRY SELECTOR ==========
+  // Reusable phone mask helpers
+  function mG(v){if(v.length>6)return v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);if(v.length>3)return v.slice(0,3)+' '+v.slice(3);return v}
+  function mUS(v){if(v.length>6)return'('+v.slice(0,3)+') '+v.slice(3,6)+'-'+v.slice(6);if(v.length>3)return'('+v.slice(0,3)+') '+v.slice(3);return v}
+  function m44(v){if(v.length>4)return v.slice(0,4)+' '+v.slice(4);return v}
+  function mFR(v){if(v.length>7)return v.slice(0,1)+' '+v.slice(1,3)+' '+v.slice(3,5)+' '+v.slice(5,7)+' '+v.slice(7);if(v.length>5)return v.slice(0,1)+' '+v.slice(1,3)+' '+v.slice(3,5)+' '+v.slice(5);if(v.length>3)return v.slice(0,1)+' '+v.slice(1,3)+' '+v.slice(3);if(v.length>1)return v.slice(0,1)+' '+v.slice(1);return v}
+  function mBR(v){if(v.length>7)return'('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);if(v.length>2)return'('+v.slice(0,2)+') '+v.slice(2);return v}
+  var COUNTRIES = [
+    { iso:'BR', nameKey:'countryBR', code:'+55', maxDigits:11, mask:mBR },
+    { iso:'AF', nameKey:'countryAF', code:'+93', maxDigits:9, mask:mG },
+    { iso:'ZA', nameKey:'countryZA', code:'+27', maxDigits:9, mask:mG },
+    { iso:'AL', nameKey:'countryAL', code:'+355', maxDigits:9, mask:mG },
+    { iso:'DE', nameKey:'countryDE', code:'+49', maxDigits:11, mask:m44 },
+    { iso:'AO', nameKey:'countryAO', code:'+244', maxDigits:9, mask:mG },
+    { iso:'SA', nameKey:'countrySA', code:'+966', maxDigits:9, mask:mG },
+    { iso:'DZ', nameKey:'countryDZ', code:'+213', maxDigits:9, mask:mG },
+    { iso:'AR', nameKey:'countryAR', code:'+54', maxDigits:10, mask:mG },
+    { iso:'AM', nameKey:'countryAM', code:'+374', maxDigits:8, mask:m44 },
+    { iso:'AU', nameKey:'countryAU', code:'+61', maxDigits:9, mask:mG },
+    { iso:'AT', nameKey:'countryAT', code:'+43', maxDigits:10, mask:mG },
+    { iso:'AZ', nameKey:'countryAZ', code:'+994', maxDigits:9, mask:mG },
+    { iso:'BH', nameKey:'countryBH', code:'+973', maxDigits:8, mask:m44 },
+    { iso:'BD', nameKey:'countryBD', code:'+880', maxDigits:10, mask:mG },
+    { iso:'BE', nameKey:'countryBE', code:'+32', maxDigits:9, mask:mG },
+    { iso:'BY', nameKey:'countryBY', code:'+375', maxDigits:9, mask:mG },
+    { iso:'BO', nameKey:'countryBO', code:'+591', maxDigits:8, mask:m44 },
+    { iso:'BA', nameKey:'countryBA', code:'+387', maxDigits:8, mask:m44 },
+    { iso:'BW', nameKey:'countryBW', code:'+267', maxDigits:8, mask:m44 },
+    { iso:'BN', nameKey:'countryBN', code:'+673', maxDigits:7, mask:mG },
+    { iso:'BG', nameKey:'countryBG', code:'+359', maxDigits:9, mask:mG },
+    { iso:'CV', nameKey:'countryCV', code:'+238', maxDigits:7, mask:mG },
+    { iso:'CM', nameKey:'countryCM', code:'+237', maxDigits:9, mask:mG },
+    { iso:'KH', nameKey:'countryKH', code:'+855', maxDigits:9, mask:mG },
+    { iso:'CA', nameKey:'countryCA', code:'+1', maxDigits:10, mask:mUS },
+    { iso:'QA', nameKey:'countryQA', code:'+974', maxDigits:8, mask:m44 },
+    { iso:'KZ', nameKey:'countryKZ', code:'+7', maxDigits:10, mask:mG },
+    { iso:'CL', nameKey:'countryCL', code:'+56', maxDigits:9, mask:mG },
+    { iso:'CN', nameKey:'countryCN', code:'+86', maxDigits:11, mask:mG },
+    { iso:'CY', nameKey:'countryCY', code:'+357', maxDigits:8, mask:m44 },
+    { iso:'CO', nameKey:'countryCO', code:'+57', maxDigits:10, mask:mG },
+    { iso:'CD', nameKey:'countryCD', code:'+243', maxDigits:9, mask:mG },
+    { iso:'KR', nameKey:'countryKR', code:'+82', maxDigits:10, mask:mG },
+    { iso:'CR', nameKey:'countryCR', code:'+506', maxDigits:8, mask:m44 },
+    { iso:'CI', nameKey:'countryCI', code:'+225', maxDigits:10, mask:mG },
+    { iso:'HR', nameKey:'countryHR', code:'+385', maxDigits:9, mask:mG },
+    { iso:'CU', nameKey:'countryCU', code:'+53', maxDigits:8, mask:m44 },
+    { iso:'DK', nameKey:'countryDK', code:'+45', maxDigits:8, mask:m44 },
+    { iso:'EG', nameKey:'countryEG', code:'+20', maxDigits:10, mask:mG },
+    { iso:'SV', nameKey:'countrySV', code:'+503', maxDigits:8, mask:m44 },
+    { iso:'AE', nameKey:'countryAE', code:'+971', maxDigits:9, mask:mG },
+    { iso:'EC', nameKey:'countryEC', code:'+593', maxDigits:9, mask:mG },
+    { iso:'SK', nameKey:'countrySK', code:'+421', maxDigits:9, mask:mG },
+    { iso:'SI', nameKey:'countrySI', code:'+386', maxDigits:8, mask:m44 },
+    { iso:'ES', nameKey:'countryES', code:'+34', maxDigits:9, mask:mG },
+    { iso:'US', nameKey:'countryUS', code:'+1', maxDigits:10, mask:mUS },
+    { iso:'EE', nameKey:'countryEE', code:'+372', maxDigits:8, mask:m44 },
+    { iso:'ET', nameKey:'countryET', code:'+251', maxDigits:9, mask:mG },
+    { iso:'FJ', nameKey:'countryFJ', code:'+679', maxDigits:7, mask:mG },
+    { iso:'PH', nameKey:'countryPH', code:'+63', maxDigits:10, mask:mG },
+    { iso:'FI', nameKey:'countryFI', code:'+358', maxDigits:10, mask:mG },
+    { iso:'FR', nameKey:'countryFR', code:'+33', maxDigits:9, mask:mFR },
+    { iso:'GA', nameKey:'countryGA', code:'+241', maxDigits:8, mask:m44 },
+    { iso:'GH', nameKey:'countryGH', code:'+233', maxDigits:9, mask:mG },
+    { iso:'GE', nameKey:'countryGE', code:'+995', maxDigits:9, mask:mG },
+    { iso:'GR', nameKey:'countryGR', code:'+30', maxDigits:10, mask:mG },
+    { iso:'GT', nameKey:'countryGT', code:'+502', maxDigits:8, mask:m44 },
+    { iso:'GN', nameKey:'countryGN', code:'+224', maxDigits:9, mask:mG },
+    { iso:'HN', nameKey:'countryHN', code:'+504', maxDigits:8, mask:m44 },
+    { iso:'HK', nameKey:'countryHK', code:'+852', maxDigits:8, mask:m44 },
+    { iso:'HU', nameKey:'countryHU', code:'+36', maxDigits:9, mask:mG },
+    { iso:'YE', nameKey:'countryYE', code:'+967', maxDigits:9, mask:mG },
+    { iso:'IN', nameKey:'countryIN', code:'+91', maxDigits:10, mask:mG },
+    { iso:'ID', nameKey:'countryID', code:'+62', maxDigits:11, mask:mG },
+    { iso:'IR', nameKey:'countryIR', code:'+98', maxDigits:10, mask:mG },
+    { iso:'IQ', nameKey:'countryIQ', code:'+964', maxDigits:10, mask:mG },
+    { iso:'IE', nameKey:'countryIE', code:'+353', maxDigits:9, mask:mG },
+    { iso:'IS', nameKey:'countryIS', code:'+354', maxDigits:7, mask:mG },
+    { iso:'IL', nameKey:'countryIL', code:'+972', maxDigits:9, mask:mG },
+    { iso:'IT', nameKey:'countryIT', code:'+39', maxDigits:10, mask:mG },
+    { iso:'JM', nameKey:'countryJM', code:'+1', maxDigits:10, mask:mUS },
+    { iso:'JP', nameKey:'countryJP', code:'+81', maxDigits:10, mask:mG },
+    { iso:'JO', nameKey:'countryJO', code:'+962', maxDigits:9, mask:mG },
+    { iso:'KW', nameKey:'countryKW', code:'+965', maxDigits:8, mask:m44 },
+    { iso:'LA', nameKey:'countryLA', code:'+856', maxDigits:10, mask:mG },
+    { iso:'LV', nameKey:'countryLV', code:'+371', maxDigits:8, mask:m44 },
+    { iso:'LB', nameKey:'countryLB', code:'+961', maxDigits:8, mask:m44 },
+    { iso:'LY', nameKey:'countryLY', code:'+218', maxDigits:9, mask:mG },
+    { iso:'LT', nameKey:'countryLT', code:'+370', maxDigits:8, mask:m44 },
+    { iso:'LU', nameKey:'countryLU', code:'+352', maxDigits:9, mask:mG },
+    { iso:'MK', nameKey:'countryMK', code:'+389', maxDigits:8, mask:m44 },
+    { iso:'MG', nameKey:'countryMG', code:'+261', maxDigits:9, mask:mG },
+    { iso:'MY', nameKey:'countryMY', code:'+60', maxDigits:10, mask:mG },
+    { iso:'ML', nameKey:'countryML', code:'+223', maxDigits:8, mask:m44 },
+    { iso:'MT', nameKey:'countryMT', code:'+356', maxDigits:8, mask:m44 },
+    { iso:'MA', nameKey:'countryMA', code:'+212', maxDigits:9, mask:mG },
+    { iso:'MX', nameKey:'countryMX', code:'+52', maxDigits:10, mask:mG },
+    { iso:'MZ', nameKey:'countryMZ', code:'+258', maxDigits:9, mask:mG },
+    { iso:'MD', nameKey:'countryMD', code:'+373', maxDigits:8, mask:m44 },
+    { iso:'MN', nameKey:'countryMN', code:'+976', maxDigits:8, mask:m44 },
+    { iso:'ME', nameKey:'countryME', code:'+382', maxDigits:8, mask:m44 },
+    { iso:'MM', nameKey:'countryMM', code:'+95', maxDigits:10, mask:mG },
+    { iso:'NA', nameKey:'countryNA', code:'+264', maxDigits:9, mask:mG },
+    { iso:'NP', nameKey:'countryNP', code:'+977', maxDigits:10, mask:mG },
+    { iso:'NI', nameKey:'countryNI', code:'+505', maxDigits:8, mask:m44 },
+    { iso:'NG', nameKey:'countryNG', code:'+234', maxDigits:10, mask:mG },
+    { iso:'NO', nameKey:'countryNO', code:'+47', maxDigits:8, mask:m44 },
+    { iso:'NZ', nameKey:'countryNZ', code:'+64', maxDigits:9, mask:mG },
+    { iso:'OM', nameKey:'countryOM', code:'+968', maxDigits:8, mask:m44 },
+    { iso:'NL', nameKey:'countryNL', code:'+31', maxDigits:9, mask:mG },
+    { iso:'PK', nameKey:'countryPK', code:'+92', maxDigits:10, mask:mG },
+    { iso:'PA', nameKey:'countryPA', code:'+507', maxDigits:8, mask:m44 },
+    { iso:'PG', nameKey:'countryPG', code:'+675', maxDigits:8, mask:m44 },
+    { iso:'PY', nameKey:'countryPY', code:'+595', maxDigits:9, mask:mG },
+    { iso:'PE', nameKey:'countryPE', code:'+51', maxDigits:9, mask:mG },
+    { iso:'PL', nameKey:'countryPL', code:'+48', maxDigits:9, mask:mG },
+    { iso:'PT', nameKey:'countryPT', code:'+351', maxDigits:9, mask:mG },
+    { iso:'KG', nameKey:'countryKG', code:'+996', maxDigits:9, mask:mG },
+    { iso:'GB', nameKey:'countryGB', code:'+44', maxDigits:10, mask:m44 },
+    { iso:'DO', nameKey:'countryDO', code:'+1', maxDigits:10, mask:mUS },
+    { iso:'CZ', nameKey:'countryCZ', code:'+420', maxDigits:9, mask:mG },
+    { iso:'RO', nameKey:'countryRO', code:'+40', maxDigits:9, mask:mG },
+    { iso:'RW', nameKey:'countryRW', code:'+250', maxDigits:9, mask:mG },
+    { iso:'RU', nameKey:'countryRU', code:'+7', maxDigits:10, mask:mG },
+    { iso:'SN', nameKey:'countrySN', code:'+221', maxDigits:9, mask:mG },
+    { iso:'RS', nameKey:'countryRS', code:'+381', maxDigits:9, mask:mG },
+    { iso:'SG', nameKey:'countrySG', code:'+65', maxDigits:8, mask:m44 },
+    { iso:'SY', nameKey:'countrySY', code:'+963', maxDigits:9, mask:mG },
+    { iso:'LK', nameKey:'countryLK', code:'+94', maxDigits:9, mask:mG },
+    { iso:'SE', nameKey:'countrySE', code:'+46', maxDigits:10, mask:mG },
+    { iso:'CH', nameKey:'countryCH', code:'+41', maxDigits:9, mask:mG },
+    { iso:'TH', nameKey:'countryTH', code:'+66', maxDigits:9, mask:mG },
+    { iso:'TW', nameKey:'countryTW', code:'+886', maxDigits:9, mask:mG },
+    { iso:'TZ', nameKey:'countryTZ', code:'+255', maxDigits:9, mask:mG },
+    { iso:'TT', nameKey:'countryTT', code:'+1', maxDigits:10, mask:mUS },
+    { iso:'TN', nameKey:'countryTN', code:'+216', maxDigits:8, mask:m44 },
+    { iso:'TR', nameKey:'countryTR', code:'+90', maxDigits:10, mask:mG },
+    { iso:'UA', nameKey:'countryUA', code:'+380', maxDigits:9, mask:mG },
+    { iso:'UG', nameKey:'countryUG', code:'+256', maxDigits:9, mask:mG },
+    { iso:'UY', nameKey:'countryUY', code:'+598', maxDigits:8, mask:m44 },
+    { iso:'UZ', nameKey:'countryUZ', code:'+998', maxDigits:9, mask:mG },
+    { iso:'VE', nameKey:'countryVE', code:'+58', maxDigits:10, mask:mG },
+    { iso:'VN', nameKey:'countryVN', code:'+84', maxDigits:10, mask:mG },
+    { iso:'ZW', nameKey:'countryZW', code:'+263', maxDigits:9, mask:mG }
+  ];
+  var selectedCountry = COUNTRIES[0]; // Brasil default
+
+  function flagImg(iso, alt) {
+    return '<img src="https://flagcdn.com/w40/'+iso.toLowerCase()+'.png" class="flag-img" alt="'+(alt||iso)+'" />';
+  }
+
+  function renderCountryList(filter) {
+    var list = document.getElementById('countryList');
+    var f = (filter || '').toLowerCase();
+    var filtered = f ? COUNTRIES.filter(function(c) {
+      var name = t(c.nameKey);
+      return name.toLowerCase().includes(f) || c.code.includes(f) || c.iso.toLowerCase().includes(f);
+    }) : COUNTRIES;
+    list.innerHTML = filtered.map(function(c) {
+      return '<div class="country-item" data-iso="'+c.iso+'">' +
+        '<span class="ci-flag">'+flagImg(c.iso, t(c.nameKey))+'</span>' +
+        '<span class="ci-name">'+t(c.nameKey)+'</span>' +
+        '<span class="ci-code">'+c.code+'</span>' +
+      '</div>';
+    }).join('');
+    list.querySelectorAll('.country-item').forEach(function(el) {
+      el.addEventListener('click', function() { selectCountry(el.dataset.iso); });
+    });
+  }
+
+  function selectCountry(iso) {
+    var c = COUNTRIES.find(function(x) { return x.iso === iso; });
+    if (!c) return;
+    selectedCountry = c;
+    document.getElementById('countryFlag').innerHTML = flagImg(c.iso, t(c.nameKey));
+    document.getElementById('countryCode').textContent = c.code;
+    document.getElementById('countryDropdown').classList.remove('open');
+    var phoneInput = document.getElementById('passengerPhone');
+    var digits = phoneInput.value.replace(/\D/g, '').slice(0, c.maxDigits);
+    phoneInput.value = c.mask(digits);
+    phoneInput.placeholder = c === COUNTRIES[0] ? '11 99999-9999' : '';
+    phoneInput.focus();
+  }
+
+  window.toggleCountryDropdown = function() {
+    var dd = document.getElementById('countryDropdown');
+    var isOpen = dd.classList.contains('open');
+    if (isOpen) {
+      dd.classList.remove('open');
+    } else {
+      dd.classList.add('open');
+      document.getElementById('countrySearch').value = '';
+      renderCountryList('');
+      setTimeout(function() { document.getElementById('countrySearch').focus(); }, 50);
+    }
+  };
+
+  document.getElementById('countrySearch').addEventListener('input', function(e) {
+    renderCountryList(e.target.value);
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener('click', function(e) {
+    var wrapper = document.querySelector('.phone-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      document.getElementById('countryDropdown').classList.remove('open');
+    }
+  });
+
+  // ========== PHONE MASK ==========
+  document.getElementById('passengerPhone').addEventListener('input', function(e) {
+    var digits = e.target.value.replace(/\D/g, '').slice(0, selectedCountry.maxDigits);
+    e.target.value = digits.length ? selectedCountry.mask(digits).replace(/[\s\-]+$/, '') : '';
+  });
+
+  // ========== BAGGAGE ITEMS RENDERING ==========
+  function renderBaggageItems() {
+    var qty = parseInt(document.getElementById('baggageQty').value) || 1;
+    var container = document.getElementById('baggageItemsContainer');
+    container.innerHTML = '';
+
+    for (var i = 0; i < qty; i++) {
+      var html = '<div class="card" style="margin-top:12px;">' +
+          '<div class="card-title">' + t('baggageN') + ' ' + (i + 1) + '</div>' +
+          '<div class="field">' +
+            '<label>' + t('labelType') + '</label>' +
+            '<select name="bagType_' + i + '" id="bagType_' + i + '">' +
+              '<option value="">' + t('optSelect') + '</option>' +
+              '<option value="mala">' + t('optSuitcase') + '</option>' +
+              '<option value="mochila">' + t('optBackpack') + '</option>' +
+              '<option value="bolsa">' + t('optBag') + '</option>' +
+              '<option value="outro">' + t('optOther') + '</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="field">' +
+            '<label>' + t('labelColor') + '</label>' +
+            '<input type="text" name="color_' + i + '" id="color_' + i + '" placeholder="' + t('phColor') + '" />' +
+          '</div>' +
+          '<div class="field">' +
+            '<label>' + t('labelBrand') + '</label>' +
+            '<input type="text" name="brand_' + i + '" id="brand_' + i + '" placeholder="' + t('phBrand') + '" />' +
+          '</div>' +
+          '<div class="field">' +
+            '<label>' + t('labelPhotoExt') + ' <span class="required">*</span></label>' +
+            '<div class="photo-upload-zone" id="photoZone_' + i + '" data-index="' + i + '">' +
+              '<div class="icon">' + (IS_ADMIN ? '📎' : '📷') + '</div>' +
+              '<div class="text">' + t(IS_ADMIN ? 'photoZoneTextAdmin' : 'photoZoneText') + '</div>' +
+            '</div>' +
+            '<input type="file" id="photoInput_' + i + '" accept="image/*"' + (IS_ADMIN ? '' : ' capture="environment"') + ' style="display:none;" />' +
+            '<div class="photo-preview" id="photoPreview_' + i + '" style="display:none;">' +
+              '<img id="photoImg_' + i + '" src="" alt="Preview" />' +
+              '<button type="button" class="remove-btn" onclick="removePhoto(' + i + ', false)">✕</button>' +
+            '</div>' +
+            '<div class="hint">' + t('hintPhotoExt') + '</div>' +
+          '</div>' +
+          '<div class="field">' +
+            '<label>' + t('labelPhotoAlt') + ' <span class="required">*</span></label>' +
+            '<div class="photo-upload-zone" id="photoZone_b_' + i + '" data-index="' + i + '">' +
+              '<div class="icon">' + (IS_ADMIN ? '📎' : '📸') + '</div>' +
+              '<div class="text">' + t(IS_ADMIN ? 'photoZone2TextAdmin' : 'photoZone2Text') + '</div>' +
+            '</div>' +
+            '<input type="file" id="photoInput_b_' + i + '" accept="image/*"' + (IS_ADMIN ? '' : ' capture="environment"') + ' style="display:none;" />' +
+            '<div class="photo-preview" id="photoPreview_b_' + i + '" style="display:none;">' +
+              '<img id="photoImg_b_' + i + '" src="" alt="Preview" />' +
+              '<button type="button" class="remove-btn" onclick="removePhoto(' + i + ', true)">✕</button>' +
+            '</div>' +
+            '<div class="hint">' + t('hintPhotoAlt') + '</div>' +
+          '</div>' +
+        '</div>';
+      container.insertAdjacentHTML('beforeend', html);
+
+      // Wire foto 1 — exterior
+      (function(idx) {
+        var zone1 = document.getElementById('photoZone_' + idx);
+        var input1 = document.getElementById('photoInput_' + idx);
+        zone1.addEventListener('click', function() { input1.click(); });
+        if (IS_ADMIN) {
+          zone1.addEventListener('dragover', function(e) { e.preventDefault(); zone1.classList.add('dragover'); });
+          zone1.addEventListener('dragleave', function() { zone1.classList.remove('dragover'); });
+          zone1.addEventListener('drop', function(e) {
+            e.preventDefault(); zone1.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) handlePhoto(idx, e.dataTransfer.files[0], false);
+          });
+        }
+        input1.addEventListener('change', function(e) {
+          if (e.target.files[0]) handlePhoto(idx, e.target.files[0], false);
+        });
+
+        // Wire foto 2 — outro ângulo
+        var zone2 = document.getElementById('photoZone_b_' + idx);
+        var input2 = document.getElementById('photoInput_b_' + idx);
+        zone2.addEventListener('click', function() { input2.click(); });
+        if (IS_ADMIN) {
+          zone2.addEventListener('dragover', function(e) { e.preventDefault(); zone2.classList.add('dragover'); });
+          zone2.addEventListener('dragleave', function() { zone2.classList.remove('dragover'); });
+          zone2.addEventListener('drop', function(e) {
+            e.preventDefault(); zone2.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) handlePhoto(idx, e.dataTransfer.files[0], true);
+          });
+        }
+        input2.addEventListener('change', function(e) {
+          if (e.target.files[0]) handlePhoto(idx, e.target.files[0], true);
+        });
+      })(i);
+    }
+  }
+
+  document.getElementById('baggageQty').addEventListener('change', renderBaggageItems);
+
+  // ========== PHOTO HANDLING ==========
+  var photoDataMap = {};
+  var photoDataMap2 = {};
+
+  function handlePhoto(index, file, isSecond) {
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { alert(t('errImgSize')); return; }
+
+    var suffix = isSecond ? '_b' : '';
+    var map = isSecond ? photoDataMap2 : photoDataMap;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var maxDim = 1200;
+        var w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var compressed = canvas.toDataURL('image/jpeg', 0.75);
+        canvas.width = 0; canvas.height = 0; canvas = null;
+
+        map[index] = compressed;
+
+        document.getElementById('photoZone' + suffix + '_' + index).style.display = 'none';
+        var preview = document.getElementById('photoPreview' + suffix + '_' + index);
+        preview.style.display = 'block';
+        document.getElementById('photoImg' + suffix + '_' + index).src = compressed;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  window.removePhoto = function(index, isSecond) {
+    var suffix = isSecond ? '_b' : '';
+    var map = isSecond ? photoDataMap2 : photoDataMap;
+    delete map[index];
+    document.getElementById('photoZone' + suffix + '_' + index).style.display = 'flex';
+    document.getElementById('photoPreview' + suffix + '_' + index).style.display = 'none';
+    document.getElementById('photoInput' + suffix + '_' + index).value = '';
+  };
+
+  // ========== SUMMARY ==========
+  function renderSummary() {
+    var qty = parseInt(document.getElementById('baggageQty').value) || 1;
+    var transport = document.querySelector('input[name="transportType"]:checked')?.value || 'aereo';
+    var transportLabels = { aereo: t('transportAir'), maritimo: t('transportSea'), terrestre: t('transportLand') };
+
+    var html = '<div style="font-size:13px; color:#374151; line-height:1.8;">' +
+        '<strong>' + esc(t('summaryTitle')) + '</strong><br/>' +
+        '👤 ' + esc(val('passengerName')) + '<br/>' +
+        '📧 ' + esc(val('passengerEmail')) + '<br/>' +
+        '📱 ' + flagImg(selectedCountry.iso, t(selectedCountry.nameKey)) + ' ' + esc(selectedCountry.code) + ' ' + esc(val('passengerPhone')) + '<br/>' +
+        esc(transportLabels[transport] || transport) + ' ' + esc(val('origin')) + ' → ' + esc(val('destination')) + '<br/>' +
+        (val('airline') ? '🛩️ ' + esc(val('airline')) + '<br/>' : '') +
+        (val('outboundDate') ? '📅 ' + esc(t('summaryOut')) + ': ' + esc(val('outboundDate')) + '<br/>' : '') +
+        (val('returnDate') ? '📅 ' + esc(t('summaryRet')) + ': ' + esc(val('returnDate')) + '<br/>' : '') +
+        '🧳 ' + qty + ' ' + esc(t('summaryBags')) + '<br/>' +
+      '</div>';
+    document.getElementById('summaryPreview').innerHTML = html;
+  }
+
+  // ========== FORM SUBMIT ==========
+  document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!validateCurrentStep()) return;
+
+    var submitBtn = document.getElementById('submitBtn');
+    var loading = document.getElementById('loadingOverlay');
+    submitBtn.disabled = true;
+    loading.classList.add('active');
+
+    var qty = parseInt(document.getElementById('baggageQty').value) || 1;
+    var baggageItems = [];
+    for (var i = 0; i < qty; i++) {
+      baggageItems.push({
+        bagType: (document.getElementById('bagType_' + i)?.value || ''),
+        color: (document.getElementById('color_' + i)?.value || '').trim(),
+        brand: (document.getElementById('brand_' + i)?.value || '').trim(),
+        imageData: photoDataMap[i] || null,
+        imageData2: photoDataMap2[i] || null
+      });
+    }
+
+    var payload = {
+      saleId: val('saleId') || null,
+      passengerName: val('passengerName'),
+      passengerCpf: val('passengerCpf'),
+      passengerEmail: val('passengerEmail'),
+      emailConfirmation: val('emailConfirmation'),
+      passengerPhone: selectedCountry.code + val('passengerPhone').replace(/\D/g, ''),
+      transportType: document.querySelector('input[name="transportType"]:checked')?.value || 'aereo',
+      origin: val('origin'),
+      destination: val('destination'),
+      airline: val('airline') || null,
+      outboundDate: val('outboundDate') || null,
+      returnDate: val('returnDate') || null,
+      hasGpsTracker: document.querySelector('input[name="hasGpsTracker"]:checked')?.value === 'true',
+      baggageQty: qty,
+      termsAccepted: document.getElementById('termsAccepted').checked,
+      baggageItems: baggageItems
+    };
+
+    var MAX_RETRIES = 2;
+    var lastError = null;
+
+    for (var attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        var response = await fetch(API_BASE + '/native/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        var result = await response.json();
+
+        if (!response.ok || !result.success) {
+          if (response.status === 400 && result.details) {
+            var msgs = result.details.map(function(d) { return '• ' + d.message; }).join('\n');
+            alert(t('submitInvalidData') + '\n\n' + msgs);
+            submitBtn.disabled = false;
+            loading.classList.remove('active');
+            return;
+          }
+          throw new Error(result.error || t('submitError'));
+        }
+
+        // Sucesso
+        loading.classList.remove('active');
+        document.getElementById('formContainer').querySelector('form').style.display = 'none';
+        document.querySelector('.progress-bar').style.display = 'none';
+        document.getElementById('stepLabel').style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('cpvNumberDisplay').textContent = result.data.cpvNumber || '—';
+        return;
+
+      } catch (err) {
+        lastError = err;
+        if (err instanceof TypeError && attempt < MAX_RETRIES) {
+          document.getElementById('loadingText').textContent = t('submitRetry');
+          await new Promise(function(r) { setTimeout(r, 2000 * (attempt + 1)); });
+          document.getElementById('loadingText').textContent = t('submitProcessing');
+          continue;
+        }
+        break;
+      }
+    }
+
+    if (lastError instanceof TypeError) {
+      alert(t('submitNoConnection'));
+    } else {
+      alert((lastError?.message || t('submitError')) + '\n\n' + t('submitGenericError'));
+    }
+    submitBtn.disabled = false;
+    loading.classList.remove('active');
+  });
+
+  // ========== TRIP TYPE TOGGLE ==========
+  document.querySelectorAll('input[name="tripType"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var isOneWay = this.value === 'oneway';
+      document.getElementById('returnDateField').style.display = isOneWay ? 'none' : '';
+      if (isOneWay) document.getElementById('returnDate').value = '';
+    });
+  });
+
+  function hydratePrefilledPhone() {
+    var phoneInput = document.getElementById('passengerPhone');
+    var rawPhone = phoneInput.value.trim();
+    if (!rawPhone) return;
+
+    var country = COUNTRIES[0];
+    var rawDigits = rawPhone.replace(/\D/g, '');
+    if (rawPhone.charAt(0) === '+') {
+      country = COUNTRIES
+        .slice()
+        .sort(function(a, b) { return b.code.length - a.code.length; })
+        .find(function(item) { return rawPhone.indexOf(item.code) === 0; }) || country;
+      rawPhone = rawPhone.slice(country.code.length);
+    } else if (rawDigits.length > country.maxDigits) {
+      var detectedCountry = COUNTRIES
+        .slice()
+        .sort(function(a, b) { return b.code.length - a.code.length; })
+        .find(function(item) {
+          var countryDigits = item.code.replace(/\D/g, '');
+          var nationalDigits = rawDigits.slice(countryDigits.length);
+          return rawDigits.indexOf(countryDigits) === 0 &&
+            nationalDigits.length >= 7 && nationalDigits.length <= item.maxDigits;
+        });
+      if (detectedCountry) {
+        country = detectedCountry;
+        var countryDigits = country.code.replace(/\D/g, '');
+        rawPhone = rawDigits.slice(countryDigits.length);
+      }
+    }
+
+    selectedCountry = country;
+    document.getElementById('countryFlag').innerHTML = flagImg(country.iso, t(country.nameKey));
+    document.getElementById('countryCode').textContent = country.code;
+    var digits = rawPhone.replace(/\D/g, '').slice(0, country.maxDigits);
+    phoneInput.value = country.mask(digits).replace(/[\s\-]+$/, '');
+  }
+
+  // ========== INIT ==========
+  applyLang();
+  showStep(1);
+  hydratePrefilledPhone();
+
+  // Auto-set baggage qty from URL and lock for non-admin
+  var qtySelect = document.getElementById('baggageQty');
+  var prefilledQty = parseInt(qtySelect.dataset.prefilledQty) || 0;
+  var initialQty = URL_QTY || prefilledQty;
+  if (initialQty >= 1 && initialQty <= 5) {
+    qtySelect.value = initialQty;
+  }
+  if (!IS_ADMIN) {
+    var qtyEl = document.getElementById('baggageQty');
+    qtyEl.disabled = true;
+    qtyEl.style.opacity = '0.7';
+    qtyEl.style.cursor = 'not-allowed';
+    qtyEl.style.pointerEvents = 'none';
+  }
+  renderBaggageItems();
+
+})();
+</script>
+
+</body>
+</html>

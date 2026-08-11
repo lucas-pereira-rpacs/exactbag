@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Connection pooling para Railway PostgreSQL
+  // Recomendado: 5 conexões para Starter plan
+  // Aumentar conforme necessidade de escala
+  // Sintaxe: "...?schema=public&connection_limit=5"
+}
+
+model Partner {
+  id                String   @id @default(cuid())
+  partnerId         String   @unique
+  name              String
+  apiKey            String   @unique
+  email             String
+  isActive          Boolean  @default(true)
+  isSandbox         Boolean  @default(false)
+  rateLimitMin      Int      @default(60)
+  rateLimitDay      Int      @default(10000)
+  totalRequests     Int      @default(0)
+  failedRequests    Int      @default(0)
+  // LGPD Compliance - Consent fields
+  optOutMarketing   Boolean  @default(false)
+  optOutAnalytics   Boolean  @default(false)
+  consentDate       DateTime?
+  // Webhook for partner callbacks (optional)
+  webhookUrl        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  sales             Sale[]
+
+  @@index([partnerId])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Sale {
+  id           String   @id @default(cuid())
+  partner      Partner  @relation(fields: [partnerId], references: [partnerId])
+  partnerId    String
+  saleId       String?
+  slug         String?  @unique
+  customerName String
+  customerEmail String
+  customerPhone String
+  roundTrip    Boolean  @default(false)
+  baggageQty   Int      @default(1)
+  hasInsurance Boolean  @default(false)
+  expirationDate DateTime?
+  outboundDate DateTime?
+  returnDate   DateTime?
+  status       String   @default("pending")
+  formLink     String?
+  jobId        String?
+  // Notification deduplication
+  welcomeSentAt DateTime?
+  vesperaSentAt DateTime?
+  // Cancellation / Refund
+  cancelledAt  DateTime?
+  refundType   String?    // "integral" | "parcial"
+  refundAmount Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  submissions  Submission[]
+
+  @@index([partnerId])
+  @@index([customerEmail])
+  @@index([saleId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([outboundDate, vesperaSentAt])
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  submissionId String   @unique
+  formId       String
+  sale         Sale?    @relation(fields: [saleId], references: [id])
+  saleId       String?
+  status       String   @default("completed")
+  payload      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([saleId])
+  @@index([formId])
+  @@index([createdAt])
+  
+  // 🟡 P8: Índices compostos (consultas combinadas)
+  @@index([saleId, formId])
+  @@index([createdAt, status])
+}
+
+// ============================================================================
+// Native Registration Module (substitui JotForm — módulo paralelo isolado)
+// ============================================================================
+
+model NativeRegistration {
+  id              String   @id @default(cuid())
+  partnerId       String?
+  saleId          String?
+  // Passenger data
+  passengerName   String
+  passengerCpf    String?
+  passengerEmail  String
+  passengerPhone  String
+  // Trip data
+  baggageQty      Int      @default(1)
+  hasInsurance    Boolean  @default(false)
+  transportType   String   @default("aereo") // aereo, maritimo, terrestre
+  origin          String
+  destination     String
+  airline         String?
+  outboundDate    DateTime?
+  returnDate      DateTime?
+  hasGpsTracker   Boolean  @default(false)
+  // Terms
+  termsAccepted   Boolean  @default(false)
+  termsAcceptedAt DateTime?
+  // Status
+  status          String   @default("submitted") // submitted, cpv_generated, sent, completed
+  cpvNumber       String?  @unique
+  cpvPdfUrl       String?
+  cpvGeneratedAt  DateTime?
+  emailSentAt     DateTime?
+  whatsappSentAt  DateTime?
+  returnReminderSentAt DateTime?
+  // Metadata
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  baggageItems    NativeBaggageItem[]
+
+  @@index([partnerId, createdAt])
+  @@index([passengerEmail])
+  @@index([passengerCpf])
+  @@index([status, createdAt])
+  @@index([cpvNumber])
+  @@index([saleId])
+  @@index([returnDate])
+}
+
+model NativeBaggageItem {
+  id              String   @id @default(cuid())
+  registration    NativeRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  registrationId  String
+  bagType         String?  // mala, mochila, bolsa, outro
+  color           String?
+  brand           String?
+  identifierTag   String?  // numero SUN da TAG se aplicavel
+  imageData       String?  // base64 da foto comprimida (exterior)
+  imageData2      String?  // base64 da segunda foto (outro ângulo)
+  imageUrl        String?  // URL se armazenado externamente
+  createdAt       DateTime @default(now())
+
+  @@index([registrationId])
+}
+
+// ============================================================================
+// Dashboard Users (autenticação interna — substitui env vars)
+// ============================================================================
+
+model DashboardUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("atendente") // gestor | atendente
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+}

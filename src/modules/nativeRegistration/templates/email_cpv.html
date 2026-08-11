@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CPV ExactBag</title>
+<style>
+  body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+  .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
+  .header { background: #0b1220; color: #ffffff; text-align: center; padding: 28px 20px; }
+  .header h1 { margin: 0; font-size: 22px; letter-spacing: 1px; }
+  .header p { margin: 6px 0 0; font-size: 13px; opacity: 0.8; }
+  .body-content { padding: 28px 24px; }
+  .greeting { font-size: 16px; margin-bottom: 16px; }
+  .cpv-badge { background: #eef4ff; border: 2px solid #0f62fe; border-radius: 10px; text-align: center; padding: 20px; margin: 20px 0; }
+  .cpv-badge .label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+  .cpv-badge .number { font-size: 24px; font-weight: 700; color: #0f62fe; margin-top: 6px; letter-spacing: 2px; }
+  .info-text { font-size: 14px; line-height: 1.6; color: #374151; margin-bottom: 16px; }
+  .highlight { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 20px 0; font-size: 14px; }
+  .contact { background: #f9fafb; border-radius: 8px; padding: 16px; margin-top: 24px; font-size: 13px; color: #6b7280; }
+  .contact a { color: #0f62fe; text-decoration: none; }
+  .footer { text-align: center; padding: 20px; font-size: 11px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>ExactBag</h1>
+    <p>Certificado de Propriedade de Volume</p>
+  </div>
+  <div class="body-content">
+    <p class="greeting">Olá, <strong>{{nome}}</strong>!</p>
+
+    <p class="info-text">Seu registro de bagagem foi concluído com sucesso e o CPV foi gerado automaticamente.</p>
+
+    <div class="cpv-badge">
+      <div class="label">Número do CPV</div>
+      <div class="number">{{cpv_number}}</div>
+    </div>
+
+    <div class="highlight">
+      ✅ O documento PDF está <strong>anexado</strong> a este e-mail. Guarde-o com segurança — ele comprova o registro da sua bagagem junto ao ExactBag.
+    </div>
+
+    <p class="info-text">Com o CPV, sua bagagem está oficialmente registrada. Em caso de extravio, este documento será a referência para atuarmos na proteção dos seus pertences.</p>
+
+    <div class="contact">
+      <strong>Precisa de ajuda?</strong><br/>
+      📱 <a href="https://wa.me/{{support_phone_raw}}">{{support_phone}}</a> (WhatsApp 24h)<br/>
+      📧 <a href="mailto:contato@exactbag.com.br">contato@exactbag.com.br</a>
+    </div>
+  </div>
+  <div class="footer">
+    <p>ExactBag — Proteção para sua bagagem.</p>
+    <p>app.exactbag.com.br</p>
+  </div>
+</div>
+</body>
+</html>

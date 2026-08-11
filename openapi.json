@@ -1,0 +1,841 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ExactBag - API de Integração para Parceiros",
+    "description": "## Como funciona\n\nA ExactBag oferece um serviço digital de identificação e proteção de bagagem para passageiros.\n\n### Fluxo da integração:\n1. **Parceiro envia a venda** → `POST /webhooks/sales` com dados do passageiro\n2. **ExactBag processa** → Gera formulário personalizado e envia ao passageiro (email + WhatsApp)\n3. **Passageiro preenche** → Registra fotos e dados da bagagem no formulário\n4. **Parceiro é notificado** → Recebe callback no webhook cadastrado quando o registro é concluído\n5. **Cancelamento (opcional)** → `POST /webhooks/sales/{saleId}/cancel` calcula estorno automaticamente\n\n### Autenticação\nTodas as chamadas (exceto `/health`) exigem header:\n```\nAuthorization: Bearer SUA_API_KEY\n```\nA API Key é fornecida pela ExactBag no momento do cadastro do parceiro.\n\n### Suporte\ncontato@exactbag.com.br",
+    "version": "2.0.0",
+    "contact": {
+      "name": "ExactBag",
+      "email": "contato@exactbag.com.br",
+      "url": "https://exactbag.com.br"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://app.exactbag.com.br",
+      "description": "Produção"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Vendas",
+      "description": "Enviar vendas para processamento"
+    },
+    {
+      "name": "Cancelamento",
+      "description": "Cancelar vendas e calcular estorno"
+    },
+    {
+      "name": "Acompanhamento",
+      "description": "Consultar status do processamento"
+    },
+    {
+      "name": "Disponibilidade",
+      "description": "Consultar produtos ExactBag disponíveis para cadastro e venda em plataformas parceiras"
+    },
+    {
+      "name": "Webhook do Parceiro",
+      "description": "Configurar URL para receber notificações quando o passageiro completar o registro"
+    },
+    {
+      "name": "Status",
+      "description": "Verificar se a API está online"
+    }
+  ],
+  "paths": {
+    "/webhooks/sales": {
+      "post": {
+        "tags": ["Vendas"],
+        "summary": "Enviar uma nova venda",
+        "description": "Envia os dados de uma venda de bagagem. A ExactBag irá:\n- Gerar um formulário personalizado para o passageiro\n- Enviar link do formulário por email e WhatsApp\n- Notificar o parceiro quando o passageiro completar o registro\n\n**Processamento assíncrono**: a resposta retorna um `jobId` para acompanhamento.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleRequest"
+              },
+              "example": {
+                "partnerId": "INFOTRAVEL",
+                "saleId": "RES-2026-78901",
+                "customerName": "Maria Santos",
+                "customerEmail": "maria.santos@email.com",
+                "customerPhone": "+5511988887777",
+                "roundTrip": true,
+                "outboundDate": "2026-04-15",
+                "returnDate": "2026-04-22",
+                "baggageQty": 2,
+                "hasInsurance": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Venda aceita para processamento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Venda recebida e em processamento." },
+                    "jobId": { "type": "string", "example": "job-1711472400000-5231", "description": "Use este ID para consultar o status em GET /jobs/{jobId}" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "Validation failed" },
+                    "details": { "type": "array", "items": { "type": "string" }, "example": ["customerEmail is required", "outboundDate must be a valid date"] }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "API Key ausente ou inválida" },
+          "429": { "description": "Limite de requisições excedido (máx. 30/minuto)" }
+        }
+      }
+    },
+    "/avail/insurance": {
+      "get": {
+        "tags": ["Disponibilidade"],
+        "summary": "Consultar disponibilidade de produtos ExactBag",
+        "description": "Retorna os produtos ExactBag disponíveis no formato compatível com o endpoint `insuranceAvailbility`. Este método permite que o parceiro cadastre ou exiba os produtos ExactBag em sua plataforma com nome, descrição, imagem, valor de venda, valor net, coberturas, políticas de uso e políticas de cancelamento.\n\nA resposta segue o padrão `insuranceAvail`, com uma lista de produtos de assistência/seguro de bagagem.\n\n### Catálogo de produtos disponíveis\n\n| Código | Nome comercial | Bagagens | Preço venda | Preço net | Seguro extravio |\n|--------|----------------|----------|-------------|-----------|-----------------|\n| `5383656` | Proteção Completa | 1 bagagem | R$ 44,90 | R$ 9,60 | Sim – R$ 2.500,00 |\n| `5383657` | Proteção Essencial | 1 bagagem | R$ 38,90 | R$ 9,60 | Não |\n| `5383658` | Proteção Completa 2 Bagagens | 2 bagagens | R$ 89,80 | R$ 19,20 | Sim – R$ 2.500,00 por bag |\n| `5383659` | Proteção Essencial 2 Bagagens | 2 bagagens | R$ 77,80 | R$ 19,20 | Não |\n\n> Todos os produtos têm vigência de até 30 dias, atendimento em Brasil e exterior, e utilização ida e volta.",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "description": "Data de início da viagem/pesquisa. Formato YYYY-MM-DD.",
+            "schema": { "type": "string", "format": "date", "example": "2026-12-01" }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "description": "Data final da viagem/pesquisa. Formato YYYY-MM-DD.",
+            "schema": { "type": "string", "format": "date", "example": "2026-12-08" }
+          },
+          {
+            "name": "occupancy",
+            "in": "query",
+            "required": false,
+            "description": "Ocupação da pesquisa. Pode ser repetido para informar a idade de cada passageiro (`?occupancy=30&occupancy=30`) ou enviado como quantidade (`?occupancy=2`).",
+            "schema": {
+              "oneOf": [
+                { "type": "integer", "example": 2 },
+                { "type": "array", "items": { "type": "string" }, "example": ["30", "30"] }
+              ]
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "nationality",
+            "in": "query",
+            "required": false,
+            "description": "Código da nacionalidade do passageiro. Campo informativo para compatibilidade com a pesquisa da Infotravel.",
+            "schema": { "type": "string", "example": "BR" }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "description": "Filtra um produto ExactBag específico pelo código. Valores válidos: `5383656` (Proteção Completa 1 bag), `5383657` (Proteção Essencial 1 bag), `5383658` (Proteção Completa 2 bags), `5383659` (Proteção Essencial 2 bags). Se omitido, retorna todos os produtos.",
+            "schema": { "type": "string", "enum": ["5383656", "5383657", "5383658", "5383659"], "example": "5383656" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disponibilidade retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InsuranceAvailabilityResponse" },
+                "example": {
+                  "insuranceAvail": [
+                    {
+                      "insurance": {
+                        "provider": "ExactBag",
+                        "key": "445DEHQ2U1VO8IID8S",
+                        "code": "5383656",
+                        "name": "ASSISTENCIA DE BAGAGEM EXACTBAG COVER - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500",
+                        "startDate": "2026-12-01T00:00:00-03:00",
+                        "endDate": "2026-12-08T00:00:00-03:00",
+                        "description": "Com a Assistência de Bagagem ExactBag, o passageiro viaja com uma camada extra de proteção. Inclui seguro por extravio de R$ 2.500,00. Vigência: até 30 dias. Utilização: ida e volta. Cobertura: 1 bagagem. Atendimento: Brasil e exterior.",
+                        "image": "https://app.exactbag.com.br/native/assets/produto-protecao-completa.png",
+                        "unique": false,
+                        "onRequest": false,
+                        "providerDetail": {
+                          "id": 26908,
+                          "externalCode": "",
+                          "name": "ExactBag",
+                          "localTrip": false
+                        },
+                        "coverages": [
+                          {
+                            "code": "2898",
+                            "name": "assistencia de bagagem com seguro",
+                            "minPrice": "R$ 2.500,00",
+                            "maxPrice": "R$ 2.500,00"
+                          }
+                        ],
+                        "usagePolicy": [
+                          "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+                          "Registro digital da bagagem com fotos e informações.",
+                          "Identificação da bagagem antes do embarque.",
+                          "Acompanhamento junto às companhias aéreas.",
+                          "Auxílio na localização e recuperação da bagagem.",
+                          "Seguro por extravio de R$ 2.500,00 em caso de não localização.",
+                          "Após a compra, o passageiro recebe o link de ativação por WhatsApp ou e-mail.",
+                          "Conforme as condições da cobertura contratada."
+                        ],
+                        "keyDetail": "NTM4MzY1NiMy"
+                      },
+                      "fares": [
+                        {
+                          "type": "FARE",
+                          "price": { "currency": "BRL", "amount": 44.9, "exchange": 1.0 },
+                          "priceSale": { "currency": "BRL", "amount": 44.9 },
+                          "priceNet": { "currency": "BRL", "amount": 9.6 },
+                          "discount": false
+                        }
+                      ],
+                      "names": [
+                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                      ],
+                      "cancellationPolicies": {
+                        "refundable": false,
+                        "immediateFine": false,
+                        "penalties": [
+                          {
+                            "name": "Não reembolsável após emissão do CPV",
+                            "description": "O serviço não é reembolsável após a emissão do CPV.",
+                            "price": { "currency": "BRL", "amount": 0.0 }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "insurance": {
+                        "provider": "ExactBag",
+                        "key": "445DEHQ2U1VO8IID8T",
+                        "code": "5383657",
+                        "name": "ASSISTENCIA DE BAGAGEM EXACTBAG - PROTEÇÃO ESSENCIAL",
+                        "startDate": "2026-12-01T00:00:00-03:00",
+                        "endDate": "2026-12-08T00:00:00-03:00",
+                        "description": "Com a Assistência de Bagagem ExactBag, o passageiro viaja com uma camada extra de proteção. Vigência: até 30 dias. Utilização: ida e volta. Cobertura: 1 bagagem. Atendimento: Brasil e exterior.",
+                        "image": "https://app.exactbag.com.br/native/assets/produto-protecao-bagagem.png",
+                        "unique": false,
+                        "onRequest": false,
+                        "providerDetail": {
+                          "id": 26908,
+                          "externalCode": "",
+                          "name": "ExactBag",
+                          "localTrip": false
+                        },
+                        "coverages": [],
+                        "usagePolicy": [
+                          "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+                          "Registro digital da bagagem com fotos e informações.",
+                          "Identificação da bagagem antes do embarque.",
+                          "Acompanhamento junto às companhias aéreas.",
+                          "Auxílio na localização e recuperação da bagagem.",
+                          "Após a compra, o passageiro recebe o link de ativação por WhatsApp ou e-mail."
+                        ],
+                        "keyDetail": "NTM4MzY1NyMy"
+                      },
+                      "fares": [
+                        {
+                          "type": "FARE",
+                          "price": { "currency": "BRL", "amount": 38.9, "exchange": 1.0 },
+                          "priceSale": { "currency": "BRL", "amount": 38.9 },
+                          "priceNet": { "currency": "BRL", "amount": 9.6 },
+                          "discount": false
+                        }
+                      ],
+                      "names": [
+                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                      ],
+                      "cancellationPolicies": {
+                        "refundable": false,
+                        "immediateFine": false,
+                        "penalties": [
+                          {
+                            "name": "Não reembolsável após emissão do CPV",
+                            "description": "O serviço não é reembolsável após a emissão do CPV.",
+                            "price": { "currency": "BRL", "amount": 0.0 }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "insurance": {
+                        "provider": "ExactBag",
+                        "key": "445DEHQ2U1VO8IID8U",
+                        "code": "5383658",
+                        "name": "ASSISTENCIA DE BAGAGEM EXACTBAG COVER - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500 - 2 BAGAGENS",
+                        "startDate": "2026-12-01T00:00:00-03:00",
+                        "endDate": "2026-12-08T00:00:00-03:00",
+                        "description": "Com a Assistência de Bagagem ExactBag, o passageiro viaja com uma camada extra de proteção. Inclui seguro por extravio de R$ 2.500,00 por bagagem. Vigência: até 30 dias. Utilização: ida e volta. Cobertura: até 2 bagagens, R$ 2.500,00 por bagagem. Atendimento: Brasil e exterior.",
+                        "image": "https://app.exactbag.com.br/native/assets/produto-protecao-completa.png",
+                        "unique": false,
+                        "onRequest": false,
+                        "providerDetail": {
+                          "id": 26908,
+                          "externalCode": "",
+                          "name": "ExactBag",
+                          "localTrip": false
+                        },
+                        "coverages": [
+                          {
+                            "code": "2898",
+                            "name": "assistencia de bagagem com seguro",
+                            "minPrice": "R$ 2.500,00",
+                            "maxPrice": "R$ 2.500,00"
+                          }
+                        ],
+                        "usagePolicy": [
+                          "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+                          "Registro digital das bagagens com fotos e informações.",
+                          "Identificação das bagagens antes do embarque.",
+                          "Acompanhamento junto às companhias aéreas.",
+                          "Auxílio na localização e recuperação das bagagens.",
+                          "Seguro por extravio de R$ 2.500,00 por bagagem em caso de não localização.",
+                          "Após a compra, o passageiro recebe o link de ativação por WhatsApp ou e-mail.",
+                          "Conforme as condições da cobertura contratada."
+                        ],
+                        "keyDetail": "NTM4MzY1OCMy"
+                      },
+                      "fares": [
+                        {
+                          "type": "FARE",
+                          "price": { "currency": "BRL", "amount": 89.8, "exchange": 1.0 },
+                          "priceSale": { "currency": "BRL", "amount": 89.8 },
+                          "priceNet": { "currency": "BRL", "amount": 19.2 },
+                          "discount": false
+                        }
+                      ],
+                      "names": [
+                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false },
+                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                      ],
+                      "cancellationPolicies": {
+                        "refundable": false,
+                        "immediateFine": false,
+                        "penalties": [
+                          {
+                            "name": "Não reembolsável após emissão do CPV",
+                            "description": "O serviço não é reembolsável após a emissão do CPV.",
+                            "price": { "currency": "BRL", "amount": 0.0 }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "insurance": {
+                        "provider": "ExactBag",
+                        "key": "445DEHQ2U1VO8IID8V",
+                        "code": "5383659",
+                        "name": "ASSISTENCIA DE BAGAGEM EXACTBAG - PROTEÇÃO ESSENCIAL - 2 BAGAGENS",
+                        "startDate": "2026-12-01T00:00:00-03:00",
+                        "endDate": "2026-12-08T00:00:00-03:00",
+                        "description": "Com a Assistência de Bagagem ExactBag, o passageiro viaja com uma camada extra de proteção. Vigência: até 30 dias. Utilização: ida e volta. Cobertura: até 2 bagagens. Atendimento: Brasil e exterior.",
+                        "image": "https://app.exactbag.com.br/native/assets/produto-protecao-bagagem.png",
+                        "unique": false,
+                        "onRequest": false,
+                        "providerDetail": {
+                          "id": 26908,
+                          "externalCode": "",
+                          "name": "ExactBag",
+                          "localTrip": false
+                        },
+                        "coverages": [],
+                        "usagePolicy": [
+                          "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+                          "Registro digital da bagagem com fotos e informações.",
+                          "Identificação das bagagens antes do embarque.",
+                          "Acompanhamento junto às companhias aéreas.",
+                          "Auxílio na localização e recuperação da bagagem.",
+                          "Após a compra, o passageiro recebe o link de ativação por WhatsApp ou e-mail."
+                        ],
+                        "keyDetail": "NTM4MzY1OSMy"
+                      },
+                      "fares": [
+                        {
+                          "type": "FARE",
+                          "price": { "currency": "BRL", "amount": 77.8, "exchange": 1.0 },
+                          "priceSale": { "currency": "BRL", "amount": 77.8 },
+                          "priceNet": { "currency": "BRL", "amount": 19.2 },
+                          "discount": false
+                        }
+                      ],
+                      "names": [
+                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false },
+                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                      ],
+                      "cancellationPolicies": {
+                        "refundable": false,
+                        "immediateFine": false,
+                        "penalties": [
+                          {
+                            "name": "Não reembolsável após emissão do CPV",
+                            "description": "O serviço não é reembolsável após a emissão do CPV.",
+                            "price": { "currency": "BRL", "amount": 0.0 }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "description": "API Key ausente ou inválida" },
+          "429": { "description": "Limite de requisições excedido" },
+          "500": { "description": "Falha ao obter disponibilidade" }
+        }
+      }
+    },
+    "/jobs/{jobId}": {
+      "get": {
+        "tags": ["Acompanhamento"],
+        "summary": "Consultar status de uma venda",
+        "description": "Retorna o status do processamento usando o `jobId` recebido ao enviar a venda.",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "description": "ID do job retornado no POST /webhooks/sales",
+            "schema": { "type": "string", "example": "job-1711472400000-5231" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status do processamento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "example": "job-1711472400000-5231" },
+                    "status": { "type": "string", "enum": ["pending", "running", "completed", "failed"], "example": "completed" },
+                    "createdAt": { "type": "string", "format": "date-time" },
+                    "completedAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Job não encontrado" }
+        }
+      }
+    },
+    "/jobs": {
+      "get": {
+        "tags": ["Acompanhamento"],
+        "summary": "Listar todos os jobs",
+        "description": "Lista os jobs de processamento do parceiro autenticado.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Quantidade de resultados (máx. 100)",
+            "schema": { "type": "integer", "default": 20, "maximum": 100 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Deslocamento para paginação",
+            "schema": { "type": "integer", "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Lista de jobs retornada" },
+          "401": { "description": "API Key ausente ou inválida" }
+        }
+      }
+    },
+    "/webhooks/register": {
+      "post": {
+        "tags": ["Webhook do Parceiro"],
+        "summary": "Cadastrar URL de callback",
+        "description": "Define a URL que receberá notificações quando eventos ocorrerem.\n\n**Eventos enviados à sua URL:**\n\n1. **`customer.registration.completed`** — Passageiro completou o registro de bagagem:\n```json\n{\n  \"event\": \"customer.registration.completed\",\n  \"saleId\": \"clxyz123abc\",\n  \"partnerId\": \"INFOTRAVEL\",\n  \"customerName\": \"Maria Santos\",\n  \"customerEmail\": \"maria.santos@email.com\",\n  \"submissionId\": \"clxyz456def\",\n  \"completedAt\": \"2026-04-10T14:30:00Z\",\n  \"signature\": \"hmac-sha256-hex...\"\n}\n```\n\n2. **`sale.cancelled`** — Venda foi cancelada:\n```json\n{\n  \"event\": \"sale.cancelled\",\n  \"saleId\": \"RES-2026-78901\",\n  \"partnerId\": \"INFOTRAVEL\",\n  \"customerName\": \"Maria Santos\",\n  \"customerEmail\": \"maria.santos@email.com\",\n  \"cancelledAt\": \"2026-04-08T10:00:00Z\",\n  \"refundType\": \"integral\",\n  \"reason\": \"Cliente desistiu\",\n  \"signature\": \"hmac-sha256-hex...\"\n}\n```\n\n**Verificação da assinatura (recomendado):**\nO campo `signature` é gerado com HMAC-SHA256 usando sua API Key como secret sobre o payload JSON. Também enviado no header `X-ExactBag-Signature`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["webhookUrl"],
+                "properties": {
+                  "webhookUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "https://api.seusite.com.br/callbacks/exactbag"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook registrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "message": { "type": "string", "example": "Webhook registrado com sucesso" },
+                    "webhookUrl": { "type": "string", "example": "https://api.seusite.com.br/callbacks/exactbag" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "URL inválida" },
+          "401": { "description": "API Key ausente ou inválida" }
+        }
+      }
+    },
+    "/webhooks/status": {
+      "get": {
+        "tags": ["Webhook do Parceiro"],
+        "summary": "Verificar webhook cadastrado",
+        "description": "Consulta se o parceiro possui URL de callback configurada.",
+        "responses": {
+          "200": {
+            "description": "Status retornado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "success" },
+                    "webhookUrl": { "type": "string", "nullable": true, "example": "https://api.seusite.com.br/callbacks/exactbag" },
+                    "configured": { "type": "boolean", "example": true },
+                    "isSandbox": { "type": "boolean", "example": false, "description": "Se true, notificações (email/WhatsApp) são simuladas e NÃO enviadas. Ideal para testes." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/unregister": {
+      "delete": {
+        "tags": ["Webhook do Parceiro"],
+        "summary": "Remover webhook",
+        "description": "Remove a URL de callback. Sem webhook, o parceiro não receberá notificações automáticas.",
+        "responses": {
+          "200": { "description": "Webhook removido com sucesso" },
+          "401": { "description": "API Key ausente ou inválida" }
+        }
+      }
+    },
+    "/webhooks/sales/{saleId}/cancel": {
+      "post": {
+        "tags": ["Cancelamento"],
+        "summary": "Cancelar uma venda",
+        "description": "Cancela uma venda e calcula o estorno automaticamente.\n\n**Regras de estorno:**\n- **≥48h antes do voo** → Estorno integral (100%)\n- **<48h antes do voo** → Estorno parcial (50%)\n- **Status `reserva` (não paga)** → Sem estorno\n\n**O que acontece ao cancelar:**\n1. Status da venda muda para `cancelada`\n2. Link do formulário é invalidado (cliente não consegue mais acessar)\n3. Notificações de véspera são canceladas\n4. Callback `sale.cancelled` é enviado ao parceiro (se webhook configurado)",
+        "parameters": [
+          {
+            "name": "saleId",
+            "in": "path",
+            "required": true,
+            "description": "ID da venda no sistema do parceiro (mesmo `saleId` enviado no POST /webhooks/sales)",
+            "schema": { "type": "string", "example": "RES-2026-78901" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "Motivo do cancelamento (opcional)",
+                    "example": "Cliente desistiu da viagem"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Venda cancelada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Venda cancelada com sucesso" },
+                    "sale": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "saleId": { "type": "string", "example": "RES-2026-78901" },
+                        "customerName": { "type": "string", "example": "Maria Santos" },
+                        "status": { "type": "string", "example": "cancelada" },
+                        "cancelledAt": { "type": "string", "format": "date-time" }
+                      }
+                    },
+                    "refundType": { "type": "string", "enum": ["integral", "parcial", "nenhum"], "example": "integral" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Venda não encontrada" },
+          "409": { "description": "Venda já está cancelada" },
+          "422": { "description": "Status da venda não permite cancelamento" },
+          "401": { "description": "API Key ausente ou inválida" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Status"],
+        "summary": "Verificar se a API está online",
+        "description": "Não requer autenticação.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API online",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ExactBag API Online" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SaleRequest": {
+        "type": "object",
+        "required": ["partnerId", "saleId", "customerName", "customerEmail", "customerPhone"],
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "description": "Identificador do parceiro (fornecido pela ExactBag)",
+            "example": "INFOTRAVEL"
+          },
+          "saleId": {
+            "type": "string",
+            "description": "ID da venda no sistema do parceiro (usado para evitar duplicidade)",
+            "example": "RES-2026-78901"
+          },
+          "customerName": {
+            "type": "string",
+            "description": "Nome completo do passageiro",
+            "example": "Maria Santos"
+          },
+          "customerEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Email do passageiro (receberá o link do formulário)",
+            "example": "maria.santos@email.com"
+          },
+          "customerPhone": {
+            "type": "string",
+            "description": "Telefone com DDI+DDD (receberá WhatsApp)",
+            "example": "+5511988887777"
+          },
+          "roundTrip": {
+            "type": "boolean",
+            "description": "Viagem de ida e volta?",
+            "default": false,
+            "example": true
+          },
+          "outboundDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de ida (formato YYYY-MM-DD)",
+            "example": "2026-04-15"
+          },
+          "returnDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de volta (apenas se roundTrip=true)",
+            "example": "2026-04-22"
+          },
+          "baggageQty": {
+            "type": "integer",
+            "description": "Quantidade de bagagens contratadas",
+            "default": 1,
+            "minimum": 1,
+            "example": 2
+          },
+          "hasInsurance": {
+            "type": "boolean",
+            "description": "Indica se a venda inclui seguro de bagagem. Propaga para o registro do passageiro e fica visível no painel.",
+            "default": false,
+            "example": true
+          }
+        }
+      },
+      "InsuranceAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "insuranceAvail": {
+            "type": "array",
+            "description": "Lista de produtos ExactBag disponíveis para a pesquisa realizada.",
+            "items": { "$ref": "#/components/schemas/InsuranceAvailItem" }
+          }
+        }
+      },
+      "InsuranceAvailItem": {
+        "type": "object",
+        "properties": {
+          "insurance": { "$ref": "#/components/schemas/InsuranceProduct" },
+          "fares": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InsuranceFare" }
+          },
+          "names": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InsuranceName" }
+          },
+          "cancellationPolicies": { "$ref": "#/components/schemas/CancellationPolicies" }
+        }
+      },
+      "InsuranceProduct": {
+        "type": "object",
+        "properties": {
+          "provider": { "type": "string", "example": "ExactBag" },
+          "key": { "type": "string", "description": "Chave de sessão da disponibilidade", "example": "445DEHQ2U1VO8IID8S" },
+          "code": { "type": "string", "description": "Código do produto ExactBag", "example": "5383656" },
+          "name": { "type": "string", "example": "ASSISTENCIA DE BAGAGEM EXACTBAG COVER - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500" },
+          "startDate": { "type": "string", "format": "date-time", "example": "2026-12-01T00:00:00-03:00" },
+          "endDate": { "type": "string", "format": "date-time", "example": "2026-12-08T00:00:00-03:00" },
+          "description": { "type": "string", "description": "Descrição comercial do produto" },
+          "image": { "type": "string", "format": "uri", "description": "Imagem/arte do produto para exibição no parceiro" },
+          "unique": { "type": "boolean", "example": false },
+          "onRequest": { "type": "boolean", "example": false },
+          "providerDetail": { "$ref": "#/components/schemas/InsuranceProviderDetail" },
+          "coverages": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InsuranceCoverage" }
+          },
+          "usagePolicy": {
+            "type": "array",
+            "description": "Políticas de uso do produto ExactBag",
+            "items": { "type": "string" }
+          },
+          "keyDetail": { "type": "string", "description": "Chave de detalhe do produto para uso no fluxo de reserva", "example": "NTM4MzY1NiMy" }
+        }
+      },
+      "InsuranceProviderDetail": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 26908 },
+          "externalCode": { "type": "string", "example": "" },
+          "name": { "type": "string", "example": "ExactBag" },
+          "localTrip": { "type": "boolean", "example": false }
+        }
+      },
+      "InsuranceCoverage": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "2898" },
+          "name": { "type": "string", "example": "assistencia de bagagem com seguro" },
+          "minPrice": { "type": "string", "example": "R$ 2.500,00" },
+          "maxPrice": { "type": "string", "example": "R$ 2.500,00" }
+        }
+      },
+      "InsuranceFare": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "example": "FARE" },
+          "price": { "$ref": "#/components/schemas/InsurancePriceWithExchange" },
+          "priceSale": { "$ref": "#/components/schemas/InsurancePrice" },
+          "priceNet": { "$ref": "#/components/schemas/InsurancePrice" },
+          "discount": { "type": "boolean", "example": false }
+        }
+      },
+      "InsurancePrice": {
+        "type": "object",
+        "properties": {
+          "currency": { "type": "string", "example": "BRL" },
+          "amount": { "type": "number", "format": "float", "example": 44.9 }
+        }
+      },
+      "InsurancePriceWithExchange": {
+        "allOf": [
+          { "$ref": "#/components/schemas/InsurancePrice" },
+          {
+            "type": "object",
+            "properties": {
+              "exchange": { "type": "number", "format": "float", "example": 1.0 }
+            }
+          }
+        ]
+      },
+      "InsuranceName": {
+        "type": "object",
+        "properties": {
+          "age": { "type": "integer", "example": 30 },
+          "type": { "type": "string", "enum": ["ADT", "CHD"], "example": "ADT" },
+          "gender": { "type": "string", "example": "UNDEFINED" },
+          "isMain": { "type": "boolean", "example": false }
+        }
+      },
+      "CancellationPolicies": {
+        "type": "object",
+        "properties": {
+          "refundable": { "type": "boolean", "example": false },
+          "immediateFine": { "type": "boolean", "example": false },
+          "penalties": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CancellationPenalty" }
+          }
+        }
+      },
+      "CancellationPenalty": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Não reembolsável após emissão do CPV" },
+          "description": { "type": "string", "example": "O serviço não é reembolsável após a emissão do CPV." },
+          "price": { "$ref": "#/components/schemas/InsurancePrice" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Informe sua API Key: Bearer SUA_API_KEY"
+      }
+    }
+  }
+}

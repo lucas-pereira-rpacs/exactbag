@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Sale" ADD COLUMN "baggageQty" INTEGER NOT NULL DEFAULT 1;
