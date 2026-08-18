@@ -2,6 +2,7 @@
 const registrationService = require('../services/nativeRegistrationService');
 const repository = require('../repositories/nativeRegistrationRepository');
 const { validateRegistrationInput } = require('../validators/nativeRegistrationValidator');
+const scheduler = require('../../../jobs/scheduler');
 
 /**
  * POST /native/registro — Cria registro completo
@@ -24,6 +25,18 @@ const createRegistration = async (req, res) => {
     };
 
     const result = await registrationService.createRegistration(validation.sanitized, meta);
+    const saleId = validation.sanitized.saleId || null;
+
+    if (saleId) {
+      await scheduler.now("now-integration", {
+        saleId,
+        cpvNumber: result.registration.cpvNumber,
+      });
+      console.log(
+        "[NativeRegistration] now-integration enfileirado para CPV:",
+        result.registration.cpvNumber,
+      );
+    }
 
     return res.status(201).json({
       success: true,

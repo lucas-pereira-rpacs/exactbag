@@ -51,7 +51,9 @@ const backfillSchemaSql = [
   // Insurance indicator (20260619)
   'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "hasInsurance" BOOLEAN NOT NULL DEFAULT false',
   // Optional sale-level registration expiration (20260801)
-  'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "expirationDate" TIMESTAMP(3)'
+  'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "expirationDate" TIMESTAMP(3)',
+  // External integration responses (NOW, future partners)
+  'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "integration_responses" JSONB'
 ];
 
 // ============================================================================

@@ -5,10 +5,13 @@ const reportScheduler = require('./services/reportScheduler');
 const vesperaScheduler = require('./services/vesperaScheduler');
 const returnFlightScheduler = require('./services/returnFlightScheduler');
 const jotformPollingService = require('./services/jotformPollingService');
+const agenda = require('./jobs/scheduler');
 const { initializeDatabase } = require('./services/databaseBootstrapService');
+const { runProductionMigrations } = require('./services/productionMigrationService');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+
 
 // ========== VALIDAÇÃO DE ENV VARS OBRIGATÓRIAS ==========
 if (process.env.NODE_ENV === 'production') {
@@ -51,13 +54,16 @@ jobQueueService.registerHandler('PARTNER_CALLBACK', async (data, job) => {
 let server;
 
 const startServer = async () => {
+  // Production must not accept traffic until every tracked migration succeeds.
+  await runProductionMigrations();
+
   try {
     await initializeDatabase();
   } catch (error) {
     console.warn('[ServerInit] Failed to bootstrap database schema:', error.message);
   }
 
-  server = app.listen(PORT, HOST, () => {
+  server = app.listen(PORT, HOST, async () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║         ExactBag Partner Sales API - Production            ║
@@ -68,6 +74,8 @@ const startServer = async () => {
 🔧 WhatsApp Provider: ${process.env.WHATSAPP_PROVIDER || 'meta'}
 📧 Email Provider: resend
     `);
+
+    
 
     // Initialize report scheduler for automated reports
     reportScheduler.initialize().catch(err => {
@@ -93,6 +101,14 @@ const startServer = async () => {
       jotformPollingService.start();
     } catch (err) {
       console.warn('[ServerInit] Failed to start JotForm polling:', err.message);
+    }
+
+    // Start Agenda worker for now-integration jobs
+    try {
+      await agenda.start();
+      console.log('✅ Agenda scheduler started');
+    } catch (err) {
+      console.warn('[ServerInit] Failed to start Agenda scheduler:', err.message);
     }
 
     // Registrar health check apenas em debug mode
@@ -147,6 +163,13 @@ async function gracefulShutdown(signal) {
   if (jotformPollingService && typeof jotformPollingService.stop === 'function') {
     jotformPollingService.stop();
     console.log('✅ JotForm polling stopped');
+  }
+
+  if (agenda && typeof agenda.stop === 'function') {
+    await agenda.stop();
+    const removedJobs = await agenda.cancel({ name: 'now-integration' });
+    console.log(`[Agenda] Cleared ${removedJobs} queued now-integration job(s)`);
+    console.log('✅ Agenda scheduler stopped');
   }
 
   // Fechar browser singleton de PDF

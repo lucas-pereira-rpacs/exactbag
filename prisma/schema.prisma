@@ -69,6 +69,7 @@ model Sale {
   cancelledAt  DateTime?
   refundType   String?    // "integral" | "parcial"
   refundAmount Float?
+  integrationResponses Json? @map("integration_responses")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   submissions  Submission[]

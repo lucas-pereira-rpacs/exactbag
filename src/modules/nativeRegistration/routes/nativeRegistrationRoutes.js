@@ -5,6 +5,7 @@ const controller = require('../controllers/nativeRegistrationController');
 const { handleDashboardManualSale } = require('../../../controllers/manualSaleController');
 const { handlePhysicalTagSale } = require('../../../controllers/physicalTagSaleController');
 const partnerRepository = require('../../../repositories/partnerRepository');
+const nowIntegrationRoutes = require('./nowIntegrationRoutes');
 const { dashboardAuthMiddleware, requireRole, login, logout, validateToken,
         listUsers, getUserById, createUser, updateUser, changePassword, toggleUserActive } = require('../services/dashboardAuthService');
 
@@ -78,6 +79,59 @@ router.get('/sales-log', dashboardAuthMiddleware, requireRole('gestor'), async (
     return res.status(500).json({ success: false, error: 'Erro ao carregar histórico de vendas.' });
   }
 });
+
+// GET /native/integrations/now — Respostas salvas da integraÃ§Ã£o NOW por venda.
+router.get('/integrations/now', dashboardAuthMiddleware, requireRole('gestor'), async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const { prisma } = require('../../../config');
+    if (!prisma) return res.json({ success: true, data: [] });
+
+    const sales = await prisma.$queryRaw`
+      SELECT id, "saleId", integration_responses AS "integrationResponses", "updatedAt"
+      FROM "Sale"
+      WHERE integration_responses->'now' IS NOT NULL
+      ORDER BY "updatedAt" DESC
+      LIMIT ${limit}
+    `;
+
+    return res.json({
+      success: true,
+      data: sales.flatMap((sale) => {
+        const now = sale.integrationResponses?.now;
+        if (Array.isArray(now?.proposals)) {
+          return now.proposals.map((proposal) => ({
+            saleId: sale.id,
+            externalSaleId: sale.saleId,
+            cpv: proposal.cpv || now.cpv || null,
+            baggageId: proposal.baggageId || proposal.nrproposta,
+            nrproposta: proposal.nrproposta,
+            propostaid: proposal.propostaid || null,
+            cancelledAt: proposal.cancelledAt || null,
+            updatedAt: sale.updatedAt
+          }));
+        }
+
+        return now?.nrproposta ? [{
+          saleId: sale.id,
+          externalSaleId: sale.saleId,
+          cpv: now.cpv || now.nrproposta,
+          baggageId: null,
+          nrproposta: now.nrproposta,
+          propostaid: now.propostaid || null,
+          cancelledAt: now.cancelledAt || null,
+          updatedAt: sale.updatedAt
+        }] : [];
+      })
+    });
+  } catch (err) {
+    console.error('[IntegrationsNOW] Erro ao listar:', err);
+    return res.status(500).json({ success: false, error: 'Erro ao carregar integraÃ§Ãµes NOW.' });
+  }
+});
+
+// POST /native/integrations/now/:saleId/cancel — Cancela proposta NOW pelo propostaid salvo.
+router.use('/integrations/now', nowIntegrationRoutes);
 
 // ==================== AUTH DASHBOARD (login interno ExactBag) ====================
 router.post('/auth/login', async (req, res) => {

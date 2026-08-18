@@ -130,6 +130,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 /* ===== VENDAS VIEW ===== */
 .vendas-view{display:none}
 .vendas-view.active{display:block}
+.integrations-view{display:none}
+.integrations-view.active{display:block}
 .vendas-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
 .vendas-toolbar h2{font-size:18px;font-weight:700;color:#1a1a2e}
 .vendas-grid{display:grid;grid-template-columns:1fr;gap:16px}
@@ -137,6 +139,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 .vendas-col-header{padding:12px 16px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid;display:flex;align-items:center;gap:8px}
 .vendas-col-header.digital{color:#1e40af;border-color:#bfdbfe;background:#eff6ff}
 .vendas-col-header.fisica{color:#15803d;border-color:#86efac;background:#f0fdf4}
+.vendas-col-header.integration{color:#1e40af;border-color:#bfdbfe;background:#eff6ff}
 .vlog-count{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(0,0,0,0.08);margin-left:2px}
 .vendas-col-body{overflow-x:auto;max-height:420px;overflow-y:auto}
 .vendas-col-body table{min-width:560px;margin:0}
@@ -400,6 +403,7 @@ tr{cursor:pointer;transition:background 0.1s}
     <nav class="sidebar-nav">
       <a href="#" class="active" id="navRegistros" onclick="switchView('registros'); return false;"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg></span><span class="link-text">Dashboard</span></a>
       <a href="#" id="navVendas" data-role="gestor" onclick="switchView('vendas'); return false;"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></span><span class="link-text">Vendas</span></a>
+      <a href="#" id="navIntegrations" data-role="gestor" onclick="switchView('integrations'); return false;"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2zM5 3h14c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2zm0 2v14h14V5H5z"/></svg></span><span class="link-text">Integrações</span></a>
       <a href="#" id="navUsers" data-role="gestor" onclick="switchView('users'); return false;"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></span><span class="link-text">Usuários</span></a>
     </nav>
     <div class="sidebar-bottom">
@@ -674,6 +678,23 @@ tr{cursor:pointer;transition:background 0.1s}
           <div class="vendas-col">
             <div class="vendas-col-header fisica">Tag Física</div>
             <div class="vendas-col-body" id="salesLogPhysical"><div class="sales-log-empty">Carregando...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== INTEGRATIONS VIEW (gestor only) ===== -->
+      <div class="integrations-view" id="integrationsView" data-role="gestor">
+        <div class="vendas-toolbar">
+          <h2>Integrações</h2>
+          <button class="btn-sm btn-filter" onclick="loadIntegrations()" style="display:inline-flex;align-items:center;gap:4px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            Atualizar
+          </button>
+        </div>
+        <div class="vendas-grid">
+          <div class="vendas-col">
+            <div class="vendas-col-header integration">Integração NOW</div>
+            <div class="vendas-col-body" id="nowIntegrationTable"><div class="sales-log-empty">Carregando...</div></div>
           </div>
         </div>
       </div>
@@ -1046,6 +1067,7 @@ tr{cursor:pointer;transition:background 0.1s}
           allPhotosOffset += photos.length;
 
           return '<div class="detail-section"><h3>Bagagem ' + (i+1) + '</h3>' +
+            row('ID da bagagem', item.id) +
             row('Tipo', item.bagType) + row('Cor', item.color) + row('Marca', item.brand) +
             (item.identifierTag ? row('TAG', item.identifierTag) : '') +
             gallery +
@@ -1448,19 +1470,110 @@ tr{cursor:pointer;transition:background 0.1s}
     document.getElementById('registrosView').classList.toggle('hidden', view !== 'registros');
     document.getElementById('usersView').classList.toggle('active', view === 'users');
     document.getElementById('vendasView').classList.toggle('active', view === 'vendas');
+    document.getElementById('integrationsView').classList.toggle('active', view === 'integrations');
     // Nav active state
     document.getElementById('navRegistros').classList.toggle('active', view === 'registros');
     const navUsers = document.getElementById('navUsers');
     if (navUsers) navUsers.classList.toggle('active', view === 'users');
     const navVendas = document.getElementById('navVendas');
     if (navVendas) navVendas.classList.toggle('active', view === 'vendas');
+    const navIntegrations = document.getElementById('navIntegrations');
+    if (navIntegrations) navIntegrations.classList.toggle('active', view === 'integrations');
     // Topbar title
-    const _titles = { registros: 'Gestão de Registros', users: 'Gerenciamento de Usuários', vendas: 'Histórico de Vendas' };
+    const _titles = { registros: 'Gestão de Registros', users: 'Gerenciamento de Usuários', vendas: 'Histórico de Vendas', integrations: 'Integrações' };
     document.querySelector('.topbar-title').textContent = _titles[view] || 'Gestão de Registros';
     if (view === 'users') loadUsers();
     if (view === 'vendas') loadSalesLog();
+    if (view === 'integrations') loadIntegrations();
     // Close sidebar on mobile
     if (window.innerWidth <= 1024) closeSidebar();
+  };
+
+  // ===== INTEGRATIONS =====
+  window.loadIntegrations = async function() {
+    const el = document.getElementById('nowIntegrationTable');
+    if (!el) return;
+    el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    try {
+      const res = await fetch(API + '/native/integrations/now?limit=50', { headers: headers() });
+      if (res.status === 401) { doLogout(); return; }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      renderNowIntegrations(json.data || []);
+    } catch (e) {
+      el.innerHTML = '<div class="sales-log-empty">Erro ao carregar integrações. ' + esc(e.message) + '</div>';
+    }
+  };
+
+  function renderNowIntegrations(items) {
+    const el = document.getElementById('nowIntegrationTable');
+    window._nowIntegrations = items.filter(r => r.nrproposta);
+    const rows = window._nowIntegrations.map((r, index) => {
+      const proposalId = r.propostaid || '—';
+      const baggageId = r.baggageId || '—';
+      const cpvBackground = colorFromCpv(r.cpv);
+      const disabled = !r.propostaid || r.cancelledAt;
+      const action = disabled
+        ? '<span style="color:#9ca3af;font-size:12px">' + (r.cancelledAt ? 'Cancelada' : 'Sem proposta') + '</span>'
+        : '<button class="btn-sm btn-clear" onclick="event.stopPropagation(); cancelNowProposal(\'' + esc(r.saleId) + '\', \'' + esc(r.baggageId || '') + '\')" style="display:inline-flex;align-items:center;gap:4px">Cancelar proposta</button>';
+      return '<tr onclick="openNowRegistration(' + index + ')">' +
+        '<td><code style="font-size:11px;background:' + cpvBackground + ';padding:3px 7px;border-radius:4px">' + esc(r.cpv || '—') + '</code></td>' +
+        '<td><code style="font-size:11px;background:#f3f4f6;padding:2px 5px;border-radius:3px">' + esc(baggageId) + '</code></td>' +
+        '<td>' + esc(proposalId) + '</td>' +
+        '<td>' + action + '</td>' +
+      '</tr>';
+    }).join('');
+
+    if (!rows) {
+      el.innerHTML = '<div class="sales-log-empty">Nenhuma integração NOW encontrada ainda.</div>';
+      return;
+    }
+
+    el.innerHTML = '<table>' +
+      '<thead><tr><th>CPV</th><th>ID da bagagem</th><th>propostaid</th><th>Ações</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>';
+  }
+
+  function colorFromCpv(cpv) {
+    let hash = 0;
+    const value = String(cpv || '');
+    for (let i = 0; i < value.length; i++) hash = value.charCodeAt(i) + ((hash << 5) - hash);
+    const channel = shift => Math.floor((((hash >>> shift) & 255) * 0.25) + 191);
+    return '#' + [16, 8, 0].map(shift => channel(shift).toString(16).padStart(2, '0')).join('');
+  }
+
+  window.openNowRegistration = async function(index) {
+    const integration = window._nowIntegrations && window._nowIntegrations[index];
+    if (!integration || !integration.cpv) return;
+
+    try {
+      const res = await fetch(API + '/native/registro/cpv/' + encodeURIComponent(integration.cpv), { headers: headers() });
+      if (res.status === 401) { doLogout(); return; }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const registration = (await res.json()).data;
+      if (!registration?.id) throw new Error('Registro não encontrado');
+      openDetail(registration.id);
+    } catch (e) {
+      toast('Erro ao abrir registro do CPV.', 'error');
+    }
+  };
+
+  window.cancelNowProposal = async function(saleId, baggageId) {
+    if (!confirm('Cancelar esta proposta na NOW?')) return;
+    try {
+      const res = await fetch(API + '/native/integrations/now/' + encodeURIComponent(saleId) + '/cancel', {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ baggageId: baggageId })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao cancelar proposta');
+      toast('Proposta NOW cancelada!', 'success');
+      loadIntegrations();
+    } catch (e) {
+      toast(e.message || 'Erro ao cancelar proposta NOW.', 'error');
+    }
   };
 
   // ===== SALES LOG =====
