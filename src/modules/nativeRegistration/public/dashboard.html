@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#0b1220" />
 <title>ExactBag — Gestão de Registros</title>
 <style>
+/* JSONEditor CDN */
+@import url('https://cdn.jsdelivr.net/npm/jsoneditor@10.4.3/dist/jsoneditor.min.css');
+/* JSONEditor is loaded below with the page scripts. */
 /* ===== INLINE SVG ICON SYSTEM ===== */
 .ico{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;vertical-align:-0.125em}
 .ico svg{width:100%;height:100%;fill:currentColor}
@@ -260,6 +263,11 @@ tr{cursor:pointer;transition:background 0.1s}
 .cancel-modal-footer{padding:14px 22px;border-top:1px solid #e5e7eb;display:flex;gap:8px;justify-content:flex-end}
 .btn-danger{padding:9px 18px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
 .btn-danger:hover{background:#b91c1c}.btn-danger:disabled{opacity:.65;cursor:not-allowed}
+.json-modal{max-width:900px;height:80vh}
+.json-modal .modal-body{height:calc(80vh - 70px);padding:0;background:#f8fafc}
+.json-editor{height:100%;border:0}
+.jsoneditor{border:0;font-size:12px}
+.jsoneditor-menu{background:#0b1220;border-bottom:0}
 
 /* ===== EMPTY / LOADING ===== */
 .empty-state{text-align:center;padding:50px 20px;color:#9ca3af}
@@ -385,6 +393,7 @@ tr{cursor:pointer;transition:background 0.1s}
   .topbar-actions #userName{display:none}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/jsoneditor@10.4.3/dist/jsoneditor.min.js"></script>
 </head>
 <body>
 
@@ -732,6 +741,17 @@ tr{cursor:pointer;transition:background 0.1s}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- INTEGRATION JSON MODAL -->
+<div class="modal-overlay" id="jsonModalOverlay" onclick="if(event.target===this)closeJsonModal()">
+  <div class="modal json-modal">
+    <div class="modal-header">
+      <div><h2>integration_responses</h2><div class="cancel-modal-subtitle" id="jsonModalSubtitle">Payload salvo da integraÃ§Ã£o NOW</div></div>
+      <button class="modal-close" onclick="closeJsonModal()" aria-label="Fechar">âœ•</button>
+    </div>
+    <div class="modal-body"><div class="json-editor" id="integrationJsonEditor"></div></div>
+  </div>
+</div>
 
 <!-- USER FORM MODAL -->
 <!-- CANCELLATION MODAL -->
@@ -1557,9 +1577,11 @@ tr{cursor:pointer;transition:background 0.1s}
       const baggageId = r.baggageId || '—';
       const cpvBackground = colorFromCpv(r.cpv);
       const disabled = !r.propostaid || r.cancelledAt;
-      const action = disabled
+      const jsonAction = '<button class="btn-sm btn-clear" onclick="event.stopPropagation(); openNowIntegrationJson(' + index + ')" style="display:inline-flex;align-items:center;gap:4px;margin-right:5px" title="Ver integration_responses">JSON</button>';
+      const cancelAction = disabled
         ? '<span style="color:#9ca3af;font-size:12px">' + (r.cancelledAt ? 'Cancelada' : 'Sem proposta') + '</span>'
         : '<button class="btn-sm btn-clear" onclick="event.stopPropagation(); cancelNowProposal(\'' + esc(r.saleId) + '\', \'' + esc(r.baggageId || '') + '\', \'' + esc(proposalId) + '\')" style="display:inline-flex;align-items:center;gap:4px">Cancelar proposta</button>';
+      const action = jsonAction + cancelAction;
       return '<tr onclick="openNowRegistration(' + index + ')">' +
         '<td><code style="font-size:11px;background:' + cpvBackground + ';padding:3px 7px;border-radius:4px">' + esc(r.cpv || '—') + '</code></td>' +
         '<td><code style="font-size:11px;background:#f3f4f6;padding:2px 5px;border-radius:3px">' + esc(baggageId) + '</code></td>' +
@@ -1601,6 +1623,29 @@ tr{cursor:pointer;transition:background 0.1s}
     } catch (e) {
       toast('Erro ao abrir registro do CPV.', 'error');
     }
+  };
+
+  let integrationJsonEditor = null;
+
+  window.openNowIntegrationJson = function(index) {
+    const integration = window._nowIntegrations && window._nowIntegrations[index];
+    if (!integration) return;
+    const container = document.getElementById('integrationJsonEditor');
+    if (!integrationJsonEditor) {
+      integrationJsonEditor = new JSONEditor(container, {
+        mode: 'view',
+        navigationBar: true,
+        mainMenuBar: true,
+        statusBar: true,
+      });
+    }
+    integrationJsonEditor.set(integration.integrationResponses || {});
+    document.getElementById('jsonModalSubtitle').textContent = 'CPV ' + (integration.cpv || 'â€”') + ' Â· proposta ' + (integration.propostaid || 'â€”');
+    document.getElementById('jsonModalOverlay').classList.add('active');
+  };
+
+  window.closeJsonModal = function() {
+    document.getElementById('jsonModalOverlay').classList.remove('active');
   };
 
   let pendingNowCancellation = null;

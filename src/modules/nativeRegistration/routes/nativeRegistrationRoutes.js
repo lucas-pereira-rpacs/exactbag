@@ -108,6 +108,7 @@ router.get('/integrations/now', dashboardAuthMiddleware, requireRole('gestor'), 
             nrproposta: proposal.nrproposta,
             propostaid: proposal.propostaid || null,
             cancelledAt: proposal.cancelledAt || null,
+            integrationResponses: sale.integrationResponses,
             updatedAt: sale.updatedAt
           }));
         }
@@ -120,6 +121,7 @@ router.get('/integrations/now', dashboardAuthMiddleware, requireRole('gestor'), 
           nrproposta: now.nrproposta,
           propostaid: now.propostaid || null,
           cancelledAt: now.cancelledAt || null,
+          integrationResponses: sale.integrationResponses,
           updatedAt: sale.updatedAt
         }] : [];
       })
