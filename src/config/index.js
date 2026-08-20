@@ -15,7 +15,9 @@ let prisma = null;
 
 if (process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
     try {
-        const { PrismaClient } = require('@prisma/client');
+        // Prisma 7 generates CommonJS TypeScript sources outside node_modules.
+        const { PrismaClient } = require('../generated/prisma/client.ts');
+        const { PrismaPg } = require('@prisma/adapter-pg');
         const globalForPrisma = global;
 
         // Limita pool de conexões PG para reduzir RAM (~10MB por conexão)
@@ -24,9 +26,12 @@ if (process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
           ? (dbUrl.includes('?') ? dbUrl + '&connection_limit=3' : dbUrl + '?connection_limit=3')
           : dbUrl;
 
-        prisma = globalForPrisma.__exactBagPrisma || new PrismaClient({
-          datasources: { db: { url: connLimit } }
+        const adapter = new PrismaPg({
+          connectionString: connLimit,
+          max: 3
         });
+
+        prisma = globalForPrisma.__exactBagPrisma || new PrismaClient({ adapter });
 
         if (process.env.NODE_ENV !== 'production') {
             globalForPrisma.__exactBagPrisma = prisma;

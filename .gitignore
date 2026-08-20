@@ -39,6 +39,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+src/generated/prisma/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -151,3 +152,4 @@ vite.config.ts.timestamp-*
 **/compose*.yaml
 **/DOCKER.md
 **/docker/
+!docker-compose.yml

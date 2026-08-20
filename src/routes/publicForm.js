@@ -3,6 +3,8 @@ const router = express.Router();
 const { redirectToPrefilledForm } = require('../controllers/publicFormController');
 
 // Link curto publico para abrir formulario pre-preenchido
-router.get('/:token([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)', redirectToPrefilledForm);
+// Express 5 no longer supports inline regular expressions in route paths.
+// Keep the token format validation in the controller/service instead.
+router.get('/:token', redirectToPrefilledForm);
 
 module.exports = router;

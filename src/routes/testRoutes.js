@@ -5,9 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const { prisma } = require('../config');
 
 /**
  * POST /test/setup/customer
@@ -72,8 +70,6 @@ router.post('/setup/customer', async (req, res) => {
       error: 'Falha ao criar cliente teste',
       details: error.message
     });
-  } finally {
-    await prisma.$disconnect();
   }
 });
 

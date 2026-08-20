@@ -5,37 +5,52 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/server.js",
+    "prestart": "npm run prisma:generate",
+    "prisma:generate": "prisma generate",
     "test": "jest",
     "test:prod": "node test_production.js",
     "stress:prod": "node scripts/stress_production.js"
   },
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "dependencies": {
     "@agendajs/postgres-backend": "^3.0.6",
-    "@prisma/client": "^5.7.0",
-    "@sparticuz/chromium": "^143.0.4",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "@sparticuz/chromium": "^149.0.0",
     "agenda": "^6.2.6",
-    "axios": "^1.6.2",
+    "axios": "^1.19.0",
     "bcrypt": "^6.0.0",
-    "body-parser": "^1.20.2",
+    "body-parser": "^2.3.0",
     "compression": "^1.8.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "express-handlebars": "^9.0.1",
-    "express-rate-limit": "^8.3.1",
+    "express-rate-limit": "^8.6.2",
     "jsonwebtoken": "^9.0.3",
     "node-schedule": "^2.1.1",
-    "prisma": "^5.7.0",
-    "puppeteer-core": "^24.43.1",
+    "pg": "^8.16.3",
+    "prisma": "^7.9.1",
+    "puppeteer-core": "^25.8.0",
     "qrcode": "^1.5.4",
-    "resend": "^3.0.0",
+    "resend": "^6.20.0",
     "xss": "^1.0.15"
   },
   "devDependencies": {
-    "jest": "^27.5.1",
-    "puppeteer": "^24.40.0",
+    "jest": "^30.4.2",
+    "puppeteer": "^25.8.0",
     "supertest": "^7.2.2"
   },
   "author": "Diego Costa",
-  "license": "ISC"
+  "license": "ISC",
+  "allowScripts": {
+    "@prisma/client@7.9.1": true,
+    "@prisma/engines@7.9.1": true,
+    "bcrypt@6.0.0": true,
+    "prisma@7.9.1": true,
+    "puppeteer@25.8.0": true,
+    "unrs-resolver@1.12.2": true
+  }
 }
