@@ -87,42 +87,46 @@ router.get('/integrations/now', dashboardAuthMiddleware, requireRole('gestor'), 
     const { prisma } = require('../../../config');
     if (!prisma) return res.json({ success: true, data: [] });
 
-    const sales = await prisma.$queryRaw`
-      SELECT id, "saleId", integration_responses AS "integrationResponses", "updatedAt"
-      FROM "Sale"
-      WHERE integration_responses->'now' IS NOT NULL
-      ORDER BY "updatedAt" DESC
+    const requests = await prisma.$queryRaw`
+      SELECT r."saleId", s."saleId" AS "externalSaleId", r.responses, r.error_messages AS "errorMessages", r."updatedAt"
+      FROM "Requests" r
+      INNER JOIN "Sale" s ON s.id = r."saleId"
+      WHERE r.integration = 'now'
+      ORDER BY r."updatedAt" DESC
       LIMIT ${limit}
     `;
 
     return res.json({
       success: true,
-      data: sales.flatMap((sale) => {
-        const now = sale.integrationResponses?.now;
+      data: requests.flatMap((request) => {
+        const now = request.responses?.now;
         if (Array.isArray(now?.proposals)) {
-          return now.proposals.map((proposal) => ({
-            saleId: sale.id,
-            externalSaleId: sale.saleId,
+          const proposalRows = now.proposals.map((proposal) => ({
+            saleId: request.saleId,
+            externalSaleId: request.externalSaleId,
             cpv: proposal.cpv || now.cpv || null,
             baggageId: proposal.baggageId || proposal.nrproposta,
             nrproposta: proposal.nrproposta,
             propostaid: proposal.propostaid || null,
             cancelledAt: proposal.cancelledAt || null,
-            integrationResponses: sale.integrationResponses,
-            updatedAt: sale.updatedAt
+            responses: request.responses,
+            errorMessages: request.errorMessages,
+            updatedAt: request.updatedAt
           }));
+          if (proposalRows.length) return proposalRows;
         }
 
-        return now?.nrproposta ? [{
-          saleId: sale.id,
-          externalSaleId: sale.saleId,
-          cpv: now.cpv || now.nrproposta,
+        return now?.nrproposta || request.errorMessages?.length ? [{
+          saleId: request.saleId,
+          externalSaleId: request.externalSaleId,
+          cpv: now?.cpv || null,
           baggageId: null,
-          nrproposta: now.nrproposta,
-          propostaid: now.propostaid || null,
-          cancelledAt: now.cancelledAt || null,
-          integrationResponses: sale.integrationResponses,
-          updatedAt: sale.updatedAt
+          nrproposta: now?.nrproposta || null,
+          propostaid: now?.propostaid || null,
+          cancelledAt: now?.cancelledAt || null,
+          responses: request.responses,
+          errorMessages: request.errorMessages,
+          updatedAt: request.updatedAt
         }] : [];
       })
     });

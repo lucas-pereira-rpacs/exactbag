@@ -69,10 +69,10 @@ model Sale {
   cancelledAt  DateTime?
   refundType   String?    // "integral" | "parcial"
   refundAmount Float?
-  integrationResponses Json? @map("integration_responses")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   submissions  Submission[]
+  requests     Requests[]
 
   @@index([partnerId])
   @@index([customerEmail])
@@ -80,6 +80,21 @@ model Sale {
   @@index([createdAt])
   @@index([status])
   @@index([outboundDate, vesperaSentAt])
+}
+
+model Requests {
+  id             String   @id @default(cuid())
+  saleId         String
+  error_messages Json?
+  responses      Json?
+  integration    String
+  sale           Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([saleId])
+  @@index([integration])
+  @@index([createdAt])
 }
 
 model Submission {

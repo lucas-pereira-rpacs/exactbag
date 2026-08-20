@@ -746,7 +746,7 @@ tr{cursor:pointer;transition:background 0.1s}
 <div class="modal-overlay" id="jsonModalOverlay" onclick="if(event.target===this)closeJsonModal()">
   <div class="modal json-modal">
     <div class="modal-header">
-      <div><h2>integration_responses</h2><div class="cancel-modal-subtitle" id="jsonModalSubtitle">Payload salvo da integraÃ§Ã£o NOW</div></div>
+      <div><h2>Requests</h2><div class="cancel-modal-subtitle" id="jsonModalSubtitle">responses &amp; error_messages</div></div>
       <button class="modal-close" onclick="closeJsonModal()" aria-label="Fechar">âœ•</button>
     </div>
     <div class="modal-body"><div class="json-editor" id="integrationJsonEditor"></div></div>
@@ -1571,13 +1571,13 @@ tr{cursor:pointer;transition:background 0.1s}
 
   function renderNowIntegrations(items) {
     const el = document.getElementById('nowIntegrationTable');
-    window._nowIntegrations = items.filter(r => r.nrproposta);
+    window._nowIntegrations = items.filter(r => r.nrproposta || r.errorMessages?.length);
     const rows = window._nowIntegrations.map((r, index) => {
-      const proposalId = r.propostaid || '—';
+      const proposalId = r.propostaid || (r.errorMessages?.length ? 'Erro na requisição' : '—');
       const baggageId = r.baggageId || '—';
       const cpvBackground = colorFromCpv(r.cpv);
       const disabled = !r.propostaid || r.cancelledAt;
-      const jsonAction = '<button class="btn-sm btn-clear" onclick="event.stopPropagation(); openNowIntegrationJson(' + index + ')" style="display:inline-flex;align-items:center;gap:4px;margin-right:5px" title="Ver integration_responses">JSON</button>';
+      const jsonAction = '<button class="btn-sm btn-clear" onclick="event.stopPropagation(); openNowIntegrationJson(' + index + ')" style="display:inline-flex;align-items:center;gap:4px;margin-right:5px" title="Ver responses">JSON</button>';
       const cancelAction = disabled
         ? '<span style="color:#9ca3af;font-size:12px">' + (r.cancelledAt ? 'Cancelada' : 'Sem proposta') + '</span>'
         : '<button class="btn-sm btn-clear" onclick="event.stopPropagation(); cancelNowProposal(\'' + esc(r.saleId) + '\', \'' + esc(r.baggageId || '') + '\', \'' + esc(proposalId) + '\')" style="display:inline-flex;align-items:center;gap:4px">Cancelar proposta</button>';
@@ -1639,8 +1639,14 @@ tr{cursor:pointer;transition:background 0.1s}
         statusBar: true,
       });
     }
-    integrationJsonEditor.set(integration.integrationResponses || {});
-    document.getElementById('jsonModalSubtitle').textContent = 'CPV ' + (integration.cpv || 'â€”') + ' Â· proposta ' + (integration.propostaid || 'â€”');
+    integrationJsonEditor.set({
+      saleId: integration.saleId,
+      integration: 'now',
+      baggageId: integration.baggageId || null,
+      responses: integration.responses || {},
+      error_messages: integration.errorMessages || [],
+    });
+    document.getElementById('jsonModalSubtitle').textContent = 'responses & error_messages · CPV ' + (integration.cpv || 'â€”') + ' · proposta ' + (integration.propostaid || 'â€”');
     document.getElementById('jsonModalOverlay').classList.add('active');
   };
 

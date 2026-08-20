@@ -28,6 +28,28 @@ function getCredentials() {
   return { login, senha };
 }
 
+function serializeNowError(error) {
+  const responseData = error.response?.data || null;
+  const providerMessage =
+    responseData?.mensagem ||
+    responseData?.message ||
+    responseData?.error ||
+    responseData?.detail ||
+    responseData?.retorno?.mensagem ||
+    (typeof responseData === "string" ? responseData : null);
+
+  return {
+    name: error.name,
+    message: providerMessage || error.message,
+    axiosMessage: error.message,
+    code: error.code || null,
+    status: error.response?.status || null,
+    responseData,
+    stack: error.stack || null,
+    recordedAt: new Date().toISOString(),
+  };
+}
+
 async function authenticate() {
   const { data } = await nowApi.post("/login", getCredentials());
 
@@ -175,14 +197,27 @@ async function buildProposalPayload(nrproposta, registration, token) {
   };
 }
 
-/**
- * Handles the `now-integration` Agenda job.
- *
- * @param {import("agenda").Job} job - The Agenda job instance.
- * @returns {Promise<void>}
- */
-async function nowIntegrationHandler(job) {
-  const { saleId, cpvNumber } = job?.attrs?.data || {};
+async function recordNowRequestError(saleId, error) {
+  if (!saleId || !prisma) return;
+
+  const [sale] = await prisma.$queryRaw`
+    SELECT id
+    FROM "Sale"
+    WHERE "saleId" = ${saleId}
+    LIMIT 1
+  `;
+  if (!sale) return;
+
+  const errorMessage = serializeNowError(error);
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+  await prisma.$executeRaw`
+    INSERT INTO "Requests" (id, "saleId", integration, error_messages, "createdAt", "updatedAt")
+    VALUES (${requestId}, ${sale.id}, 'now', ${JSON.stringify([errorMessage])}::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  `;
+}
+
+async function processNowIntegration(saleId, cpvNumber) {
 
   if (!cpvNumber) {
     throw new Error("[Agenda][now-integration] now requires a cpfv number:");
@@ -264,28 +299,48 @@ async function nowIntegrationHandler(job) {
 
   if (saleId) {
     const [sale] = await prisma.$queryRaw`
-      SELECT id, integration_responses AS "integrationResponses"
+      SELECT id
       FROM "Sale"
       WHERE "saleId" = ${saleId}
       LIMIT 1
     `;
 
     if (sale) {
-      const integrationResponses = {
-        ...(sale.integrationResponses || {}),
-        now: {
-          ...(sale.integrationResponses?.now || {}),
-          cpv: String(cpvNumber),
-          proposals,
-        },
-      };
+      for (const proposal of proposals) {
+        const responses = {
+          now: {
+            cpv: String(cpvNumber),
+            proposals: [proposal],
+          },
+        };
 
-      await prisma.$executeRaw`
-        UPDATE "Sale"
-        SET integration_responses = ${JSON.stringify(integrationResponses)}::jsonb
-        WHERE id = ${sale.id}
-      `;
+        await prisma.$executeRaw`
+          INSERT INTO "Requests" (id, "saleId", integration, responses, "createdAt", "updatedAt")
+          VALUES (${`req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`}, ${sale.id}, 'now', ${JSON.stringify(responses)}::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `;
+      }
     }
+  }
+}
+
+/**
+ * Handles the `now-integration` Agenda job.
+ *
+ * @param {import("agenda").Job} job - The Agenda job instance.
+ * @returns {Promise<void>}
+ */
+async function nowIntegrationHandler(job) {
+  const { saleId, cpvNumber } = job?.attrs?.data || {};
+
+  try {
+    await processNowIntegration(saleId, cpvNumber);
+  } catch (error) {
+    try {
+      await recordNowRequestError(saleId, error);
+    } catch (recordError) {
+      console.error("[Agenda][now-integration] failed to persist request error:", recordError.message);
+    }
+    throw error;
   }
 }
 
