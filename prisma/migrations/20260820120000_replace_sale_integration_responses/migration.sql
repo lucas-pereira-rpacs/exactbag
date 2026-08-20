@@ -1,4 +1,4 @@
--- Replace the sale-level integration blob with a dedicated integration request store.
+-- Add a dedicated integration request store.
 CREATE TABLE "Requests" (
     "id" TEXT NOT NULL,
     "saleId" TEXT NOT NULL,
@@ -15,6 +15,3 @@ CREATE TABLE "Requests" (
 CREATE INDEX "Requests_saleId_idx" ON "Requests"("saleId");
 CREATE INDEX "Requests_integration_idx" ON "Requests"("integration");
 CREATE INDEX "Requests_createdAt_idx" ON "Requests"("createdAt");
-
-DROP INDEX IF EXISTS "Sale_integration_responses_idx";
-ALTER TABLE "Sale" DROP COLUMN IF EXISTS "integration_responses";
