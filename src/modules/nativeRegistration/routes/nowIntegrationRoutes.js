@@ -19,7 +19,7 @@ const nowApi = axios.create({
   },
 });
 
-async function cancelProposal(propostaid) {
+async function cancelProposal(propostaid, cancellation) {
   const login = process.env.NOW_API_LOGIN;
   const senha = process.env.NOW_API_PASSWORD;
   if (!login || !senha) {
@@ -35,7 +35,10 @@ async function cancelProposal(propostaid) {
 
   const { data } = await nowApi.delete(
     `/proposta/${encodeURIComponent(propostaid)}`,
-    { headers: { Authorization: `Bearer ${loginData.token}` } },
+    {
+      headers: { Authorization: `Bearer ${loginData.token}` },
+      data: cancellation,
+    },
   );
   return data;
 }
@@ -50,6 +53,15 @@ router.post(
         return res
           .status(503)
           .json({ success: false, error: "Banco indisponivel." });
+      }
+
+      const motivo = String(req.body?.motivo || "").trim();
+      const dataCancelamento = String(req.body?.dataCancelamento || "").trim();
+      if (!motivo || !/^\d{4}-\d{2}-\d{2}$/.test(dataCancelamento)) {
+        return res.status(400).json({
+          success: false,
+          error: "Motivo e data de cancelamento sao obrigatorios.",
+        });
       }
 
       const [sale] = await prisma.$queryRaw`
@@ -70,8 +82,12 @@ router.post(
         });
       }
 
-      const cancelResponse = await cancelProposal(proposal.propostaid);
+      const cancelResponse = await cancelProposal(proposal.propostaid, {
+        motivo,
+        dataCancelamento,
+      });
       const cancelledAt = new Date().toISOString();
+      const cancellation = { motivo, dataCancelamento };
       const integrationResponses = {
         ...(sale.integrationResponses || {}),
         now: Array.isArray(now?.proposals)
@@ -79,11 +95,11 @@ router.post(
               ...now,
               proposals: now.proposals.map((item) =>
                 item.baggageId === req.body.baggageId
-                  ? { ...item, cancelledAt, cancelResponse }
+                  ? { ...item, cancelledAt, cancellation, cancelResponse }
                   : item,
               ),
             }
-          : { ...now, cancelledAt, cancelResponse },
+          : { ...now, cancelledAt, cancellation, cancelResponse },
       };
 
       await prisma.$executeRaw`
