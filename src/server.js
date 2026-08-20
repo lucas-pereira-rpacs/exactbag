@@ -166,9 +166,16 @@ async function gracefulShutdown(signal) {
   }
 
   if (agenda && typeof agenda.stop === 'function') {
-    await agenda.stop();
-    const removedJobs = await agenda.cancel({ name: 'now-integration' });
-    console.log(`[Agenda] Cleared ${removedJobs} queued now-integration job(s)`);
+    // Stop unlocks active jobs without deleting queued work. The next server
+    // start can therefore pick up persisted jobs from PostgreSQL.
+    await agenda.stop().catch((error) => {
+      console.warn('[Agenda] Could not stop scheduler cleanly:', error.message);
+    });
+    if (agenda.databasePool) {
+      await agenda.databasePool.end().catch((error) => {
+        console.warn('[Agenda] Could not close dedicated database pool:', error.message);
+      });
+    }
     console.log('✅ Agenda scheduler stopped');
   }
 
@@ -186,8 +193,8 @@ async function gracefulShutdown(signal) {
   }, 30000);
 }
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.once('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // ========== ERROR HANDLING ==========
 process.on('uncaughtException', (error) => {

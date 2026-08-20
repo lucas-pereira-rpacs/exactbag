@@ -1,12 +1,25 @@
 const { PostgresBackend } = require("@agendajs/postgres-backend");
 const { Agenda, constant } = require("agenda");
+const { Pool } = require("pg");
 const nowIntegrationHandler = require("./nowIntegrationHandler");
+
+// Agenda owns a dedicated pool so its lifecycle cannot interfere with Prisma
+// or any other PostgreSQL client in the application.
+const agendaPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 2,
+  idleTimeoutMillis: 30000,
+});
 
 const agenda = new Agenda({
   backend: new PostgresBackend({
-    connectionString: process.env.DATABASE_URL,
+    pool: agendaPool,
   }),
 });
+
+// PostgresBackend does not close externally supplied pools. The application
+// closes this pool after agenda.stop() during graceful shutdown.
+agenda.databasePool = agendaPool;
 
 agenda.define("now-integration", nowIntegrationHandler, {
   backoff: constant({
