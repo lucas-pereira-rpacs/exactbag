@@ -8,6 +8,7 @@
     "prestart": "npm run prisma:generate",
     "prisma:generate": "prisma generate",
     "test": "jest",
+    "test:webhooks:sales": "node scripts/test_webhooks_sales.js",
     "test:prod": "node test_production.js",
     "stress:prod": "node scripts/stress_production.js"
   },
