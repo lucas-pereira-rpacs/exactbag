@@ -747,7 +747,7 @@ tr{cursor:pointer;transition:background 0.1s}
   <div class="modal json-modal">
     <div class="modal-header">
       <div><h2>Requests</h2><div class="cancel-modal-subtitle" id="jsonModalSubtitle">responses &amp; error_messages</div></div>
-      <button class="modal-close" onclick="closeJsonModal()" aria-label="Fechar">âœ•</button>
+      <button class="modal-close" onclick="closeJsonModal()" aria-label="Fechar">✕</button>
     </div>
     <div class="modal-body"><div class="json-editor" id="integrationJsonEditor"></div></div>
   </div>
@@ -1646,7 +1646,7 @@ tr{cursor:pointer;transition:background 0.1s}
       responses: integration.responses || {},
       error_messages: integration.errorMessages || [],
     });
-    document.getElementById('jsonModalSubtitle').textContent = 'responses & error_messages · CPV ' + (integration.cpv || 'â€”') + ' · proposta ' + (integration.propostaid || 'â€”');
+    document.getElementById('jsonModalSubtitle').textContent = 'responses & error_messages · CPV ' + (integration.cpv || '—') + ' · proposta ' + (integration.propostaid || '—');
     document.getElementById('jsonModalOverlay').classList.add('active');
   };
 

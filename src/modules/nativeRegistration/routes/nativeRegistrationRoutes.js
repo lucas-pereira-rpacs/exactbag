@@ -80,7 +80,7 @@ router.get('/sales-log', dashboardAuthMiddleware, requireRole('gestor'), async (
   }
 });
 
-// GET /native/integrations/now — Respostas salvas da integraÃ§Ã£o NOW por venda.
+// GET /native/integrations/now — Respostas salvas da integração NOW por venda.
 router.get('/integrations/now', dashboardAuthMiddleware, requireRole('gestor'), async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 100);
@@ -132,7 +132,7 @@ router.get('/integrations/now', dashboardAuthMiddleware, requireRole('gestor'), 
     });
   } catch (err) {
     console.error('[IntegrationsNOW] Erro ao listar:', err);
-    return res.status(500).json({ success: false, error: 'Erro ao carregar integraÃ§Ãµes NOW.' });
+    return res.status(500).json({ success: false, error: 'Erro ao carregar integrações NOW.' });
   }
 });
 
