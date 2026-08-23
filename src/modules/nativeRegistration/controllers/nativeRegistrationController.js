@@ -19,15 +19,21 @@ const createRegistration = async (req, res) => {
       });
     }
 
+    const saleId = validation.sanitized.saleId;
+    if (!saleId) {
+      throw new Error('[NativeRegistration] saleId is required');
+    }
+
     const meta = {
       ipAddress: req.ip || req.connection?.remoteAddress,
       userAgent: req.get('User-Agent')
     };
 
     const result = await registrationService.createRegistration(validation.sanitized, meta);
-    const saleId = validation.sanitized.saleId || null;
 
-    if (saleId) {
+    const saleHasInsurance = await repository.findSaleHasInsurance(saleId);
+
+    if (saleHasInsurance === true) {
       await scheduler.now("now-integration", {
         saleId,
         cpvNumber: result.registration.cpvNumber,

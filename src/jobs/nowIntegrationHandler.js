@@ -223,6 +223,39 @@ async function processNowIntegration(saleId, cpvNumber) {
     throw new Error("[Agenda][now-integration] now requires a cpfv number:");
   }
 
+  if (!saleId) {
+    throw new Error("[Agenda][now-integration] saleId is required");
+  }
+
+  const sale = await prisma.sale.findFirst({
+    where: { saleId },
+    select: { hasInsurance: true },
+  });
+
+  if (!sale) {
+    console.log("[Agenda][now-integration] skipping integration for unknown sale:", saleId);
+    return;
+  }
+
+  if (!sale.hasInsurance) {
+    console.log(
+      "[Agenda][now-integration] skipping sale without insurance:",
+      saleId,
+    );
+    return;
+  }
+
+  const registration = await prisma.nativeRegistration.findUnique({
+    where: { cpvNumber },
+    include: { baggageItems: true },
+  });
+
+  if (!registration) {
+    throw new Error(
+      `[Agenda][now-integration] registration not found for CPV: ${cpvNumber}`,
+    );
+  }
+
   const isInsured = await prisma.nativeRegistration.findFirst({
     where: {
       saleId,
@@ -237,16 +270,6 @@ async function processNowIntegration(saleId, cpvNumber) {
   }
 
   const token = await authenticate();
-  const registration = await prisma.nativeRegistration.findUnique({
-    where: { cpvNumber },
-    include: { baggageItems: true },
-  });
-
-  if (!registration) {
-    throw new Error(
-      `[Agenda][now-integration] registration not found for CPV: ${cpvNumber}`,
-    );
-  }
 
   const proposals = [];
 
