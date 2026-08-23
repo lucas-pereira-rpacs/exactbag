@@ -35,7 +35,7 @@ class VesperaScheduler {
     if (this._isRunning) { console.log('[VesperaScheduler] Ciclo já em execução, pulando'); return; }
     this._isRunning = true;
     try {
-      console.log('[VesperaScheduler] Iniciando ciclo de notificação véspera...');
+      console.log('[VesperaScheduler] Iniciando ciclo de notificação de 48h...');
 
       // Calcula "amanhã" no fuso de Brasília (UTC-3)
       const now = new Date();
@@ -60,18 +60,18 @@ class VesperaScheduler {
       });
 
       if (sales.length === 0) {
-        console.log('[VesperaScheduler] Nenhum voo amanhã para notificar');
+        console.log('[VesperaScheduler] Nenhum voo na janela de 48h para notificar');
         return;
       }
 
-      console.log(`[VesperaScheduler] ${sales.length} cliente(s) com voo amanhã`);
+      console.log(`[VesperaScheduler] ${sales.length} cliente(s) na janela de 48h`);
 
       let sent = 0;
       for (const sale of sales) {
         try {
           // Pula parceiros em modo sandbox
           if (sale.partner?.isSandbox) {
-            console.log(`[VesperaScheduler] 🏖️ SANDBOX: Véspera suprimida para ${sale.customerName} (partner ${sale.partnerId})`);
+            console.log(`[VesperaScheduler] SANDBOX: lembrete de 48h suprimido para ${sale.customerName} (partner ${sale.partnerId})`);
             continue;
           }
 
@@ -92,7 +92,7 @@ class VesperaScheduler {
           });
 
           sent++;
-          console.log(`[VesperaScheduler] ✓ Véspera enviada para ${sale.customerName} <${sale.customerEmail}>`);
+          console.log(`[VesperaScheduler] Lembrete de 48h enviado para ${sale.customerName} <${sale.customerEmail}>`);
         } catch (err) {
           console.error(`[VesperaScheduler] Erro ao notificar ${sale.customerEmail}:`, err.message);
         }
