@@ -1,10 +1,12 @@
 const axios = require("axios");
-const { prisma } = require("../config");
+const { prisma, supportPhone } = require("../config");
 
 const NOW_API_BASE_URL =
   process.env.NOW_API_BASE_URL || "https://saas-dev.nowseguros.seg.br";
 const NOW_PRODUCT_CODE = process.env.NOW_PRODUCT_CODE || "160323";
 const REQUEST_TIMEOUT_MS = Number(process.env.NOW_API_TIMEOUT_MS) || 180000;
+const EXACTBAG_CONTACT_EMAIL =
+  process.env.EMAIL_FROM || "noreply@exactbag.com.br";
 
 const nowApi = axios.create({
   baseURL: NOW_API_BASE_URL,
@@ -161,11 +163,19 @@ async function buildProposalPayload(nrproposta, registration, token) {
           ...insured.endereco,
           ...address,
         },
-        contato: contacts.map((contact) =>
-          contact.tipo === "email"
-            ? { ...contact, descricao: registration.passengerEmail }
-            : contact,
-        ),
+        contato: contacts.map((contact) => {
+          const contactType = String(contact.tipo || "").toLowerCase();
+
+          if (contactType === "email") {
+            return { ...contact, descricao: EXACTBAG_CONTACT_EMAIL };
+          }
+
+          if (["telefone", "phone", "celular", "mobile"].includes(contactType)) {
+            return { ...contact, descricao: supportPhone };
+          }
+
+          return contact;
+        }),
       },
       item_segurado: insuredItem.map((item) => ({
         ...item,
