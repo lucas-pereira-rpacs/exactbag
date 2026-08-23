@@ -92,7 +92,7 @@ class NotificationService {
       registrationLink ||
       `${process.env.APP_BASE_URL || "https://app.exactbag.com.br"}/registrodebagagem?${new URLSearchParams(
         {
-          saleId: String(saleId),
+          saleId: String(saleData?.saleId || ''),
         },
       )}`;
 
@@ -125,6 +125,21 @@ class NotificationService {
       success: settled.every(r => r.status === 'fulfilled'),
       details: settled.map(r => ({ status: r.status, value: r.value || r.reason }))
     };
+  }
+
+  async sendPurchaseConfirmationNotification(customerData, saleData) {
+    console.log(`[NotificationService] Enviando confirmacao de compra para ${customerData.name}`);
+    try {
+      const result = await emailGateway.sendPurchaseConfirmationTemplateEmail(customerData, saleData);
+      return { success: Boolean(result), details: [{ channel: 'email', success: Boolean(result), value: result }] };
+    } catch (err) {
+      console.error('[NotificationService] Erro email confirmacao de compra:', err.message);
+      return { success: false, details: [{ channel: 'email', success: false, error: err.message }] };
+    }
+  }
+
+  async sendPurchaseReminderNotification(customerData, saleData, registrationLink) {
+    return this.sendPurchaseNotification(customerData, saleData, registrationLink);
   }
 
   async sendVesperaNotification(customerData, saleData, registrationLink) {

@@ -52,6 +52,8 @@ const backfillSchemaSql = [
   'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "hasInsurance" BOOLEAN NOT NULL DEFAULT false',
   // Optional sale-level registration expiration (20260801)
   'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "expirationDate" TIMESTAMP(3)',
+  'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "welcomeSentAt" TIMESTAMP(3)',
+  'ALTER TABLE "Sale" ADD COLUMN IF NOT EXISTS "vesperaSentAt" TIMESTAMP(3)',
 ];
 
 // ============================================================================

@@ -33,11 +33,13 @@ const EMAIL_CONFIG = {
 
 // Carrega templates HTML do disco (fallback para texto simples)
 let TEMPLATE_COMPRA_HTML = null;
+let TEMPLATE_CONFIRMATION_COMPRA_HTML = null;
 let TEMPLATE_VESPERA_HTML = null;
 let TEMPLATE_VOLTA_HTML = null;
 try {
   const rootDir = path.resolve(__dirname, '..', '..');
   TEMPLATE_COMPRA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_compra.html'), 'utf-8'));
+  TEMPLATE_CONFIRMATION_COMPRA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_confirmacao_compra.html'), 'utf-8'));
   TEMPLATE_VESPERA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_vespera_voo.html'), 'utf-8'));
   TEMPLATE_VOLTA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_volta.html'), 'utf-8'));
   console.log('[EmailGateway] Templates HTML de compra, véspera e volta carregados com sucesso');
@@ -99,6 +101,33 @@ class EmailGateway {
     return this._sendEmail({
       to: customerData.email,
       subject: 'Seu serviço ExactBag foi contratado! ✈️',
+      html,
+      text: textBody
+    });
+  }
+
+  async sendPurchaseConfirmationTemplateEmail(customerData, saleData = {}) {
+    const formatDate = (value) => {
+      if (!value) return '';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    };
+    const outboundDate = formatDate(saleData.outboundDate);
+    const returnDate = formatDate(saleData.returnDate);
+    const tripType = saleData.roundTrip ? 'Ida e volta' : 'Ida';
+    const textBody = `Ola, ${customerData.name}!\n\nSua compra e reserva do ExactBag foram confirmadas com sucesso.\n\nDetalhes da reserva:\n- Tipo de viagem: ${tripType}${outboundDate ? `\n- Data da ida: ${outboundDate}` : ''}${returnDate ? `\n- Data da volta: ${returnDate}` : ''}\n\nO produto sera enviado assim que faltarem 48 horas para a sua viagem. Voce recebera as orientacoes e o link para registrar sua bagagem nesse momento.\n\nPor enquanto, nao e necessario fazer o registro. Aguarde o novo e-mail proximo da viagem e mantenha seus dados de contato atualizados.\n\nDuvidas? Estamos disponiveis 24h.\n${supportPhone}\ncontato@exactbag.com.br\n\nBoa viagem!\nEquipe ExactBag`;
+    let html = textBody;
+    if (TEMPLATE_CONFIRMATION_COMPRA_HTML) {
+      html = TEMPLATE_CONFIRMATION_COMPRA_HTML
+        .replace(/\{\{nome\}\}/g, escHtml(customerData.name) || 'Cliente')
+        .replace(/\{\{tipo_viagem\}\}/g, escHtml(tripType))
+        .replace(/\{\{data_ida\}\}/g, escHtml(outboundDate))
+        .replace(/\{\{data_volta\}\}/g, escHtml(returnDate));
+    }
+    return this._sendEmail({
+      to: customerData.email,
+      subject: 'Compra e reserva ExactBag confirmadas',
       html,
       text: textBody
     });

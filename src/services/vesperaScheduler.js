@@ -23,16 +23,9 @@ class VesperaScheduler {
       return;
     }
 
-    const hour = Number(process.env.VESPERA_HOUR_UTC || 12); // 12 UTC = 09:00 BRT
-    const minute = Number(process.env.VESPERA_MINUTE_UTC || 0);
+    this.job = schedule.scheduleJob('0 * * * *', () => this.run());
 
-    const rule = new schedule.RecurrenceRule();
-    rule.hour = hour;
-    rule.minute = minute;
-
-    this.job = schedule.scheduleJob(rule, () => this.run());
-
-    console.log(`[VesperaScheduler] ✓ Agendado para rodar diariamente às ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} UTC`);
+    console.log('[VesperaScheduler] Agendado para verificar lembretes de 48h a cada hora');
   }
 
   /**
@@ -46,14 +39,12 @@ class VesperaScheduler {
 
       // Calcula "amanhã" no fuso de Brasília (UTC-3)
       const now = new Date();
-      const brasiliaOffset = -3 * 60 * 60 * 1000;
-      const brasiliaTime = new Date(now.getTime() + brasiliaOffset);
+      const windowStart = new Date(now.getTime() + (47 * 60 * 60 * 1000));
+      const windowEnd = new Date(now.getTime() + (49 * 60 * 60 * 1000));
 
       // "Amanhã" em Brasília
-      const tomorrow = new Date(brasiliaTime);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStart = new Date(Date.UTC(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth(), tomorrow.getUTCDate(), 0, 0, 0));
-      const tomorrowEnd = new Date(Date.UTC(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth(), tomorrow.getUTCDate(), 23, 59, 59, 999));
+      const tomorrowStart = windowStart;
+      const tomorrowEnd = windowEnd;
 
       // Busca vendas processadas com voo amanhã que ainda NÃO receberam notificação véspera
       const sales = await prisma.sale.findMany({
@@ -92,7 +83,7 @@ class VesperaScheduler {
 
           const registrationLink = sale.formLink || `https://app.exactbag.com.br/f/${sale.slug || sale.id}`;
 
-          await notificationService.sendVesperaNotification(customerData, sale, registrationLink);
+          await notificationService.sendPurchaseReminderNotification(customerData, sale, registrationLink);
 
           // Marca como enviado (deduplicação)
           await prisma.sale.update({

@@ -83,10 +83,9 @@ const processPartnerSale = async (salePayload) => {
       `[SaleProcessing] 🏖️ SANDBOX: Notificações suprimidas para parceiro ${partnerId} (sale ${saleId})`,
     );
   } else {
-    await notificationService.sendPurchaseNotification(
+    await notificationService.sendPurchaseConfirmationNotification(
       { name: customerName, email: customerEmail, phone: customerPhone },
-      { saleId, partnerId },
-      formLink,
+      { saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate },
     );
   }
 
