@@ -27,17 +27,24 @@ global.Date = FrozenDate;
 const sales = new Map();
 const reminders = [];
 const updates = [];
+let returnStaleFetch = false;
 
 const prismaMock = {
   sale: {
     async findMany({ where }) {
-      return Array.from(sales.values()).filter((sale) => {
+      return Array.from(sales.values()).map((sale) => {
+        if (returnStaleFetch) return { ...sale, status: 'processed', vesperaSentAt: null };
+        return sale;
+      }).filter((sale) => {
         const outbound = new realDate(sale.outboundDate).getTime();
         return sale.status === where.status
           && sale.vesperaSentAt === null
           && outbound >= where.outboundDate.gte.getTime()
           && outbound <= where.outboundDate.lte.getTime();
       });
+    },
+    async findUnique({ where }) {
+      return sales.get(where.id) || null;
     },
     async update({ where, data }) {
       const sale = sales.get(where.id);
@@ -95,6 +102,18 @@ async function runAt(hoursFromBase) {
   await scheduler.run();
   await scheduler.run();
   assert.strictEqual(reminders.length, 1, 'a sent reminder must be deduplicated');
+
+  sale.vesperaSentAt = null;
+  sale.partner = { isSandbox: false };
+  const originalStatus = sale.status;
+  sale.status = 'cancelada';
+  returnStaleFetch = true;
+  reminders.length = 0;
+  updates.length = 0;
+  await scheduler.run();
+  assert.deepStrictEqual({ reminders: reminders.length, updates: updates.length }, { reminders: 0, updates: 0 }, 'cancelled sales must not receive reminders');
+  returnStaleFetch = false;
+  sale.status = originalStatus;
 
   sale.vesperaSentAt = null;
   sale.partner = { isSandbox: true };

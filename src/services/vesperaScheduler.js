@@ -69,25 +69,39 @@ class VesperaScheduler {
       let sent = 0;
       for (const sale of sales) {
         try {
+          // Re-read immediately before sending so a cancellation committed after
+          // the initial query cannot receive a stale registration reminder.
+          const currentSale = await prisma.sale.findUnique({
+            where: { id: sale.id },
+            include: { partner: true }
+          });
+
+          if (!currentSale || currentSale.status !== 'processed' || currentSale.vesperaSentAt) {
+            console.log(`[VesperaScheduler] Lembrete ignorado para ${sale.customerName}: venda cancelada ou já processada`);
+            continue;
+          }
+
+          const saleToNotify = currentSale;
+
           // Pula parceiros em modo sandbox
-          if (sale.partner?.isSandbox) {
-            console.log(`[VesperaScheduler] SANDBOX: lembrete de 48h suprimido para ${sale.customerName} (partner ${sale.partnerId})`);
+          if (saleToNotify.partner?.isSandbox) {
+            console.log(`[VesperaScheduler] SANDBOX: lembrete de 48h suprimido para ${saleToNotify.customerName} (partner ${saleToNotify.partnerId})`);
             continue;
           }
 
           const customerData = {
-            name: sale.customerName,
-            email: sale.customerEmail,
-            phone: sale.customerPhone
+            name: saleToNotify.customerName,
+            email: saleToNotify.customerEmail,
+            phone: saleToNotify.customerPhone
           };
 
-          const registrationLink = sale.formLink || `https://app.exactbag.com.br/f/${sale.slug || sale.id}`;
+          const registrationLink = saleToNotify.formLink || `https://app.exactbag.com.br/f/${saleToNotify.slug || saleToNotify.id}`;
 
-          await notificationService.sendPurchaseReminderNotification(customerData, sale, registrationLink);
+          await notificationService.sendPurchaseReminderNotification(customerData, saleToNotify, registrationLink);
 
           // Marca como enviado (deduplicação)
           await prisma.sale.update({
-            where: { id: sale.id },
+            where: { id: saleToNotify.id },
             data: { vesperaSentAt: new Date() }
           });
 
