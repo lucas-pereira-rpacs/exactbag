@@ -114,14 +114,25 @@ function onlyDigits(value) {
 }
 
 function getDefaultAddress() {
+  // Format: street|number|complement|district|city|state|zip
+  const [
+    street = "Avenida Paulista",
+    number = "1000",
+    complement = "",
+    district = "Bela Vista",
+    city = "Sao Paulo",
+    state = "SP",
+    zip = "01310000",
+  ] = String(process.env.NOW_DEFAULT_ADDRESS || "").split("|");
+
   return {
-    logradouro: process.env.NOW_DEFAULT_ADDRESS_STREET || "Avenida Paulista",
-    numero: process.env.NOW_DEFAULT_ADDRESS_NUMBER || "1000",
-    complemento: process.env.NOW_DEFAULT_ADDRESS_COMPLEMENT || "",
-    bairro: process.env.NOW_DEFAULT_ADDRESS_DISTRICT || "Bela Vista",
-    cidade: process.env.NOW_DEFAULT_ADDRESS_CITY || "Sao Paulo",
-    siglaestado: process.env.NOW_DEFAULT_ADDRESS_STATE || "SP",
-    cep: onlyDigits(process.env.NOW_DEFAULT_ADDRESS_ZIP || "01310000"),
+    logradouro: street,
+    numero: number,
+    complemento: complement,
+    bairro: district,
+    cidade: city,
+    siglaestado: state,
+    cep: onlyDigits(zip),
   };
 }
 
