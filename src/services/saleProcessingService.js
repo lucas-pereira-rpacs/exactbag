@@ -84,13 +84,20 @@ const processPartnerSale = async (salePayload) => {
       `[SaleProcessing] 🏖️ SANDBOX: Notificações suprimidas para parceiro ${partnerId} (sale ${saleId})`,
     );
   } else {
-    const notificationCustomer = { name: customerName, email: customerEmail, phone: customerPhone };
+    const passengerData = {
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
+      passengerName: customerName,
+      passengerEmail: customerEmail,
+      passengerPhone: customerPhone,
+    };
     const notificationSale = { saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate };
 
     if (isManualSale) {
-      await notificationService.sendImmediateRegistrationEmail(notificationCustomer, formLink);
+      await notificationService.sendPurchaseNotification(passengerData, notificationSale, formLink);
     } else {
-      await notificationService.sendPurchaseConfirmationNotification(notificationCustomer, notificationSale);
+      await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
     }
   }
 

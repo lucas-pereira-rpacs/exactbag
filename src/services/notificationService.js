@@ -127,24 +127,18 @@ class NotificationService {
     };
   }
 
-  async sendPurchaseConfirmationNotification(customerData, saleData) {
-    console.log(`[NotificationService] Enviando confirmacao de compra para ${customerData.name}`);
+  async sendPurchaseConfirmationNotification(passengerData, saleData) {
+    const passenger = {
+      name: passengerData.passengerName || passengerData.name,
+      email: passengerData.passengerEmail || passengerData.email,
+      phone: passengerData.passengerPhone || passengerData.phone,
+    };
+    console.log(`[NotificationService] Enviando confirmacao de compra para ${passenger.name} <${passenger.email}>`);
     try {
-      const result = await emailGateway.sendPurchaseConfirmationTemplateEmail(customerData, saleData);
+      const result = await emailGateway.sendPurchaseConfirmationTemplateEmail(passenger, saleData);
       return { success: Boolean(result), details: [{ channel: 'email', success: Boolean(result), value: result }] };
     } catch (err) {
       console.error('[NotificationService] Erro email confirmacao de compra:', err.message);
-      return { success: false, details: [{ channel: 'email', success: false, error: err.message }] };
-    }
-  }
-
-  async sendImmediateRegistrationEmail(customerData, registrationLink) {
-    console.log(`[NotificationService] Enviando registro imediato para ${customerData.name}`);
-    try {
-      const result = await emailGateway.sendPurchaseTemplateEmail(customerData, registrationLink);
-      return { success: Boolean(result), details: [{ channel: 'email', success: Boolean(result), value: result }] };
-    } catch (err) {
-      console.error('[NotificationService] Erro email de registro imediato:', err.message);
       return { success: false, details: [{ channel: 'email', success: false, error: err.message }] };
     }
   }
