@@ -281,6 +281,15 @@ if (process.env.NATIVE_REGISTRATION_ENABLED !== 'false') {
   });
 
   // Arquivos estáticos (CSS, JS, imagens dentro de /public) — cache de 7 dias
+  // Product assets are public. Handle this namespace explicitly and do not
+  // fall through to the global API-key middleware when a file is missing.
+  app.use('/native/assets', publicLimiter, express.static(path.join(nativePath, 'assets'), {
+    maxAge: '7d',
+    etag: true,
+    lastModified: true,
+    fallthrough: false
+  }));
+
   app.use('/native', publicLimiter, express.static(nativePath, {
     maxAge: '7d',
     etag: true,
