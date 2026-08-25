@@ -16,6 +16,7 @@ const processPartnerSale = async (salePayload) => {
     expirationDate,
     outboundDate,
     returnDate,
+    isManualSale: manualSaleFlag,
   } = salePayload;
 
   // Salva o cliente no BD
@@ -54,7 +55,7 @@ const processPartnerSale = async (salePayload) => {
   const nativeFormUrl = new URL("/registrodebagagem", base);
   nativeFormUrl.searchParams.set("saleId", String(saleId));
   const nativeFormLink = nativeFormUrl.toString();
-  const isManualSale = String(saleId).toUpperCase().startsWith("MANUAL-");
+  const isManualSale = manualSaleFlag === true || String(saleId).toUpperCase().startsWith("MANUAL-");
   let formLink = isManualSale ? nativeFormLink : null;
 
   try {
@@ -83,10 +84,14 @@ const processPartnerSale = async (salePayload) => {
       `[SaleProcessing] 🏖️ SANDBOX: Notificações suprimidas para parceiro ${partnerId} (sale ${saleId})`,
     );
   } else {
-    await notificationService.sendPurchaseConfirmationNotification(
-      { name: customerName, email: customerEmail, phone: customerPhone },
-      { saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate },
-    );
+    const notificationCustomer = { name: customerName, email: customerEmail, phone: customerPhone };
+    const notificationSale = { saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate };
+
+    if (isManualSale) {
+      await notificationService.sendImmediateRegistrationEmail(notificationCustomer, formLink);
+    } else {
+      await notificationService.sendPurchaseConfirmationNotification(notificationCustomer, notificationSale);
+    }
   }
 
   // Atualiza a venda com status final, formLink e marca welcome como enviado

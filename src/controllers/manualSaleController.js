@@ -117,6 +117,7 @@ exports.handleDashboardManualSale = async (req, res) => {
         saleId,
         partnerId,
         expirationDate,
+        isManualSale: true,
       },
       {
         attempts: 3,

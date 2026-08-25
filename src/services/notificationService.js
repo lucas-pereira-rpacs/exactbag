@@ -138,6 +138,17 @@ class NotificationService {
     }
   }
 
+  async sendImmediateRegistrationEmail(customerData, registrationLink) {
+    console.log(`[NotificationService] Enviando registro imediato para ${customerData.name}`);
+    try {
+      const result = await emailGateway.sendPurchaseTemplateEmail(customerData, registrationLink);
+      return { success: Boolean(result), details: [{ channel: 'email', success: Boolean(result), value: result }] };
+    } catch (err) {
+      console.error('[NotificationService] Erro email de registro imediato:', err.message);
+      return { success: false, details: [{ channel: 'email', success: false, error: err.message }] };
+    }
+  }
+
   async sendPurchaseReminderNotification(customerData, saleData, registrationLink) {
     return this.sendPurchaseNotification(customerData, saleData, registrationLink);
   }
