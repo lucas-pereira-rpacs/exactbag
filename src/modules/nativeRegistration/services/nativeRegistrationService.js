@@ -75,11 +75,15 @@ const createRegistration = async (sanitizedData, meta = {}) => {
   // 4. Envia por e-mail (assíncrono, não bloqueia resposta)
   setImmediate(async () => {
     try {
-      await notificationService.sendCpvByEmail(
-        registration,
-        pdfResult.pdfBuffer,
-        pdfResult.isHtmlFallback
-      );
+      if (registration.isPhysicalTag) {
+        await notificationService.sendPhysicalTagRegistrationEmail(registration);
+      } else {
+        await notificationService.sendCpvByEmail(
+          registration,
+          pdfResult.pdfBuffer,
+          pdfResult.isHtmlFallback
+        );
+      }
       await repository.update(registration.id, {
         status: 'sent',
         emailSentAt: new Date()
@@ -89,14 +93,16 @@ const createRegistration = async (sanitizedData, meta = {}) => {
     }
 
     // 5. WhatsApp (opcional, não bloqueia)
-    try {
-      await notificationService.sendCpvByWhatsApp(registration);
-      await repository.update(registration.id, {
-        whatsappSentAt: new Date(),
-        status: 'completed'
-      });
-    } catch (err) {
-      console.error('[NativeRegistration] Erro ao enviar WhatsApp CPV:', err.message);
+    if (!registration.isPhysicalTag) {
+      try {
+        await notificationService.sendCpvByWhatsApp(registration);
+        await repository.update(registration.id, {
+          whatsappSentAt: new Date(),
+          status: 'completed'
+        });
+      } catch (err) {
+        console.error('[NativeRegistration] Erro ao enviar WhatsApp CPV:', err.message);
+      }
     }
   });
 
