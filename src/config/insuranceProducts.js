@@ -64,14 +64,15 @@ const PRODUCTS = [
       'Conforme as condições da cobertura contratada.'
     ],
     cancellationPolicy: {
-      refundable: false,
+      refundable: true,
+      hoursBeforeService: 48,
       immediateFine: false,
       penalties: [
         {
-          name: 'Não reembolsável após emissão do CPV',
+          name: 'Não reembolsável dentro de 48 horas da utilização',
           description:
-            'O serviço não é reembolsável após a emissão do CPV. Cancelamentos antes da emissão seguem a política do parceiro.',
-          price: { currency: 'BRL', amount: 0.0 }
+            'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
+          price: { currency: 'BRL', amount: 0 }
         }
       ]
     }
@@ -105,14 +106,15 @@ const PRODUCTS = [
       'Vigência: até 30 dias. Utilização: ida e volta. Cobertura: 1 bagagem. Atendimento: Brasil e exterior.'
     ],
     cancellationPolicy: {
-      refundable: false,
+      refundable: true,
+      hoursBeforeService: 48,
       immediateFine: false,
       penalties: [
         {
-          name: 'Não reembolsável após emissão do CPV',
+          name: 'Não reembolsável dentro de 48 horas da utilização',
           description:
-            'O serviço não é reembolsável após a emissão do CPV. Cancelamentos antes da emissão seguem a política do parceiro.',
-          price: { currency: 'BRL', amount: 0.0 }
+            'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
+          price: { currency: 'BRL', amount: 0 }
         }
       ]
     }
@@ -154,14 +156,15 @@ const PRODUCTS = [
       'Conforme as condições da cobertura contratada.'
     ],
     cancellationPolicy: {
-      refundable: false,
+      refundable: true,
+      hoursBeforeService: 48,
       immediateFine: false,
       penalties: [
         {
-          name: 'Não reembolsável após emissão do CPV',
+          name: 'Não reembolsável dentro de 48 horas da utilização',
           description:
-            'O serviço não é reembolsável após a emissão do CPV. Cancelamentos antes da emissão seguem a política do parceiro.',
-          price: { currency: 'BRL', amount: 0.0 }
+            'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
+          price: { currency: 'BRL', amount: 0 }
         }
       ]
     }
@@ -195,14 +198,15 @@ const PRODUCTS = [
       'Vigência: até 30 dias. Utilização: ida e volta. Cobertura: até 2 bagagens. Atendimento: Brasil e exterior.'
     ],
     cancellationPolicy: {
-      refundable: false,
+      refundable: true,
+      hoursBeforeService: 48,
       immediateFine: false,
       penalties: [
         {
-          name: 'Não reembolsável após emissão do CPV',
+          name: 'Não reembolsável dentro de 48 horas da utilização',
           description:
-            'O serviço não é reembolsável após a emissão do CPV. Cancelamentos antes da emissão seguem a política do parceiro.',
-          price: { currency: 'BRL', amount: 0.0 }
+            'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
+          price: { currency: 'BRL', amount: 0 }
         }
       ]
     }
