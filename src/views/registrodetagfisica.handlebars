@@ -1204,6 +1204,48 @@ body {
     return text;
   }
 
+  const PHYSICAL_TAG_TERMS_PT = `
+    <p><strong>Termo de Uso do Produto Tag de Identificação de Bagagem:</strong></p>
+    <p><strong>1. Objetivo do Produto:</strong></p>
+    <ul>
+      <li>Nossa Tag visa proporcionar segurança da suas informações sem expor a terceiros.</li>
+      <li>Inclui uma Tag Externa e um lacre para fixação.</li>
+      <li>A ExactBag não é um serviço de rastreamento ou monitoramento de bagagens; nossa Tag tem a única finalidade de identificação e comprovação de propriedade.</li>
+    </ul>
+    <p><strong>2. Isenção de Responsabilidade:</strong></p>
+    <ul>
+      <li>A empresa não se responsabiliza por extravios, roubos, danos ou outros incidentes envolvendo a bagagem.</li>
+      <li>Cliente reconhece que uso da Tag não garante proteção total da bagagem.</li>
+      <li>Validade da Tag: 12 meses a partir da primeira data de registro. Cada viagem deve ser feita um novo registro.</li>
+    </ul>
+    <p><strong>3.</strong> Caso o passageiro tenha adquirido o combo TAG ExactBag Cover, ele declara estar ciente de que o seguro incluso possui caráter estritamente compensatório e não substitui qualquer obrigação da companhia aérea ou de terceiros. O passageiro compreende e aceita que a cobertura do seguro somente será válida mediante o cumprimento integral das regras de utilização, registro da TAG e acionamento, conforme descrito em: <em>Termos de Uso ExactBag Cover</em>.</p>
+    <p><strong>4.</strong> O passageiro autoriza a ExactBag a coletar e utilizar o número do PIR/RIB e demais informações relacionadas à ocorrência de bagagem, exclusivamente para acessar o registro junto à companhia aérea e representá-lo no acompanhamento e colaboração para resolução do problema.</p>
+    <p>A ExactBag respeita a sua privacidade e atua como controladora dos dados pessoais fornecidos neste registro. As informações são utilizadas exclusivamente para identificação e suporte relacionados à sua bagagem, comunicação sobre o atendimento e cumprimento de obrigações legais e contratuais. Em caso de necessidade operacional ou acionamento do seguro, poderão ser compartilhados apenas os dados estritamente necessários com parceiros envolvidos na solução, sempre em conformidade com a LGPD. A ExactBag não comercializa nem compartilha dados para finalidades alheias ao serviço.</p>
+    <p>Ao enviar o formulário o cliente concorda com os termos acima e que todas as informações preenchidas são verdadeiras. Boa viagem! 🛫👜</p>
+    <p><a href="https://drive.google.com/file/d/1_rPhfKcAZ-lA7YM98vd7RQAKaAoKh_86/view" target="_blank" rel="noopener noreferrer">Acesse os Termos de Uso completos</a></p>
+  `;
+
+  const PHYSICAL_TAG_TERMS_EN = `
+    <p><strong>Terms of Use for the Baggage Identification Tag:</strong></p>
+    <p><strong>1. Product Purpose:</strong></p>
+    <ul>
+      <li>Our Tag is intended to protect your information without exposing it to third parties.</li>
+      <li>It includes an External Tag and a seal for attachment.</li>
+      <li>ExactBag is not a baggage tracking or monitoring service; the Tag is intended solely for identification and proof of ownership.</li>
+    </ul>
+    <p><strong>2. Disclaimer:</strong></p>
+    <ul>
+      <li>The company is not responsible for loss, theft, damage, or other incidents involving baggage.</li>
+      <li>The customer acknowledges that use of the Tag does not guarantee complete protection of the baggage.</li>
+      <li>Tag validity: 12 months from the first registration date. A new registration must be made for each trip.</li>
+    </ul>
+    <p><strong>3.</strong> If the passenger purchased the ExactBag Cover combo, they acknowledge that the included insurance is strictly compensatory and does not replace any obligation of the airline or third parties. Coverage is valid only when all usage, Tag registration, and claim rules are followed, as described in the <em>ExactBag Cover Terms of Use</em>.</p>
+    <p><strong>4.</strong> The passenger authorizes ExactBag to collect and use the PIR/RIB number and other information related to a baggage incident solely to access the airline record and assist with follow-up and resolution.</p>
+    <p>ExactBag respects your privacy and acts as the controller of the personal data provided in this registration. The information is used exclusively for baggage identification and support, service communications, and legal and contractual obligations. Where operationally necessary or when insurance is claimed, only the data strictly necessary may be shared with partners involved in resolving the issue, in accordance with applicable data-protection law.</p>
+    <p>By submitting the form, the customer agrees to the terms above and confirms that all information provided is true.</p>
+    <p><a href="https://drive.google.com/file/d/1_rPhfKcAZ-lA7YM98vd7RQAKaAoKh_86/view" target="_blank" rel="noopener noreferrer">Read the complete Terms of Use</a></p>
+  `;
+
   function applyLang() {
     document.title = t('pageTitle');
     document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : 'en';
@@ -1264,8 +1306,9 @@ body {
     document.getElementById('cardTerms').textContent = t('cardTerms');
     document.getElementById('termsExpandBtn').textContent = t('termsExpandBtn');
     document.getElementById('termsModalTitle').textContent = t('termsModalTitle');
-    document.getElementById('termsBox').innerHTML = t('termsContent');
-    document.getElementById('termsModalBody').innerHTML = t('termsContent');
+    var physicalTagTerms = currentLang === 'pt' ? PHYSICAL_TAG_TERMS_PT : PHYSICAL_TAG_TERMS_EN;
+    document.getElementById('termsBox').innerHTML = physicalTagTerms;
+    document.getElementById('termsModalBody').innerHTML = physicalTagTerms;
     document.getElementById('termsAcceptLabel').innerHTML = t('termsAcceptLabel') + ' <span class="required">*</span>';
     document.getElementById('submitBtn').textContent = t('btnSubmit');
 
