@@ -21,7 +21,7 @@ setInterval(() => {
   if (revokedTokens.size > 10000) revokedTokens.clear();
 }, REVOKED_CLEANUP_INTERVAL).unref();
 
-const VALID_ROLES = ['gestor', 'atendente'];
+const VALID_ROLES = ['gestor', 'atendente', 'admin'];
 
 /**
  * Login com email + senha → retorna JWT token + dados do usuário

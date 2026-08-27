@@ -135,6 +135,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 .vendas-view.active{display:block}
 .integrations-view{display:none}
 .integrations-view.active{display:block}
+.factory-view{display:none}
+.factory-view.active{display:block}
 .vendas-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
 .vendas-toolbar h2{font-size:18px;font-weight:700;color:#1a1a2e}
 .vendas-grid{display:grid;grid-template-columns:1fr;gap:16px}
@@ -426,6 +428,7 @@ tr{cursor:pointer;transition:background 0.1s}
       <span class="sidebar-toggle"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></span>
     </div>
     <nav class="sidebar-nav">
+      <a href="#" id="navPhysicalTagFactory" data-role="gestor" onclick="switchView('physicalTagFactory'); return false;"><span class="icon">⚙</span><span class="link-text">Faixas de SUN</span></a>
       <a href="#" class="active" id="navRegistros" onclick="switchView('registros'); return false;"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg></span><span class="link-text">Dashboard</span></a>
       <a href="#" id="navVendas" data-role="gestor" onclick="switchView('vendas'); return false;"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></span><span class="link-text">Vendas</span></a>
       <a href="#" id="navIntegrations" data-role="gestor" onclick="switchView('integrations'); return false;"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2zM5 3h14c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2zm0 2v14h14V5H5z"/></svg></span><span class="link-text">Integrações</span></a>
@@ -708,6 +711,27 @@ tr{cursor:pointer;transition:background 0.1s}
       </div>
 
       <!-- ===== INTEGRATIONS VIEW (gestor only) ===== -->
+      <div class="factory-view" id="physicalTagFactoryView" data-role="gestor">
+        <div class="vendas-toolbar">
+          <h2>Faixas de SUN da TAG física</h2>
+          <button class="btn-sm btn-filter" onclick="loadPhysicalTagFactory()">Atualizar</button>
+        </div>
+        <div class="card" style="max-width:620px;padding:20px;">
+          <p style="margin:0 0 18px;color:#6b7280;font-size:13px;">Atualize o último número permitido para cada tipo de SUN. O SUN segurado deve começar com S.</p>
+          <div class="form-group">
+            <label for="factoryInsuredLast">Último SUN segurado</label>
+            <input type="text" id="factoryInsuredLast" placeholder="Ex.: S1024290" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="factoryNonInsuredLast">Último SUN não segurado</label>
+            <input type="text" id="factoryNonInsuredLast" placeholder="Ex.: 91208408" autocomplete="off" />
+          </div>
+          <div class="form-error" id="factoryError"></div>
+          <div id="factorySuccess" style="display:none;color:#16a34a;font-size:13px;margin:10px 0;">Configuração atualizada.</div>
+          <button class="btn-primary" id="factorySaveBtn" onclick="savePhysicalTagFactory()">Salvar configuração</button>
+        </div>
+      </div>
+
       <div class="integrations-view" id="integrationsView" data-role="gestor">
         <div class="vendas-toolbar">
           <h2>Integrações</h2>
@@ -807,6 +831,7 @@ tr{cursor:pointer;transition:background 0.1s}
         <select id="userFormRole">
           <option value="atendente">Atendente</option>
           <option value="gestor">Gestor</option>
+          <option value="admin">Admin</option>
         </select>
       </div>
       <div class="form-error" id="userFormError"></div>
@@ -842,7 +867,7 @@ tr{cursor:pointer;transition:background 0.1s}
   let currentPage = 1, currentLimit = 20, currentSortBy = 'createdAt', currentSortOrder = 'desc';
   let registrations = [];
 
-  function isGestor() { return currentUser && currentUser.role === 'gestor'; }
+  function isGestor() { return currentUser && ['gestor', 'admin'].includes(currentUser.role); }
   function isInsuranceEnabled(value) {
     return value === true || ['true', '1', 'yes', 'sim'].includes(String(value).toLowerCase());
   }
@@ -908,7 +933,7 @@ tr{cursor:pointer;transition:background 0.1s}
     // Role badge
     const badge = document.getElementById('roleBadge');
     if (badge) {
-      badge.textContent = isGestor() ? 'GESTOR' : 'ATENDENTE';
+      badge.textContent = currentUser && currentUser.role === 'admin' ? 'ADMIN' : (isGestor() ? 'GESTOR' : 'ATENDENTE');
       badge.className = 'badge ' + (isGestor() ? 'badge-sent' : 'badge-submitted');
     }
 
@@ -922,6 +947,7 @@ tr{cursor:pointer;transition:background 0.1s}
     document.getElementById('dashboardLayout').style.display = 'flex';
     applyRoleUI();
     loadAll();
+    if (isGestor()) loadPhysicalTagFactory();
   }
 
   // Auto-login if token saved
@@ -1535,6 +1561,7 @@ tr{cursor:pointer;transition:background 0.1s}
     document.getElementById('usersView').classList.toggle('active', view === 'users');
     document.getElementById('vendasView').classList.toggle('active', view === 'vendas');
     document.getElementById('integrationsView').classList.toggle('active', view === 'integrations');
+    document.getElementById('physicalTagFactoryView').classList.toggle('active', view === 'physicalTagFactory');
     // Nav active state
     document.getElementById('navRegistros').classList.toggle('active', view === 'registros');
     const navUsers = document.getElementById('navUsers');
@@ -1543,14 +1570,58 @@ tr{cursor:pointer;transition:background 0.1s}
     if (navVendas) navVendas.classList.toggle('active', view === 'vendas');
     const navIntegrations = document.getElementById('navIntegrations');
     if (navIntegrations) navIntegrations.classList.toggle('active', view === 'integrations');
+    const navPhysicalTagFactory = document.getElementById('navPhysicalTagFactory');
+    if (navPhysicalTagFactory) navPhysicalTagFactory.classList.toggle('active', view === 'physicalTagFactory');
     // Topbar title
     const _titles = { registros: 'Gestão de Registros', users: 'Gerenciamento de Usuários', vendas: 'Histórico de Vendas', integrations: 'Integrações' };
     document.querySelector('.topbar-title').textContent = _titles[view] || 'Gestão de Registros';
     if (view === 'users') loadUsers();
     if (view === 'vendas') loadSalesLog();
     if (view === 'integrations') loadIntegrations();
+    if (view === 'physicalTagFactory') loadPhysicalTagFactory();
     // Close sidebar on mobile
     if (window.innerWidth <= 1024) closeSidebar();
+  };
+
+  // ===== PHYSICAL TAG FACTORY =====
+  window.loadPhysicalTagFactory = async function() {
+    const errorEl = document.getElementById('factoryError');
+    try {
+      const res = await fetch(API + '/native/physical-tag-factory', { headers: headers() });
+      if (res.status === 401) { doLogout(); return; }
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'Erro ao carregar configuração.');
+      document.getElementById('factoryInsuredLast').value = json.data.insuredSunNumberLast || '';
+      document.getElementById('factoryNonInsuredLast').value = json.data.nonInsuredSunNumberLast || '';
+      errorEl.style.display = 'none';
+    } catch (e) {
+      errorEl.textContent = e.message;
+      errorEl.style.display = 'block';
+    }
+  };
+
+  window.savePhysicalTagFactory = async function() {
+    const errorEl = document.getElementById('factoryError');
+    const successEl = document.getElementById('factorySuccess');
+    const button = document.getElementById('factorySaveBtn');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+    button.disabled = true;
+    try {
+      const res = await fetch(API + '/native/physical-tag-factory', {
+        method: 'PUT', headers: headers(),
+        body: JSON.stringify({
+          insuredSunNumberLast: document.getElementById('factoryInsuredLast').value,
+          nonInsuredSunNumberLast: document.getElementById('factoryNonInsuredLast').value
+        })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'Erro ao atualizar configuração.');
+      successEl.style.display = 'block';
+    } catch (e) {
+      errorEl.textContent = e.message;
+      errorEl.style.display = 'block';
+    } finally { button.disabled = false; }
   };
 
   // ===== INTEGRATIONS =====
@@ -1814,7 +1885,7 @@ tr{cursor:pointer;transition:background 0.1s}
     }
     el.innerHTML = users.map(u => {
       const initials = u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-      const roleLabel = u.role === 'gestor' ? 'Gestor' : 'Atendente';
+      const roleLabel = u.role === 'admin' ? 'Admin' : (u.role === 'gestor' ? 'Gestor' : 'Atendente');
       const roleBadgeClass = u.role === 'gestor' ? 'badge-gestor' : 'badge-atendente';
       const statusBadge = u.isActive
         ? '<span class="badge badge-role badge-active">Ativo</span>'

@@ -195,7 +195,7 @@ model DashboardUser {
   name         String
   email        String   @unique
   passwordHash String
-  role         String   @default("atendente") // gestor | atendente
+  role         String   @default("atendente") // admin | gestor | atendente
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

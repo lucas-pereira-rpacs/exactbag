@@ -32,6 +32,27 @@ const readConfig = async () => {
   return rows[0] || DEFAULT_CONFIG;
 };
 
+const getPhysicalTagFactory = readConfig;
+
+const updatePhysicalTagFactoryLastNumbers = async ({ insuredLast, nonInsuredLast }) => {
+  if (!prisma) return { success: false, error: 'Banco de dados indisponível' };
+
+  const insured = String(insuredLast || '').trim().toUpperCase();
+  const nonInsured = String(nonInsuredLast || '').trim().toUpperCase();
+  if (!/^S\d+$/.test(insured) || !/^\d+$/.test(nonInsured)) {
+    return { success: false, error: 'Informe o último SUN segurado como S+números e o não segurado somente com números.' };
+  }
+
+  const rows = await prisma.$queryRaw`
+    UPDATE "PhysicalTagFactory"
+    SET "InsuredSunNumberLast" = ${insured},
+        "NonInsuredSunNumberLast" = ${nonInsured}
+    WHERE id = 1
+    RETURNING *
+  `;
+  return { success: true, config: rows[0] || null };
+};
+
 const endpointForType = (config, insured, kind) => {
   const values = Object.entries(config)
     .filter(([key]) => key !== 'id' && key.toLowerCase().includes(kind))
@@ -71,4 +92,9 @@ const validateSun = async (value) => {
   return { valid: true, insured: normalized.insured, value: normalized.value, normalized: normalized.numeric };
 };
 
-module.exports = { normalizeSun, validateSun };
+module.exports = {
+  normalizeSun,
+  validateSun,
+  getPhysicalTagFactory,
+  updatePhysicalTagFactoryLastNumbers
+};

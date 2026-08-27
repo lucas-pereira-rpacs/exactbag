@@ -4,7 +4,11 @@ const router = express.Router();
 const controller = require('../controllers/nativeRegistrationController');
 const { handleDashboardManualSale } = require('../../../controllers/manualSaleController');
 const { handlePhysicalTagSale } = require('../../../controllers/physicalTagSaleController');
-const { validateSun } = require('../../../services/physicalTagSunService');
+const {
+  validateSun,
+  getPhysicalTagFactory,
+  updatePhysicalTagFactoryLastNumbers
+} = require('../../../services/physicalTagSunService');
 const partnerRepository = require('../../../repositories/partnerRepository');
 const nowIntegrationRoutes = require('./nowIntegrationRoutes');
 const { dashboardAuthMiddleware, requireRole, login, logout, validateToken,
@@ -22,6 +26,35 @@ router.post('/physical-tag/validate-sun', async (req, res) => {
   } catch (error) {
     console.error('[PhysicalTag] Erro ao validar SUN:', error);
     return res.status(500).json({ valid: false, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' });
+  }
+});
+
+router.get('/physical-tag-factory', dashboardAuthMiddleware, requireRole('gestor', 'admin'), async (_req, res) => {
+  try {
+    const config = await getPhysicalTagFactory();
+    return res.json({
+      success: true,
+      data: {
+        insuredSunNumberLast: config.InsuredSunNumberLast,
+        nonInsuredSunNumberLast: config.NonInsuredSunNumberLast
+      }
+    });
+  } catch (error) {
+    console.error('[PhysicalTagFactory] Erro ao buscar configuração:', error);
+    return res.status(500).json({ success: false, error: 'Erro ao carregar configuração de SUN.' });
+  }
+});
+
+router.put('/physical-tag-factory', dashboardAuthMiddleware, requireRole('gestor', 'admin'), async (req, res) => {
+  try {
+    const result = await updatePhysicalTagFactoryLastNumbers({
+      insuredLast: req.body?.insuredSunNumberLast,
+      nonInsuredLast: req.body?.nonInsuredSunNumberLast
+    });
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('[PhysicalTagFactory] Erro ao atualizar configuração:', error);
+    return res.status(500).json({ success: false, error: 'Erro ao atualizar configuração de SUN.' });
   }
 });
 
