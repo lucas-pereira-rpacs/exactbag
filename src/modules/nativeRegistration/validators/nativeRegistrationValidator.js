@@ -171,6 +171,7 @@ const sanitizeInput = (body) => {
       color: item.color ? sanitize(item.color) : null,
       brand: item.brand ? sanitize(item.brand) : null,
       identifierTag: item.identifierTag ? sanitize(item.identifierTag) : null,
+      sunNumber: item.sunNumber ? sanitize(item.sunNumber).toUpperCase() : null,
       imageData: item.imageData || null,
       imageData2: item.imageData2 || null
     }))

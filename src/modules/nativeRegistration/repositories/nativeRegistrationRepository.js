@@ -105,7 +105,7 @@ const prismaFindMany = async ({ page = 1, limit = 20, sortBy = 'createdAt', sort
       where,
       include: {
         baggageItems: {
-          select: { id: true, bagType: true, color: true, brand: true, identifierTag: true, createdAt: true }
+            select: { id: true, bagType: true, color: true, brand: true, identifierTag: true, sunNumber: true, createdAt: true }
         }
       },
       orderBy: { [orderField]: sortOrder === 'asc' ? 'asc' : 'desc' },

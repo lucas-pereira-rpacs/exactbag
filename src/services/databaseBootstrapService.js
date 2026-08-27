@@ -100,6 +100,7 @@ const createNativeBaggageItemSql = `
     "color" TEXT,
     "brand" TEXT,
     "identifierTag" TEXT,
+    "sunNumber" TEXT,
     "imageData" TEXT,
     "imageData2" TEXT,
     "imageUrl" TEXT,
@@ -168,6 +169,7 @@ const initializeDatabase = async () => {
   // Backfill NativeRegistration columns added after initial creation
   await prisma.$executeRawUnsafe('ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "returnReminderSentAt" TIMESTAMP(3)');
   await prisma.$executeRawUnsafe('ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "hasInsurance" BOOLEAN NOT NULL DEFAULT false');
+  await prisma.$executeRawUnsafe('ALTER TABLE "NativeBaggageItem" ADD COLUMN IF NOT EXISTS "sunNumber" TEXT');
 
   for (const statement of nativeRegistrationIndexes) {
     // eslint-disable-next-line no-await-in-loop

@@ -32,7 +32,8 @@ const createRegistration = async (req, res) => {
       validation.sanitized.hasInsurance = sunValidation.insured;
       validation.sanitized.baggageItems[0] = {
         ...(validation.sanitized.baggageItems[0] || {}),
-        identifierTag: sunValidation.value
+        identifierTag: sunValidation.value,
+        sunNumber: sunValidation.value
       };
     }
 
