@@ -640,6 +640,14 @@ tr{cursor:pointer;transition:background 0.1s}
             </select>
           </div>
           <div class="filter-group">
+            <label>Tipo de registro</label>
+            <select id="filterPhysicalTag">
+              <option value="">Todos</option>
+              <option value="true">TAG física</option>
+              <option value="false">Registro de bagagem</option>
+            </select>
+          </div>
+          <div class="filter-group">
             <label>De</label>
             <input type="date" id="filterDateFrom" />
           </div>
@@ -986,6 +994,8 @@ tr{cursor:pointer;transition:background 0.1s}
     return document.getElementById('filterName').value.trim() ||
            document.getElementById('filterCpv').value.trim() ||
            document.getElementById('filterStatus').value ||
+           document.getElementById('filterInsurance').value ||
+           document.getElementById('filterPhysicalTag').value ||
            document.getElementById('filterDateFrom').value ||
            document.getElementById('filterDateTo').value;
   }
@@ -1036,12 +1046,14 @@ tr{cursor:pointer;transition:background 0.1s}
       const cpv = document.getElementById('filterCpv').value.trim();
       const st = document.getElementById('filterStatus').value;
       const ins = document.getElementById('filterInsurance').value;
+      const physicalTag = document.getElementById('filterPhysicalTag').value;
       const df = document.getElementById('filterDateFrom').value;
       const dt = document.getElementById('filterDateTo').value;
       if (nm) { nm.includes('@') ? p.set('passengerEmail', nm) : p.set('passengerName', nm); }
       if (cpv) p.set('cpvNumber', cpv);
       if (st) p.set('status', st);
       if (ins) p.set('hasInsurance', ins);
+      if (physicalTag) p.set('isPhysicalTag', physicalTag);
       if (df) p.set('dateFrom', df);
       if (dt) p.set('dateTo', dt);
 
@@ -1116,6 +1128,7 @@ tr{cursor:pointer;transition:background 0.1s}
     ['filterName','filterCpv','filterDateFrom','filterDateTo'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('filterStatus').value = '';
     document.getElementById('filterInsurance').value = '';
+    document.getElementById('filterPhysicalTag').value = '';
     currentPage = 1; loadAll();
   };
   document.querySelectorAll('.filters-bar input').forEach(el => { el.addEventListener('keydown', e => { if (e.key==='Enter') applyFilters(); }); });

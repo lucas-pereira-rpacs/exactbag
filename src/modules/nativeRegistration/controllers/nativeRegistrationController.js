@@ -104,7 +104,8 @@ const listRegistrations = async (req, res) => {
       cpvNumber,
       dateFrom,
       dateTo,
-      hasInsurance
+      hasInsurance,
+      isPhysicalTag
     } = req.query;
 
     // Normaliza o filtro de seguro: 'true'/'1' => true, 'false'/'0' => false, ausente => sem filtro
@@ -112,12 +113,16 @@ const listRegistrations = async (req, res) => {
     if (hasInsurance === 'true' || hasInsurance === '1') hasInsuranceFilter = true;
     else if (hasInsurance === 'false' || hasInsurance === '0') hasInsuranceFilter = false;
 
+    let isPhysicalTagFilter;
+    if (isPhysicalTag === 'true' || isPhysicalTag === '1') isPhysicalTagFilter = true;
+    else if (isPhysicalTag === 'false' || isPhysicalTag === '0') isPhysicalTagFilter = false;
+
     const result = await registrationService.listRegistrations({
       page: Math.min(Math.max(1, parseInt(page) || 1), 10000),
       limit: Math.max(1, Math.min(parseInt(limit) || 20, 100)),
       sortBy,
       sortOrder,
-      filters: { partnerId, status, passengerEmail, passengerName, cpvNumber, dateFrom, dateTo, hasInsurance: hasInsuranceFilter }
+      filters: { partnerId, status, passengerEmail, passengerName, cpvNumber, dateFrom, dateTo, hasInsurance: hasInsuranceFilter, isPhysicalTag: isPhysicalTagFilter }
     });
 
     return res.status(200).json({

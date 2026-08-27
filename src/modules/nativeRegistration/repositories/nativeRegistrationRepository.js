@@ -36,6 +36,7 @@ function matchFilter(record, filters) {
   if (filters.passengerName && !record.passengerName.toLowerCase().includes(filters.passengerName.toLowerCase())) return false;
   if (filters.cpvNumber && !(record.cpvNumber || '').toLowerCase().includes(filters.cpvNumber.toLowerCase())) return false;
   if (filters.hasInsurance !== undefined && !!record.hasInsurance !== filters.hasInsurance) return false;
+  if (filters.isPhysicalTag !== undefined && !!record.isPhysicalTag !== filters.isPhysicalTag) return false;
   if (filters.dateFrom && new Date(record.createdAt) < new Date(filters.dateFrom)) return false;
   if (filters.dateTo && new Date(record.createdAt) > new Date(filters.dateTo)) return false;
   return true;
@@ -92,6 +93,7 @@ const prismaFindMany = async ({ page = 1, limit = 20, sortBy = 'createdAt', sort
   if (filters.passengerName) where.passengerName = { contains: filters.passengerName, mode: 'insensitive' };
   if (filters.cpvNumber) where.cpvNumber = { contains: filters.cpvNumber, mode: 'insensitive' };
   if (filters.hasInsurance !== undefined) where.hasInsurance = filters.hasInsurance;
+  if (filters.isPhysicalTag !== undefined) where.isPhysicalTag = filters.isPhysicalTag;
   if (filters.dateFrom || filters.dateTo) {
     where.createdAt = {};
     if (filters.dateFrom) where.createdAt.gte = new Date(filters.dateFrom);
