@@ -31,7 +31,7 @@ const createRegistration = async (sanitizedData, meta = {}) => {
   // 1b. Herda o indicador de seguro da venda do parceiro (fonte autoritativa).
   //     No fluxo de TAG física, o indicador vem do prefixo do SUN confirmado.
   let hasInsurance = !!sanitizedData.hasInsurance;
-  if (sanitizedData.saleId && !sanitizedData.physicalTag) {
+  if (sanitizedData.saleId && !sanitizedData.isPhysicalTag) {
     try {
       const sale = await repository.findSaleContext(sanitizedData.saleId);
       if (sale?.expirationDate && new Date(sale.expirationDate) <= new Date()) {

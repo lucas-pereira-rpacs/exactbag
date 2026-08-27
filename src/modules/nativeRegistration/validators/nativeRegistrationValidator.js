@@ -93,7 +93,7 @@ const validateRegistrationInput = (body) => {
     errors.push({ field: 'termsAccepted', message: 'Aceite dos termos é obrigatório' });
   }
 
-  if (toBoolean(body.physicalTag) && !body.sunNumber) {
+  if (toBoolean(body.isPhysicalTag || body.physicalTag) && !body.sunNumber) {
     errors.push({ field: 'sunNumber', message: 'O número SUN da TAG é obrigatório' });
   }
 
@@ -163,7 +163,7 @@ const sanitizeInput = (body) => {
     termsAcceptedAt: new Date(),
     partnerId: body.partnerId || null,
     saleId: body.saleId || null,
-    physicalTag: toBoolean(body.physicalTag),
+    isPhysicalTag: toBoolean(body.isPhysicalTag || body.physicalTag),
     sunNumber: body.sunNumber ? sanitize(String(body.sunNumber)).toUpperCase() : null,
     insured: toBoolean(body.insured),
     baggageItems: (body.baggageItems || []).map((item) => ({

@@ -282,7 +282,7 @@ body {
 
   <form id="registrationForm" novalidate>
     <input type="hidden" id="saleId" name="saleId" value="{{saleId}}" />
-    <input type="hidden" id="physicalTag" name="physicalTag" value="true" />
+    <input type="hidden" id="isPhysicalTag" name="isPhysicalTag" value="true" />
     <input type="hidden" id="insured" name="insured" value="false" />
 
     <!-- ============ STEP 1: Dados Pessoais ============ -->
@@ -1887,7 +1887,7 @@ body {
 
     var payload = {
       saleId: val('saleId') || null,
-      physicalTag: true,
+      isPhysicalTag: true,
       sunNumber: val('sunNumber'),
       insured: val('insured') === 'true',
       passengerName: val('passengerName'),

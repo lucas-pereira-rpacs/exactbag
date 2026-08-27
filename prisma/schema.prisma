@@ -125,6 +125,7 @@ model NativeRegistration {
   id              String   @id @default(cuid())
   partnerId       String?
   saleId          String?
+  isPhysicalTag   Boolean  @default(false)
   // Passenger data
   passengerName   String
   passengerCpf    String?

@@ -20,7 +20,7 @@ const createRegistration = async (req, res) => {
       });
     }
 
-    if (validation.sanitized.physicalTag) {
+    if (validation.sanitized.isPhysicalTag) {
       const sunValidation = await validateSun(validation.sanitized.sunNumber);
       if (!sunValidation.valid) {
         return res.status(400).json({
@@ -38,7 +38,7 @@ const createRegistration = async (req, res) => {
     }
 
     const saleId = validation.sanitized.saleId;
-    if (!saleId && !validation.sanitized.physicalTag) {
+    if (!saleId && !validation.sanitized.isPhysicalTag) {
       throw new Error('[NativeRegistration] saleId is required');
     }
 
