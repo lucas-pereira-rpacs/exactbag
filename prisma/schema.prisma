@@ -201,3 +201,12 @@ model DashboardUser {
   @@index([email])
   @@index([role])
 }
+
+// Singleton configuration for physical SUN tag number ranges.
+model PhysicalTagFactory {
+  id                         Int    @id @default(1)
+  InsuredSunNumberStarting   String @default("9110001")
+  NonInsuredSunNumberStarting String @default("S1010001")
+  InsuredSunNumberLast       String @default("S1024290")
+  NonInsuredSunNumberLast    String @default("91208408")
+}
