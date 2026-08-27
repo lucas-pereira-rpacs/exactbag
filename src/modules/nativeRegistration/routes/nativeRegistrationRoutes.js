@@ -4,6 +4,7 @@ const router = express.Router();
 const controller = require('../controllers/nativeRegistrationController');
 const { handleDashboardManualSale } = require('../../../controllers/manualSaleController');
 const { handlePhysicalTagSale } = require('../../../controllers/physicalTagSaleController');
+const { validateSun } = require('../../../services/physicalTagSunService');
 const partnerRepository = require('../../../repositories/partnerRepository');
 const nowIntegrationRoutes = require('./nowIntegrationRoutes');
 const { dashboardAuthMiddleware, requireRole, login, logout, validateToken,
@@ -14,6 +15,15 @@ const { dashboardAuthMiddleware, requireRole, login, logout, validateToken,
 // Body parser com limite de 10mb para upload de fotos base64
 const bodyParser = require('body-parser');
 router.post('/registro', bodyParser.json({ limit: '10mb' }), controller.createRegistration);
+router.post('/physical-tag/validate-sun', async (req, res) => {
+  try {
+    const result = await validateSun(req.body?.sunNumber);
+    return res.status(result.valid ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('[PhysicalTag] Erro ao validar SUN:', error);
+    return res.status(500).json({ valid: false, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' });
+  }
+});
 
 // GET /native/cpv/:cpvNumber — Consulta pública do CPV (QR Code, sem auth)
 router.get('/cpv/:cpvNumber', controller.getPublicCpv);

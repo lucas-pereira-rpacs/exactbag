@@ -93,6 +93,10 @@ const validateRegistrationInput = (body) => {
     errors.push({ field: 'termsAccepted', message: 'Aceite dos termos é obrigatório' });
   }
 
+  if (toBoolean(body.physicalTag) && !body.sunNumber) {
+    errors.push({ field: 'sunNumber', message: 'O número SUN da TAG é obrigatório' });
+  }
+
   const baggageQty = parseInt(body.baggageQty);
   if (isNaN(baggageQty) || baggageQty < 1 || baggageQty > 10) {
     errors.push({ field: 'baggageQty', message: 'Quantidade de bagagens deve ser entre 1 e 10' });
@@ -159,6 +163,9 @@ const sanitizeInput = (body) => {
     termsAcceptedAt: new Date(),
     partnerId: body.partnerId || null,
     saleId: body.saleId || null,
+    physicalTag: toBoolean(body.physicalTag),
+    sunNumber: body.sunNumber ? sanitize(String(body.sunNumber)).toUpperCase() : null,
+    insured: toBoolean(body.insured),
     baggageItems: (body.baggageItems || []).map((item) => ({
       bagType: item.bagType ? sanitize(item.bagType) : null,
       color: item.color ? sanitize(item.color) : null,

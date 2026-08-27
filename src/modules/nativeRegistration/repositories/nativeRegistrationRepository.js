@@ -43,7 +43,7 @@ function matchFilter(record, filters) {
 
 // ===== Prisma implementations =====
 const prismaCreate = async (data) => {
-  const { baggageItems, ...registrationData } = data;
+  const { baggageItems, physicalTag, sunNumber, insured, ...registrationData } = data;
   return prisma.nativeRegistration.create({
     data: {
       ...registrationData,

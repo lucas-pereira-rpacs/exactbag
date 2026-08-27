@@ -271,6 +271,21 @@ if (process.env.NATIVE_REGISTRATION_ENABLED !== 'false') {
     res.render("registrodebagagem", { roundTrip: true, layout: false });
   });
 
+  app.get("/registrodetagfisica", publicLimiter, async (req, res) => {
+    const saleId = req.query.saleId;
+    if (saleId) {
+      const [sale] = await prisma.$queryRaw`SELECT * FROM "Sale" WHERE "saleId" = ${saleId} LIMIT 1`;
+      const isExpired = sale?.expirationDate && new Date(sale.expirationDate) <= new Date();
+      if (isExpired) return res.status(410).render('link-expirado', { layout: false });
+      return res.render('registrodetagfisica', {
+        ...(sale || {}), roundTrip: sale?.roundTrip ?? true,
+        outboundDateInput: sale?.outboundDate?.toISOString().slice(0, 10) || '',
+        returnDateInput: sale?.returnDate?.toISOString().slice(0, 10) || '', layout: false
+      });
+    }
+    return res.render('registrodetagfisica', { roundTrip: true, layout: false });
+  });
+
   // Redirect antigo /native/form para nova URL
   app.get('/native/form', (req, res) => {
     const qs = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';

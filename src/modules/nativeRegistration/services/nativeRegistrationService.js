@@ -29,9 +29,9 @@ const createRegistration = async (sanitizedData, meta = {}) => {
   const cpvNumber = cpvPdfService.generateCpvNumber();
 
   // 1b. Herda o indicador de seguro da venda do parceiro (fonte autoritativa).
-  //     Se houver saleId vinculado, o valor da venda prevalece sobre o enviado no formulário.
+  //     No fluxo de TAG física, o indicador vem do prefixo do SUN confirmado.
   let hasInsurance = !!sanitizedData.hasInsurance;
-  if (sanitizedData.saleId) {
+  if (sanitizedData.saleId && !sanitizedData.physicalTag) {
     try {
       const sale = await repository.findSaleContext(sanitizedData.saleId);
       if (sale?.expirationDate && new Date(sale.expirationDate) <= new Date()) {

@@ -3,6 +3,7 @@ const registrationService = require('../services/nativeRegistrationService');
 const repository = require('../repositories/nativeRegistrationRepository');
 const { validateRegistrationInput } = require('../validators/nativeRegistrationValidator');
 const scheduler = require('../../../jobs/scheduler');
+const { validateSun } = require('../../../services/physicalTagSunService');
 
 /**
  * POST /native/registro — Cria registro completo
@@ -19,8 +20,24 @@ const createRegistration = async (req, res) => {
       });
     }
 
+    if (validation.sanitized.physicalTag) {
+      const sunValidation = await validateSun(validation.sanitized.sunNumber);
+      if (!sunValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.',
+          details: [{ field: 'sunNumber', message: sunValidation.error }]
+        });
+      }
+      validation.sanitized.hasInsurance = sunValidation.insured;
+      validation.sanitized.baggageItems[0] = {
+        ...(validation.sanitized.baggageItems[0] || {}),
+        identifierTag: sunValidation.value
+      };
+    }
+
     const saleId = validation.sanitized.saleId;
-    if (!saleId) {
+    if (!saleId && !validation.sanitized.physicalTag) {
       throw new Error('[NativeRegistration] saleId is required');
     }
 
@@ -31,7 +48,7 @@ const createRegistration = async (req, res) => {
 
     const result = await registrationService.createRegistration(validation.sanitized, meta);
 
-    const saleHasInsurance = await repository.findSaleHasInsurance(saleId);
+    const saleHasInsurance = saleId ? await repository.findSaleHasInsurance(saleId) : null;
 
     if (saleHasInsurance === true) {
       await scheduler.now("now-integration", {
