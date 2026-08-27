@@ -3,7 +3,8 @@ const registrationService = require('../services/nativeRegistrationService');
 const repository = require('../repositories/nativeRegistrationRepository');
 const { validateRegistrationInput } = require('../validators/nativeRegistrationValidator');
 const scheduler = require('../../../jobs/scheduler');
-const { validateSun } = require('../../../services/physicalTagSunService');
+const { validateSun, isTestSun } = require('../../../services/physicalTagSunService');
+const { validateToken } = require('../services/dashboardAuthService');
 
 /**
  * POST /native/registro — Cria registro completo
@@ -21,6 +22,17 @@ const createRegistration = async (req, res) => {
     }
 
     if (validation.sanitized.isPhysicalTag) {
+      if (isTestSun(validation.sanitized.sunNumber)) {
+        const session = validateToken(req.headers.authorization?.startsWith('Bearer ')
+          ? req.headers.authorization.slice(7)
+          : req.query.token);
+        if (!session || !['admin', 'gestor'].includes(session.role)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Apenas administradores ou gestores podem usar SUNs de teste.'
+          });
+        }
+      }
       const sunValidation = await validateSun(validation.sanitized.sunNumber);
       if (!sunValidation.valid) {
         return res.status(400).json({

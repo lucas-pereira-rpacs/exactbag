@@ -1,6 +1,16 @@
 const { prisma } = require('../config');
 const QRCode = require('qrcode');
 
+const TEST_SUNS = {
+  nonInsured: '-1',
+  insured: 'S-1'
+};
+
+const isTestSun = (value) => {
+  const normalized = normalizeSun(value);
+  return normalized.value === TEST_SUNS.nonInsured || normalized.value === TEST_SUNS.insured;
+};
+
 const findFirstSunUsage = async (sunNumber) => {
   if (!prisma) return null;
   const rows = await prisma.$queryRaw`
@@ -71,6 +81,15 @@ const endpointForType = (config, insured, kind) => {
 
 const validateSun = async (value) => {
   const normalized = normalizeSun(value);
+  if (isTestSun(normalized.value)) {
+    return {
+      valid: true,
+      insured: normalized.value === TEST_SUNS.insured,
+      value: normalized.value,
+      normalized: normalized.value.slice(normalized.value.startsWith('S') ? 1 : 0)
+    };
+  }
+
   if (!normalized.numeric || !/^\d+$/.test(normalized.numeric)) {
     return { valid: false, insured: normalized.insured, value: normalized.value, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' };
   }
@@ -105,5 +124,7 @@ module.exports = {
   validateSun,
   getPhysicalTagFactory,
   updatePhysicalTagFactoryLastNumbers,
-  generatePhysicalTagRegistrationQrCode
+  generatePhysicalTagRegistrationQrCode,
+  TEST_SUNS,
+  isTestSun
 };

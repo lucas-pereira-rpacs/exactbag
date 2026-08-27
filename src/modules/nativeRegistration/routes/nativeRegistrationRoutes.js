@@ -8,7 +8,8 @@ const {
   validateSun,
   getPhysicalTagFactory,
   updatePhysicalTagFactoryLastNumbers,
-  generatePhysicalTagRegistrationQrCode
+  generatePhysicalTagRegistrationQrCode,
+  isTestSun
 } = require('../../../services/physicalTagSunService');
 const partnerRepository = require('../../../repositories/partnerRepository');
 const nowIntegrationRoutes = require('./nowIntegrationRoutes');
@@ -22,7 +23,16 @@ const bodyParser = require('body-parser');
 router.post('/registro', bodyParser.json({ limit: '10mb' }), controller.createRegistration);
 router.post('/physical-tag/validate-sun', async (req, res) => {
   try {
-    const result = await validateSun(req.body?.sunNumber);
+    const requestedSun = req.body?.sunNumber;
+    if (isTestSun(requestedSun)) {
+      const session = validateToken(req.headers.authorization?.startsWith('Bearer ')
+        ? req.headers.authorization.slice(7)
+        : req.query.token);
+      if (!session || !['admin', 'gestor'].includes(session.role)) {
+        return res.status(403).json({ valid: false, error: 'Apenas administradores ou gestores podem usar SUNs de teste.' });
+      }
+    }
+    const result = await validateSun(requestedSun);
     return res.status(result.valid ? 200 : 400).json(result);
   } catch (error) {
     console.error('[PhysicalTag] Erro ao validar SUN:', error);

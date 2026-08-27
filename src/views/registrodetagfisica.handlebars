@@ -1318,6 +1318,10 @@ body {
   let currentStep = 1;
   const totalSteps = 4;
   let sunConfirmed = false;
+  function dashboardAuthHeaders() {
+    var token = localStorage.getItem('exactbag_dash_token');
+    return token ? { 'Authorization': 'Bearer ' + token } : {};
+  }
 
   // ========== STEP NAVIGATION ==========
   window.nextStep = function() {
@@ -1452,7 +1456,7 @@ body {
     button.disabled = true;
     try {
       var response = await fetch(API_BASE + '/native/physical-tag/validate-sun', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, dashboardAuthHeaders()),
         body: JSON.stringify({ sunNumber: sun })
       });
       var result = await response.json();
@@ -1914,7 +1918,7 @@ body {
       try {
         var response = await fetch(API_BASE + '/native/registro', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: Object.assign({ 'Content-Type': 'application/json' }, dashboardAuthHeaders()),
           body: JSON.stringify(payload)
         });
 
