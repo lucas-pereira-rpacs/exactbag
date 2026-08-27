@@ -1,5 +1,17 @@
 const { prisma } = require('../config');
 
+const findFirstSunUsage = async (sunNumber) => {
+  if (!prisma) return null;
+  const rows = await prisma.$queryRaw`
+    SELECT "createdAt"
+    FROM "NativeBaggageItem"
+    WHERE "sunNumber" = ${sunNumber}
+    ORDER BY "createdAt" ASC
+    LIMIT 1
+  `;
+  return rows[0]?.createdAt || null;
+};
+
 const DEFAULT_CONFIG = {
   InsuredSunNumberStarting: '9110001',
   NonInsuredSunNumberStarting: 'S1010001',
@@ -45,6 +57,15 @@ const validateSun = async (value) => {
 
   if (first === null || last === null || number < first || number > last) {
     return { valid: false, insured: normalized.insured, value: normalized.value, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' };
+  }
+
+  const firstUsage = await findFirstSunUsage(normalized.value);
+  if (firstUsage) {
+    const expirationDate = new Date(firstUsage);
+    expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+    if (expirationDate <= new Date()) {
+      return { valid: false, insured: normalized.insured, value: normalized.value, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' };
+    }
   }
 
   return { valid: true, insured: normalized.insured, value: normalized.value, normalized: normalized.numeric };
