@@ -1,4 +1,5 @@
 const { prisma } = require('../config');
+const QRCode = require('qrcode');
 
 const findFirstSunUsage = async (sunNumber) => {
   if (!prisma) return null;
@@ -33,6 +34,13 @@ const readConfig = async () => {
 };
 
 const getPhysicalTagFactory = readConfig;
+
+const generatePhysicalTagRegistrationQrCode = async () => {
+  const baseUrl = (process.env.APP_BASE_URL || 'https://app.exactbag.com.br').replace(/\/+$/, '');
+  return QRCode.toString(`${baseUrl}/registrodetagfisica`, {
+    type: 'svg', margin: 2, errorCorrectionLevel: 'H'
+  });
+};
 
 const updatePhysicalTagFactoryLastNumbers = async ({ insuredLast, nonInsuredLast }) => {
   if (!prisma) return { success: false, error: 'Banco de dados indisponível' };
@@ -96,5 +104,6 @@ module.exports = {
   normalizeSun,
   validateSun,
   getPhysicalTagFactory,
-  updatePhysicalTagFactoryLastNumbers
+  updatePhysicalTagFactoryLastNumbers,
+  generatePhysicalTagRegistrationQrCode
 };

@@ -7,7 +7,8 @@ const { handlePhysicalTagSale } = require('../../../controllers/physicalTagSaleC
 const {
   validateSun,
   getPhysicalTagFactory,
-  updatePhysicalTagFactoryLastNumbers
+  updatePhysicalTagFactoryLastNumbers,
+  generatePhysicalTagRegistrationQrCode
 } = require('../../../services/physicalTagSunService');
 const partnerRepository = require('../../../repositories/partnerRepository');
 const nowIntegrationRoutes = require('./nowIntegrationRoutes');
@@ -55,6 +56,20 @@ router.put('/physical-tag-factory', dashboardAuthMiddleware, requireRole('gestor
   } catch (error) {
     console.error('[PhysicalTagFactory] Erro ao atualizar configuração:', error);
     return res.status(500).json({ success: false, error: 'Erro ao atualizar configuração de SUN.' });
+  }
+});
+
+router.get('/physical-tag-factory/qrcode', dashboardAuthMiddleware, requireRole('gestor', 'admin'), async (_req, res) => {
+  try {
+    const qrCode = await generatePhysicalTagRegistrationQrCode();
+    res.set({
+      'Content-Type': 'image/svg+xml',
+      'Content-Disposition': 'attachment; filename="exactbag-registro-tag-fisica.svg"'
+    });
+    return res.send(qrCode);
+  } catch (error) {
+    console.error('[PhysicalTagFactory] Erro ao gerar QR Code:', error);
+    return res.status(500).json({ success: false, error: 'Erro ao gerar QR Code.' });
   }
 });
 
