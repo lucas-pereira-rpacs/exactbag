@@ -1750,38 +1750,21 @@ body {
     var suffix = isSecond ? '_b' : '';
     var map = isSecond ? photoDataMap2 : photoDataMap;
 
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var canvas = document.createElement('canvas');
-        var maxDim = 1200;
-        var w = img.width, h = img.height;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-          else { w = Math.round(w * maxDim / h); h = maxDim; }
-        }
-        canvas.width = w; canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        var compressed = canvas.toDataURL('image/jpeg', 0.75);
-        canvas.width = 0; canvas.height = 0; canvas = null;
+    // Keep the original File. Object URLs are used only for the preview, so
+    // the upload never becomes a Base64 string or gets converted to another
+    // image format.
+    map[index] = { file: file, previewUrl: URL.createObjectURL(file) };
 
-        map[index] = compressed;
-
-        document.getElementById('photoZone' + suffix + '_' + index).style.display = 'none';
-        var preview = document.getElementById('photoPreview' + suffix + '_' + index);
-        preview.style.display = 'block';
-        document.getElementById('photoImg' + suffix + '_' + index).src = compressed;
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    document.getElementById('photoZone' + suffix + '_' + index).style.display = 'none';
+    var preview = document.getElementById('photoPreview' + suffix + '_' + index);
+    preview.style.display = 'block';
+    document.getElementById('photoImg' + suffix + '_' + index).src = map[index].previewUrl;
   }
 
   window.removePhoto = function(index, isSecond) {
     var suffix = isSecond ? '_b' : '';
     var map = isSecond ? photoDataMap2 : photoDataMap;
+    if (map[index]?.previewUrl) URL.revokeObjectURL(map[index].previewUrl);
     delete map[index];
     document.getElementById('photoZone' + suffix + '_' + index).style.display = 'flex';
     document.getElementById('photoPreview' + suffix + '_' + index).style.display = 'none';
@@ -1825,8 +1808,6 @@ body {
         bagType: (document.getElementById('bagType_' + i)?.value || ''),
         color: (document.getElementById('color_' + i)?.value || '').trim(),
         brand: (document.getElementById('brand_' + i)?.value || '').trim(),
-        imageData: photoDataMap[i] || null,
-        imageData2: photoDataMap2[i] || null
       });
     }
 
@@ -1854,10 +1835,16 @@ body {
 
     for (var attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
+        var formData = new FormData();
+        formData.append('registrationData', JSON.stringify(payload));
+        for (var fileIndex = 0; fileIndex < qty; fileIndex++) {
+          if (photoDataMap[fileIndex]) formData.append('imageData', photoDataMap[fileIndex].file);
+          if (photoDataMap2[fileIndex]) formData.append('imageData2', photoDataMap2[fileIndex].file);
+        }
+
         var response = await fetch(API_BASE + '/native/registro', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: formData
         });
 
         var result = await response.json();

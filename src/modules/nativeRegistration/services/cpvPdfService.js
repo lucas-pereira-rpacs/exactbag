@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const QRCode = require('qrcode');
+const { getObjectUrl } = require('../../../services/minioClient');
 
 // QR code cache — evita regenerar QR para o mesmo CPV (5min TTL)
 const _qrCache = new Map();
@@ -97,7 +98,11 @@ const logoAreaHtml = () => {
  */
 const generateCpvHtml = async (registration) => {
   const cpvNumber = registration.cpvNumber;
-  const baggageItems = registration.baggageItems || [];
+  const baggageItems = await Promise.all((registration.baggageItems || []).map(async (item) => ({
+    ...item,
+    imageData: await getObjectUrl(item.imageData),
+    imageData2: await getObjectUrl(item.imageData2),
+  })));
   const submissionDate = registration.createdAt || new Date();
 
   // Gera QR Code com link público de consulta do CPV (rota pública sem auth)

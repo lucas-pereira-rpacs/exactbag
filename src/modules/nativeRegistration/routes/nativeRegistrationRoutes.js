@@ -13,14 +13,27 @@ const {
 } = require('../../../services/physicalTagSunService');
 const partnerRepository = require('../../../repositories/partnerRepository');
 const nowIntegrationRoutes = require('./nowIntegrationRoutes');
+const multer = require('multer');
+const { minioStorage } = require('../../../services/minioClient');
 const { dashboardAuthMiddleware, requireRole, login, logout, validateToken,
         listUsers, getUserById, createUser, updateUser, changePassword, toggleUserActive } = require('../services/dashboardAuthService');
 
 // ==================== ROTAS PÚBLICAS (formulário do passageiro) ====================
 // POST /native/registro — Passageiro submete registro (sem auth, com rate limit)
-// Body parser com limite de 10mb para upload de fotos base64
-const bodyParser = require('body-parser');
-router.post('/registro', bodyParser.json({ limit: '10mb' }), controller.createRegistration);
+// Multipart upload: each image is streamed directly to MinIO by the custom
+// storage engine. The JSON metadata is submitted as the `registrationData`
+// field alongside repeated `imageData` and `imageData2` file fields.
+const upload = multer({
+  storage: minioStorage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 20 },
+  fileFilter: (_req, file, callback) => {
+    callback(null, file.mimetype.startsWith('image/'));
+  }
+});
+router.post('/registro', upload.fields([
+  { name: 'imageData', maxCount: 10 },
+  { name: 'imageData2', maxCount: 10 }
+]), controller.createRegistration);
 router.post('/physical-tag/validate-sun', async (req, res) => {
   try {
     const requestedSun = req.body?.sunNumber;

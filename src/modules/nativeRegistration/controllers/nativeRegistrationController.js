@@ -11,7 +11,29 @@ const { validateToken } = require('../services/dashboardAuthService');
  */
 const createRegistration = async (req, res) => {
   try {
-    const validation = validateRegistrationInput(req.body);
+    let registrationBody = req.body || {};
+
+    // Multipart requests carry metadata as JSON and images as MinIO-backed
+    // Multer files. Keep the persisted field names stable for the rest of the
+    // registration flow.
+    if (registrationBody.registrationData) {
+      try {
+        registrationBody = JSON.parse(registrationBody.registrationData);
+      } catch (_error) {
+        return res.status(400).json({ success: false, error: 'Dados invÃ¡lidos' });
+      }
+    }
+
+    const imageFiles = req.files || {};
+    const imageDataFiles = imageFiles.imageData || [];
+    const imageData2Files = imageFiles.imageData2 || [];
+    registrationBody.baggageItems = (registrationBody.baggageItems || []).map((item, index) => ({
+      ...item,
+      imageData: imageDataFiles[index]?.key || null,
+      imageData2: imageData2Files[index]?.key || null
+    }));
+
+    const validation = validateRegistrationInput(registrationBody);
 
     if (!validation.valid) {
       return res.status(400).json({
