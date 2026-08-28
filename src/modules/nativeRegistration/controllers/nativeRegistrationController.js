@@ -5,6 +5,16 @@ const { validateRegistrationInput } = require('../validators/nativeRegistrationV
 const scheduler = require('../../../jobs/scheduler');
 const { validateSun, isTestSun } = require('../../../services/physicalTagSunService');
 const { validateToken } = require('../services/dashboardAuthService');
+const { getObjectUrl } = require('../../../services/minioClient');
+
+const withImageUrls = async (registration) => ({
+  ...registration,
+  baggageItems: await Promise.all((registration.baggageItems || []).map(async (item) => ({
+    ...item,
+    imageData: await getObjectUrl(item.imageData),
+    imageData2: await getObjectUrl(item.imageData2),
+  })))
+});
 
 /**
  * POST /native/registro — Cria registro completo
@@ -188,7 +198,7 @@ const getRegistration = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: registration
+      data: await withImageUrls(registration)
     });
   } catch (error) {
     console.error('[NativeRegistration] Erro ao buscar registro:', error);
