@@ -45,7 +45,7 @@ async function ensureBucket() {
 }
 
 async function getObjectUrl(objectName, expiry = 3600) {
-  if (!objectName || objectName.startsWith('data:')) return objectName;
+  if (!objectName || objectName.startsWith('data:') || objectName.startsWith('/')) return objectName;
   if (!minioClient) return objectName;
   return minioClient.presignedGetObject(config.bucket, objectName, expiry);
 }

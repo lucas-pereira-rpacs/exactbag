@@ -20,6 +20,19 @@ const withImageUrls = async (registration) => ({
   })))
 });
 
+const withImageProxyUrls = (registration) => ({
+  ...registration,
+  baggageItems: (registration.baggageItems || []).map((item) => ({
+    ...item,
+    imageData: item.imageData?.startsWith('data:')
+      ? item.imageData
+      : (item.imageData ? `/native/registro/${registration.id}/image/${item.id}/imageData` : null),
+    imageData2: item.imageData2?.startsWith('data:')
+      ? item.imageData2
+      : (item.imageData2 ? `/native/registro/${registration.id}/image/${item.id}/imageData2` : null),
+  }))
+});
+
 /**
  * POST /native/registro — Cria registro completo
  */
@@ -263,7 +276,7 @@ const getCpvPreview = async (req, res) => {
     }
 
     const { generateCpvHtml } = require('../services/cpvPdfService');
-    const html = await generateCpvHtml(registration);
+    const html = await generateCpvHtml(withImageProxyUrls(registration));
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(html);
