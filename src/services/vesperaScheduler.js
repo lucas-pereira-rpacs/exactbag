@@ -46,7 +46,8 @@ class VesperaScheduler {
       const tomorrowStart = windowStart;
       const tomorrowEnd = windowEnd;
 
-      // Busca vendas processadas com voo amanhã que ainda NÃO receberam notificação véspera
+      // Busca todas as vendas processadas com voo na janela de 48h que ainda
+      // não receberam a notificação de véspera.
       const sales = await prisma.sale.findMany({
         where: {
           outboundDate: {

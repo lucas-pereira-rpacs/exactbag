@@ -60,6 +60,7 @@ model Sale {
   outboundDate DateTime?
   returnDate   DateTime?
   status       String   @default("pending")
+  isManualSale Boolean  @default(false)
   formLink     String?
   jobId        String?
   // Notification deduplication

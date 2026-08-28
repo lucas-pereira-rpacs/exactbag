@@ -3,6 +3,18 @@ const formGateway = require("../gateways/formGateway");
 const notificationService = require("./notificationService");
 const partnerRepository = require("../repositories/partnerRepository");
 
+const REGISTRATION_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+const isJustTravel = (partnerId) =>
+  String(partnerId || "").replace(/[\s_-]/g, "").toLowerCase() === "justtravel";
+
+const isWithinRegistrationWindow = (outboundDate, now = new Date()) => {
+  if (!outboundDate) return true;
+  const tripTime = new Date(outboundDate).getTime();
+  if (Number.isNaN(tripTime)) return true;
+  return tripTime - now.getTime() <= REGISTRATION_WINDOW_MS;
+};
+
 const processPartnerSale = async (salePayload) => {
   const {
     customerName,
@@ -32,6 +44,7 @@ const processPartnerSale = async (salePayload) => {
     expirationDate,
     outboundDate,
     returnDate,
+    isManualSale: manualSaleFlag === true,
   });
 
   // Prepara dados enriquecidos com todos os campos necessários para gateways
@@ -94,10 +107,25 @@ const processPartnerSale = async (salePayload) => {
     };
     const notificationSale = { saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate };
 
-    if (isManualSale) {
-      await notificationService.sendPurchaseNotification(passengerData, notificationSale, formLink);
-    } else {
+    const deferJustTravelRegistration =
+      isManualSale &&
+      isJustTravel(partnerId) &&
+      !isWithinRegistrationWindow(outboundDate);
+
+    if (deferJustTravelRegistration) {
       await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
+    } else {
+      const registrationNotification = await notificationService.sendPurchaseNotification(
+        passengerData,
+        notificationSale,
+        formLink,
+      );
+
+      // Prevent the 48-hour scheduler from sending a duplicate for sales
+      // created inside the registration window.
+      if (isManualSale && isJustTravel(partnerId) && registrationNotification.success) {
+        await dbService.updateSale(customerRecord.id, { vesperaSentAt: new Date() });
+      }
     }
   }
 

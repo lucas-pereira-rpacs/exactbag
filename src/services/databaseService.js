@@ -38,6 +38,7 @@ const saveCustomer = async (customerData) => {
     expirationDate: customerData.expirationDate ? new Date(customerData.expirationDate) : null,
     outboundDate: customerData.outboundDate ? new Date(customerData.outboundDate) : null,
     returnDate: customerData.returnDate ? new Date(customerData.returnDate) : null,
+    isManualSale: customerData.isManualSale === true,
     status: 'processing',
     createdAt: new Date(),
     updatedAt: new Date()
@@ -62,6 +63,7 @@ const saveCustomer = async (customerData) => {
       expirationDate: customerData.expirationDate ? new Date(customerData.expirationDate) : null,
       outboundDate: customerData.outboundDate ? new Date(customerData.outboundDate) : null,
       returnDate: customerData.returnDate ? new Date(customerData.returnDate) : null,
+      isManualSale: customerData.isManualSale === true,
       status: 'processing'
     }
   });
