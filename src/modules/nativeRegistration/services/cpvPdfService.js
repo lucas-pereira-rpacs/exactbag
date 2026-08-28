@@ -466,7 +466,7 @@ function _resetBrowserIdleTimer() {
 }
 
 async function getBrowser() {
-  if (_browser && _browser.isConnected()) {
+  if (_browser?.connected) {
     _resetBrowserIdleTimer();
     return _browser;
   }
@@ -575,7 +575,7 @@ const generateCpvPdf = async (registration) => {
   } catch (_err) {
     console.warn('[CpvPdfService] Falha ao gerar PDF:', _err.message);
     // Se o browser morreu, limpa referência para re-launch na próxima
-    if (_browser && !_browser.isConnected()) _browser = null;
+    if (_browser && !_browser.connected) _browser = null;
     return { cpvNumber, pdfBuffer: Buffer.from(html, 'utf-8'), html, isHtmlFallback: true };
   } finally {
     if (page) {
