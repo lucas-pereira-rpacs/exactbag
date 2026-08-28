@@ -492,7 +492,9 @@ async function getBrowser() {
     // 2) Produção (Docker): @sparticuz/chromium
     if (!executablePath) {
       try {
-        const chromium = require('@sparticuz/chromium');
+        // v149 exposes the Chromium class through the default export in CommonJS.
+        const chromiumModule = require('@sparticuz/chromium');
+        const chromium = chromiumModule.default || chromiumModule;
         const p = await chromium.executablePath();
         if (p && existsSync(p)) {
           executablePath = p;
