@@ -46,6 +46,12 @@ if (process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
 const SUPPORT_PHONE = process.env.SUPPORT_PHONE || '+55 12 99758-3157';
 const SUPPORT_PHONE_RAW = SUPPORT_PHONE.replace(/[\s\-\+\(\)]/g, '');
 
+// Object storage configuration. Support both the application-facing names and
+// the private/root names used by the local MinIO compose setup.
+const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT || process.env.MINIO_PRIVATE_ENDPOINT || '';
+const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY || process.env.MINIO_ROOT_USER || '';
+const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || process.env.MINIO_ROOT_PASSWORD || '';
+
 const config = {
     port: process.env.PORT || 3000,
     db: {
@@ -57,6 +63,15 @@ const config = {
     },
     supportPhone: SUPPORT_PHONE,
     supportPhoneRaw: SUPPORT_PHONE_RAW,
+    minio: {
+        endpoint: MINIO_ENDPOINT,
+        accessKey: MINIO_ACCESS_KEY,
+        secretKey: MINIO_SECRET_KEY,
+        port: process.env.MINIO_PORT || process.env.MINIO_PRIVATE_PORT || '',
+        useSSL: process.env.MINIO_USE_SSL === 'true',
+        bucket: process.env.MINIO_BUCKET || 'exactbag',
+        region: process.env.MINIO_REGION || 'us-east-1',
+    },
     prisma,
 };
 
