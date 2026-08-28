@@ -1,2 +1,2 @@
 ALTER TABLE "NativeRegistration"
-ADD COLUMN "isPhysicalTag" BOOLEAN NOT NULL DEFAULT false;
+ADD COLUMN IF NOT EXISTS "isPhysicalTag" BOOLEAN NOT NULL DEFAULT false;
