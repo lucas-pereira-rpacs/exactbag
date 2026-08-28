@@ -320,6 +320,9 @@ router.get('/registros', dashboardAuthMiddleware, controller.listRegistrations);
 router.get('/stats', dashboardAuthMiddleware, requireRole('gestor'), controller.getStats);
 
 // GET /native/registro/:id — Detalhe individual (gestor + atendente)
+// Baggage images are intentionally public for now; the route remains covered
+// by the native module's rate limiter.
+router.get('/registro/:id/image/:itemId/:field', controller.streamRegistrationImage);
 router.get('/registro/:id', dashboardAuthMiddleware, controller.getRegistration);
 
 // GET /native/registro/:id/cpv — Preview HTML do CPV (gestor + atendente)

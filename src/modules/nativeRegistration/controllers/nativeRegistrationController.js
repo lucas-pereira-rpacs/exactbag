@@ -5,14 +5,18 @@ const { validateRegistrationInput } = require('../validators/nativeRegistrationV
 const scheduler = require('../../../jobs/scheduler');
 const { validateSun, isTestSun } = require('../../../services/physicalTagSunService');
 const { validateToken } = require('../services/dashboardAuthService');
-const { getObjectUrl } = require('../../../services/minioClient');
+const { client: minioClient, config: minioConfig } = require('../../../services/minioClient');
 
 const withImageUrls = async (registration) => ({
   ...registration,
   baggageItems: await Promise.all((registration.baggageItems || []).map(async (item) => ({
     ...item,
-    imageData: await getObjectUrl(item.imageData),
-    imageData2: await getObjectUrl(item.imageData2),
+    imageData: item.imageData?.startsWith('data:')
+      ? item.imageData
+      : (item.imageData ? `/native/registro/${registration.id}/image/${item.id}/imageData` : null),
+    imageData2: item.imageData2?.startsWith('data:')
+      ? item.imageData2
+      : (item.imageData2 ? `/native/registro/${registration.id}/image/${item.id}/imageData2` : null),
   })))
 });
 
@@ -206,6 +210,44 @@ const getRegistration = async (req, res) => {
       success: false,
       error: 'Erro interno ao buscar registro'
     });
+  }
+};
+
+/**
+ * GET /native/registro/:id/image/:itemId/:field — Streams a private registration image
+ */
+const streamRegistrationImage = async (req, res) => {
+  try {
+    const { id, itemId, field } = req.params;
+    if (!['imageData', 'imageData2'].includes(field)) {
+      return res.status(400).json({ success: false, error: 'Campo de imagem invÃ¡lido' });
+    }
+    if (!minioClient) {
+      return res.status(503).json({ success: false, error: 'Object storage indisponÃ­vel' });
+    }
+
+    const registration = await registrationService.getRegistration(id);
+    const objectName = registration?.baggageItems?.find((item) => item.id === itemId)?.[field];
+    if (!objectName || objectName.startsWith('data:')) {
+      return res.status(404).json({ success: false, error: 'Imagem nÃ£o encontrada' });
+    }
+
+    const metadata = await minioClient.statObject(minioConfig.bucket, objectName);
+    const contentType = metadata.metaData?.['content-type'] || metadata.metaData?.['Content-Type'] || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+    if (metadata.size !== undefined) res.setHeader('Content-Length', metadata.size);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+
+    const imageStream = await minioClient.getObject(minioConfig.bucket, objectName);
+    imageStream.on('error', (error) => {
+      console.error('[NativeRegistration] Erro ao transmitir imagem:', error.message);
+      if (!res.headersSent) res.status(500).end();
+      else res.destroy(error);
+    });
+    imageStream.pipe(res);
+  } catch (error) {
+    console.error('[NativeRegistration] Erro ao buscar imagem:', error);
+    return res.status(404).json({ success: false, error: 'Imagem nÃ£o encontrada' });
   }
 };
 
@@ -473,6 +515,7 @@ module.exports = {
   createRegistration,
   listRegistrations,
   getRegistration,
+  streamRegistrationImage,
   getCpvPreview,
   downloadCpvPdf,
   resendEmail,

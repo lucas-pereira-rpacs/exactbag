@@ -1155,6 +1155,7 @@ tr{cursor:pointer;transition:background 0.1s}
       const res = await fetch(API + '/native/registro/' + id, { headers: headers() });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const r = (await res.json()).data;
+      const photoSrc = (src) => src;
       const registrationInList = registrations.find(item => String(item.id) === String(r.id || id));
       const hasInsurance = isInsuranceEnabled(r.hasInsurance) ||
         isInsuranceEnabled(registrationInList && registrationInList.hasInsurance);
@@ -1165,8 +1166,8 @@ tr{cursor:pointer;transition:background 0.1s}
       const allPhotos = [];
       if (r.baggageItems && r.baggageItems.length) {
         r.baggageItems.forEach((item, i) => {
-          if (item.imageData) allPhotos.push({ src: item.imageData, label: 'Bagagem ' + (i+1) + ' — Exterior' });
-          if (item.imageData2) allPhotos.push({ src: item.imageData2, label: 'Bagagem ' + (i+1) + ' — Outro Ângulo' });
+          if (item.imageData) allPhotos.push({ src: photoSrc(item.imageData), label: 'Bagagem ' + (i+1) + ' — Exterior' });
+          if (item.imageData2) allPhotos.push({ src: photoSrc(item.imageData2), label: 'Bagagem ' + (i+1) + ' — Outro Ângulo' });
         });
       }
       // Store in window for lightbox access
@@ -1178,8 +1179,8 @@ tr{cursor:pointer;transition:background 0.1s}
       if (r.baggageItems && r.baggageItems.length) {
         bags = r.baggageItems.map((item,i) => {
           const photos = [];
-          if (item.imageData) photos.push({ src: item.imageData, label: 'Bagagem ' + (i+1) + ' — Exterior' });
-          if (item.imageData2) photos.push({ src: item.imageData2, label: 'Bagagem ' + (i+1) + ' — Outro Ângulo' });
+          if (item.imageData) photos.push({ src: photoSrc(item.imageData), label: 'Bagagem ' + (i+1) + ' — Exterior' });
+          if (item.imageData2) photos.push({ src: photoSrc(item.imageData2), label: 'Bagagem ' + (i+1) + ' — Outro Ângulo' });
 
           let gallery = '';
           if (photos.length > 0) {
