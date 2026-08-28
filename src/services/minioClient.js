@@ -30,6 +30,18 @@ const minioClient = isConfigured
     })
   : null;
 
+async function ensureBucket() {
+  if (!minioClient) return false;
+
+  const exists = await minioClient.bucketExists(config.bucket);
+  if (!exists) {
+    await minioClient.makeBucket(config.bucket, config.region);
+    console.log(`[MinIO] Created bucket: ${config.bucket}`);
+  }
+
+  return true;
+}
+
 if (!isConfigured) {
   console.warn('[MinIO] Client disabled: endpoint and credentials are not fully configured');
 }
@@ -37,5 +49,6 @@ if (!isConfigured) {
 module.exports = {
   client: minioClient,
   config,
+  ensureBucket,
   isConfigured,
 };

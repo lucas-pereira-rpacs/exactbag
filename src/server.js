@@ -8,6 +8,7 @@ const jotformPollingService = require('./services/jotformPollingService');
 const agenda = require('./jobs/scheduler');
 const { initializeDatabase } = require('./services/databaseBootstrapService');
 const { runProductionMigrations } = require('./services/productionMigrationService');
+const { ensureBucket } = require('./services/minioClient');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -61,6 +62,12 @@ const startServer = async () => {
     await initializeDatabase();
   } catch (error) {
     console.warn('[ServerInit] Failed to bootstrap database schema:', error.message);
+  }
+
+  try {
+    await ensureBucket();
+  } catch (error) {
+    console.warn('[ServerInit] Failed to initialize MinIO bucket:', error.message);
   }
 
   server = app.listen(PORT, HOST, async () => {
