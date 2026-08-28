@@ -158,6 +158,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 .vendas-col-body table{min-width:560px;margin:0}
 .vendas-col-body thead{position:sticky;top:0;z-index:1}
 .sales-log-empty{padding:32px 16px;text-align:center;color:#9ca3af;font-size:13px}
+.notification-list{display:grid;gap:10px}
+.notification-item{padding:12px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb}
+.notification-item strong{display:block;color:#1f2937;font-size:13px}
+.notification-item small{display:block;margin-top:4px;color:#6b7280;font-size:11px}
+.notification-status{display:inline-block;margin-top:7px;padding:3px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.notification-status.sent{background:#dcfce7;color:#166534}.notification-status.scheduled,.notification-status.due{background:#dbeafe;color:#1e40af}.notification-status.blocked,.notification-status.missed-window{background:#fef3c7;color:#92400e}
 
 /* ===== FILTERS ===== */
 .filters-bar{background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:14px}
@@ -786,6 +792,12 @@ tr{cursor:pointer;transition:background 0.1s}
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="notificationModalOverlay" onclick="if(event.target===this)closeNotificationModal()">
+  <div class="modal">
+    <div class="modal-header"><h2 id="notificationModalTitle">Notificações da venda</h2><button class="modal-close" onclick="closeNotificationModal()">✕</button></div>
+    <div class="modal-body" id="notificationModalBody"></div>
   </div>
 </div>
 
@@ -1887,15 +1899,49 @@ tr{cursor:pointer;transition:background 0.1s}
         '<td style="white-space:nowrap">' + esc(r.customerPhone || '—') + '</td>' +
         '<td><code style="font-size:10px;background:#f3f4f6;padding:2px 5px;border-radius:3px">' + esc(r.partnerId || '—') + '</code></td>' +
         '<td>' + statusBadge + '</td>' +
+        '<td><button class="btn-sm btn-filter" onclick="event.stopPropagation();showSaleNotifications(\'' + esc(r.id) + '\')" style="padding:5px 8px;font-size:10px;white-space:nowrap">E-mails</button></td>' +
       '</tr>';
     }).join('');
     el.innerHTML = '<table>' +
       '<thead><tr>' +
-        '<th>Data</th><th>Cliente</th><th>E-mail</th><th>Telefone</th><th>Parceiro</th><th>Status</th>' +
+        '<th>Data</th><th>Cliente</th><th>E-mail</th><th>Telefone</th><th>Parceiro</th><th>Status</th><th>Notificações</th>' +
       '</tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
     '</table>';
   }
+
+  window.closeNotificationModal = function() {
+    document.getElementById('notificationModalOverlay').classList.remove('active');
+  };
+
+  window.showSaleNotifications = async function(saleId) {
+    const overlay = document.getElementById('notificationModalOverlay');
+    const body = document.getElementById('notificationModalBody');
+    const title = document.getElementById('notificationModalTitle');
+    overlay.classList.add('active');
+    body.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    try {
+      const res = await fetch(API + '/native/sales-log/' + encodeURIComponent(saleId) + '/notifications', { headers: headers() });
+      if (res.status === 401) { closeNotificationModal(); doLogout(); return; }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      title.textContent = 'Notificações — ' + (data.sale.customerName || 'Venda');
+      const format = (value) => value ? fmtDt(value) : '—';
+      const item = (entry, status) => '<div class="notification-item"><strong>' + esc(entry.label) + '</strong>' +
+        '<span class="notification-status ' + status + '">' + (status === 'sent' ? 'Enviado' : status === 'due' ? 'Pendente — janela atual' : status === 'scheduled' ? 'Agendado' : status === 'blocked' ? 'Aguardando' : 'Janela perdida') + '</span>' +
+        (entry.at ? '<small>' + (status === 'sent' ? 'Em: ' : 'Previsto para: ') + format(entry.at) + '</small>' : '') +
+        (entry.reason ? '<small>' + esc(entry.reason) + '</small>' : '') + '</div>';
+      const sent = (data.sent || []).map(entry => item(entry, 'sent')).join('');
+      const scheduled = (data.scheduled || []).map(entry => item(entry, entry.status)).join('');
+      body.innerHTML = '<p style="margin:0 0 14px;color:#6b7280;font-size:12px">' + esc(data.sale.customerEmail || '') + '</p>' +
+        '<h3 style="font-size:12px;text-transform:uppercase;color:#6b7280;margin:0 0 8px">E-mails enviados</h3>' +
+        '<div class="notification-list">' + (sent || '<div class="sales-log-empty">Nenhum e-mail registrado.</div>') + '</div>' +
+        '<h3 style="font-size:12px;text-transform:uppercase;color:#6b7280;margin:18px 0 8px">Scheduler</h3>' +
+        '<div class="notification-list">' + (scheduled || '<div class="sales-log-empty">Nenhum disparo previsto.</div>') + '</div>';
+    } catch (e) {
+      body.innerHTML = '<div class="sales-log-empty">Erro ao carregar notificações: ' + esc(e.message) + '</div>';
+    }
+  };
 
   function renderSalesLogPhysical(items) {
     const el = document.getElementById('salesLogPhysical');

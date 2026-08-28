@@ -122,12 +122,14 @@ router.get('/sales-log', dashboardAuthMiddleware, requireRole('gestor'), async (
     if (prisma) {
       const [sales, tagRows] = await Promise.all([
         prisma.sale.findMany({
-          where: { saleId: { startsWith: 'MANUAL-' } },
+          where: { isManualSale: true },
           orderBy: { createdAt: 'desc' },
           take: limit,
           select: {
             id: true, saleId: true, customerName: true, customerEmail: true,
-            customerPhone: true, partnerId: true, status: true, createdAt: true
+            customerPhone: true, partnerId: true, status: true, createdAt: true,
+            outboundDate: true, welcomeSentAt: true, vesperaSentAt: true,
+            isManualSale: true
           }
         }),
         prisma.$queryRaw`
@@ -145,6 +147,66 @@ router.get('/sales-log', dashboardAuthMiddleware, requireRole('gestor'), async (
   } catch (err) {
     console.error('[SalesLog] Erro:', err);
     return res.status(500).json({ success: false, error: 'Erro ao carregar histórico de vendas.' });
+  }
+});
+
+// GET /native/sales-log/:id/notifications — Histórico e próximo disparo de e-mail da venda.
+router.get('/sales-log/:id/notifications', dashboardAuthMiddleware, requireRole('gestor'), async (req, res) => {
+  try {
+    const { prisma } = require('../../../config');
+    if (!prisma) return res.status(503).json({ success: false, error: 'Banco de dados indisponível.' });
+
+    const sale = await prisma.sale.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true, saleId: true, customerName: true, customerEmail: true,
+        partnerId: true, status: true, isManualSale: true, createdAt: true,
+        outboundDate: true, welcomeSentAt: true, vesperaSentAt: true
+      }
+    });
+    if (!sale) return res.status(404).json({ success: false, error: 'Venda não encontrada.' });
+
+    const sent = [];
+    const sentAt = (label, at, source) => sent.push({ label, at, source });
+    const isJustTravel = String(sale.partnerId || '').replace(/[\s_-]/g, '').toLowerCase() === 'justtravel';
+    const outboundTime = sale.outboundDate ? new Date(sale.outboundDate).getTime() : NaN;
+    const createdTime = new Date(sale.createdAt).getTime();
+    const wasDeferredConfirmation =
+      sale.isManualSale && isJustTravel &&
+      Number.isFinite(outboundTime) && outboundTime - createdTime > 48 * 60 * 60 * 1000;
+    const welcomeAndVesperaAreSameEmail = sale.welcomeSentAt && sale.vesperaSentAt &&
+      Math.abs(new Date(sale.welcomeSentAt).getTime() - new Date(sale.vesperaSentAt).getTime()) < 5000;
+
+    if (sale.welcomeSentAt) {
+      sentAt(wasDeferredConfirmation ? 'Confirmação de compra' : 'E-mail com link de registro', sale.welcomeSentAt, 'sale');
+    }
+    if (sale.vesperaSentAt && !welcomeAndVesperaAreSameEmail) {
+      sentAt('E-mail com link de registro (scheduler de 48h)', sale.vesperaSentAt, 'scheduler');
+    }
+
+    const scheduled = [];
+    if (sale.status !== 'processed') {
+      scheduled.push({ label: 'E-mail com link de registro (scheduler de 48h)', status: 'blocked', reason: 'A venda ainda não está processada.' });
+    } else if (!sale.outboundDate || !Number.isFinite(outboundTime)) {
+      scheduled.push({ label: 'E-mail com link de registro (scheduler de 48h)', status: 'blocked', reason: 'Data da viagem não informada.' });
+    } else if (sale.vesperaSentAt) {
+      scheduled.push({ label: 'E-mail com link de registro (scheduler de 48h)', status: 'sent', at: sale.vesperaSentAt });
+    } else {
+      const scheduledAt = new Date(outboundTime - 48 * 60 * 60 * 1000);
+      const now = Date.now();
+      const inSchedulerWindow = outboundTime - now >= 47 * 60 * 60 * 1000 && outboundTime - now <= 49 * 60 * 60 * 1000;
+      scheduled.push({
+        label: 'E-mail com link de registro (scheduler de 48h)',
+        status: inSchedulerWindow ? 'due' : (scheduledAt > new Date(now) ? 'scheduled' : 'missed-window'),
+        at: scheduledAt,
+        reason: inSchedulerWindow ? 'Será enviado no próximo ciclo horário do scheduler.' : undefined
+      });
+    }
+
+    return res.json({ success: true, sale, sent, scheduled });
+  } catch (err) {
+    console.error('[SalesNotifications] Erro:', err);
+    return res.status(500).json({ success: false, error: 'Erro ao carregar notificações da venda.' });
   }
 });
 
