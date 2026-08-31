@@ -1,5 +1,4 @@
 const app = require('./app');
-const jotformPollingService = require('./services/jotformPollingService');
 const agenda = require('./jobs/scheduler');
 const { getJobCounts } = require('./jobs/agendaJobService');
 const { initializeDatabase } = require('./services/databaseBootstrapService');
@@ -15,9 +14,7 @@ if (process.env.NODE_ENV === 'production') {
   const required = [
     'DATABASE_URL',
     'EMAIL_API_KEY',
-    'JOTFORM_API_KEY',
-    'JOTFORM_FORM_ID',
-    'JOTFORM_WEBHOOK_SECRET',
+    'PUBLIC_FORM_LINK_SECRET',
     'WHATSAPP_META_ACCESS_TOKEN',
     'WHATSAPP_META_PHONE_NUMBER_ID',
     'DASHBOARD_JWT_SECRET'
@@ -67,13 +64,6 @@ const startServer = async () => {
 
     
 
-    // Initialize JotForm polling (fallback when webhook is not configured)
-    try {
-      jotformPollingService.start();
-    } catch (err) {
-      console.warn('[ServerInit] Failed to start JotForm polling:', err.message);
-    }
-
     // Registrar health check apenas em debug mode
     // Em produção, Railway monitora via health check endpoint próprio
     if (process.env.DEBUG_LOGS === 'true') {
@@ -101,12 +91,6 @@ async function gracefulShutdown(signal) {
   // Fechar servidor HTTP
   if (server) {
     server.close(() => console.log('✅ Server closed'));
-  }
-
-  // Parar polling JotForm
-  if (jotformPollingService && typeof jotformPollingService.stop === 'function') {
-    jotformPollingService.stop();
-    console.log('✅ JotForm polling stopped');
   }
 
   if (agenda && typeof agenda.stop === 'function') {

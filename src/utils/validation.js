@@ -240,53 +240,10 @@ const validatePartnerSale = (data) => {
     return { valid: true };
 };
 
-/**
- * Validate JotForms submission data
- * @param {object} data - Form submission data
- * @returns {object} - { valid, data: {...sanitized}, errors: [...] }
- */
-const validateAndSanitizeJotFormsSubmission = (data) => {
-    const errors = [];
-    const sanitizedData = {};
-
-    // Validate submission ID
-    if (!data.submissionId || typeof data.submissionId !== 'string') {
-        errors.push('Submission ID is required');
-    } else {
-        sanitizedData.submissionId = sanitizeString(data.submissionId);
-    }
-
-    // Validate form ID
-    if (!data.formId || typeof data.formId !== 'string') {
-        errors.push('Form ID is required');
-    } else {
-        sanitizedData.formId = sanitizeString(data.formId);
-    }
-
-    // Validate form data (can be any object, but sanitize strings within)
-    if (data.formData && typeof data.formData === 'object') {
-        sanitizedData.formData = {};
-        for (const [key, value] of Object.entries(data.formData)) {
-            if (typeof value === 'string') {
-                sanitizedData.formData[key] = sanitizeString(value);
-            } else {
-                sanitizedData.formData[key] = value;
-            }
-        }
-    }
-
-    return {
-        valid: errors.length === 0,
-        data: sanitizedData,
-        errors
-    };
-};
-
 module.exports = {
     // Main validation functions
     validatePartnerSale, // LEGACY
     validateAndSanitizePartnerSale,
-    validateAndSanitizeJotFormsSubmission,
     
     // Individual validators
     isValidEmail,

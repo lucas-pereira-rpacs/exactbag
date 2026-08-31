@@ -51,7 +51,6 @@ const PUBLIC_ENDPOINTS = [
   '/docs',
   '/api-docs',
   '/swagger',
-  '/jotforms',  // JotForm webhook (usa webhook secret próprio)
   '/cost'
 ];
 

@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const ipKeyGenerator = rateLimit.ipKeyGenerator || ((ip) => ip);
 
 // Endpoints públicos (limitados por IP)
-const PUBLIC_ENDPOINTS = ['/health', '/cost', '/jotforms'];
+const PUBLIC_ENDPOINTS = ['/health', '/cost'];
 
 // Função auxiliar para extrair API Key do header
 const getApiKeyFromRequest = (req) => {
@@ -75,31 +75,7 @@ const publicLimiter = rateLimit({
   }
 });
 
-// 3️⃣ JotForms Webhook (menos restritivo - webhook de 3rd-party)
-// Limite: 500 requisições por hora
-// Uso: POST /jotforms/webhook
-const jotformsLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
-  max: 500,
-  message: {
-    success: false,
-    error: 'Rate limit exceeded for JotForms webhook'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  // JotForms usa webhook secret, não API Key - limitar por IP
-  // Usar IP diretamente - express-rate-limit maneja IPv6
-  handler: (req, res) => {
-    res.status(429).json({
-      success: false,
-      error: 'Rate limit exceeded',
-      message: 'Maximum 500 JotForms webhook requests per hour',
-      retryAfter: 3600
-    });
-  }
-});
-
-// 4️⃣ Limiter para qualquer rota não mapeada (fallback)
+// 3️⃣ Limiter para qualquer rota não mapeada (fallback)
 // Limite conservador: 50 requisições por minuto
 const defaultLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minuto
@@ -184,7 +160,6 @@ const privacyLimiter = rateLimit({
 module.exports = {
   webhookLimiter: createTestLimiter(webhookLimiter),
   publicLimiter: createTestLimiter(publicLimiter),
-  jotformsLimiter: createTestLimiter(jotformsLimiter),
   defaultLimiter: createTestLimiter(defaultLimiter),
   privacyLimiter: createTestLimiter(privacyLimiter),
   rateLimitLogger,

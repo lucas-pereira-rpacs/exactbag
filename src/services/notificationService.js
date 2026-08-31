@@ -2,25 +2,23 @@
  * Notification Service
  * Orquestra o envio de notificações via múltiplos canais (Email, WhatsApp)
  * Fornece uma camada de abstração que mascara as APIs internas do parceiro
- * (JotForms, Mailgun, Meta WhatsApp não são expostos ao parceiro)
+ * (provedores de e-mail e Meta WhatsApp não são expostos ao parceiro)
  */
 
 const emailGateway = require('../gateways/emailGateway');
 const whatsappGateway = require('../gateways/whatsappGateway');
-const formGateway = require('../gateways/formGateway');
 
 class NotificationService {
   /**
    * Envia notificação de confirmação de compra
    * @param {object} customerData - { name, email, phone }
    * @param {object} saleData - { saleId, partnerId, amount, etc }
-   * @param {object} options - { useEmail, useWhatsapp, useForm }
+   * @param {object} options - { useEmail, useWhatsapp }
    */
   async sendPurchaseConfirmation(customerData, saleData, options = {}) {
     const {
       useEmail = true,
-      useWhatsapp = true,
-      useForm = false
+      useWhatsapp = true
     } = options;
 
     const notifications = [];
@@ -49,19 +47,6 @@ class NotificationService {
         }).catch(err => {
           console.error('[NotificationService] Erro ao enviar WhatsApp de confirmação:', err.message);
           return { success: false, channel: 'whatsapp', error: err.message };
-        })
-      );
-    }
-
-    // Disparar formulário ExactBag (se configurado)
-    if (useForm && formGateway.triggerFormFlow) {
-      notifications.push(
-        formGateway.triggerFormFlow(customerData, {
-          customerData,
-          saleData
-        }).catch(err => {
-          console.warn('[NotificationService] Erro ao disparar fluxo de formulário:', err.message);
-          return { success: false, channel: 'form', error: err.message };
         })
       );
     }

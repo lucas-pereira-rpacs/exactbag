@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { prisma } = require('../config');
+const { buildNativeRegistrationLink } = require('../services/nativeRegistrationLinkService');
 
 /**
  * POST /test/setup/customer
@@ -18,8 +19,8 @@ router.post('/setup/customer', async (req, res) => {
 
     console.log(`[Test Setup] Criando cliente: ${name}`);
 
-    // Gerar form link pre-preenchido
-    const formLink = `https://form.jotform.com/241924649872058?q3_customerName=${encodeURIComponent(name)}&q4_customerEmail=${encodeURIComponent(email)}&q5_customerPhone=${encodeURIComponent(phone)}&q8_RoundTrip[0]=Ida&q9_roundTripOutboundDate=03%2F30%2F2026&q10_roundTripReturnDate=04%2F04%2F2026&q11_classOfService=Economy&q12_airline=United&q13_fareType=NonRefundable`;
+    const testSaleId = `TEST-${Date.now()}`;
+    const formLink = buildNativeRegistrationLink(testSaleId);
 
     // Verificar se cliente já existe
     const existing = await prisma.sale.findFirst({
@@ -46,6 +47,7 @@ router.post('/setup/customer', async (req, res) => {
         customerName: name,
         customerEmail: email,
         customerPhone: phone,
+        saleId: testSaleId,
         status: 'pending',
         formLink,
         partnerId: 'AGENCIA_TEST'
@@ -170,18 +172,6 @@ router.post('/trigger/report', async (req, res) => {
     res.json({ status: 'ok', reportType: type, sent: result });
   } catch (error) {
     console.error('[Test] Erro relatório:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Rota para forçar polling de submissões do JotForm
-router.post('/trigger/jotform-poll', async (req, res) => {
-  try {
-    const jotformPollingService = require('../services/jotformPollingService');
-    await jotformPollingService.poll();
-    res.json({ status: 'ok', message: 'Polling executado' });
-  } catch (error) {
-    console.error('[Test] Erro polling:', error);
     res.status(500).json({ error: error.message });
   }
 });

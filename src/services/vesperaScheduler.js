@@ -7,6 +7,7 @@
 const { prisma } = require('../config');
 const notificationService = require('./notificationService');
 const emailGateway = require('../gateways/emailGateway');
+const { buildNativeRegistrationLink } = require('./nativeRegistrationLinkService');
 
 class VesperaScheduler {
   constructor() {
@@ -126,7 +127,7 @@ class VesperaScheduler {
             phone: saleToNotify.customerPhone
           };
 
-          const registrationLink = saleToNotify.formLink || `https://app.exactbag.com.br/f/${saleToNotify.slug || saleToNotify.id}`;
+          const registrationLink = buildNativeRegistrationLink(saleToNotify.saleId);
 
           await notificationService.sendPurchaseReminderNotification(customerData, saleToNotify, registrationLink);
 

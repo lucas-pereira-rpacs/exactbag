@@ -1,4 +1,5 @@
 const { prisma } = require('../config');
+const { buildNativeRegistrationLink } = require('./nativeRegistrationLinkService');
 
 const createDownloadTokenTableSql = `
   CREATE TABLE IF NOT EXISTS "DownloadToken" (
@@ -226,9 +227,30 @@ const initializeDatabase = async () => {
   );
 
   // Seed default admin if table is empty
+  await migrateLegacyRegistrationLinks();
   await seedDefaultDashboardUsers();
   await seedDefaultPartners();
 };
+
+async function migrateLegacyRegistrationLinks() {
+  const legacySales = await prisma.sale.findMany({
+    where: {
+      formLink: { startsWith: 'https://form.jotform.com/' },
+      saleId: { not: null },
+    },
+    select: { id: true, saleId: true },
+  });
+
+  if (!legacySales.length) return;
+
+  await prisma.$transaction(
+    legacySales.map((sale) => prisma.sale.update({
+      where: { id: sale.id },
+      data: { formLink: buildNativeRegistrationLink(sale.saleId) },
+    })),
+  );
+  console.log(`[Bootstrap] ${legacySales.length} legacy registration link(s) migrated to the native form`);
+}
 
 /**
  * Cria usuários padrão se a tabela DashboardUser estiver vazia

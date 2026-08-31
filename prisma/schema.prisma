@@ -119,7 +119,7 @@ model Submission {
 }
 
 // ============================================================================
-// Native Registration Module (substitui JotForm — módulo paralelo isolado)
+// Native Registration Module
 // ============================================================================
 
 model NativeRegistration {

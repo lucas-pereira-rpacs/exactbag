@@ -15,7 +15,6 @@ const authMiddleware = require('./middlewares/authMiddleware');
 const {
   webhookLimiter,
   publicLimiter,
-  jotformsLimiter,
   defaultLimiter,
   privacyLimiter,
   rateLimitLogger
@@ -349,10 +348,6 @@ app.use('/avail', defaultLimiter, require('./routes/avail'));
 // ============================================================================
 // Native Registration — Rotas protegidas (removido - agora todas montadas antes do authMiddleware)
 // ============================================================================
-
-// Rotas de callback JotForms (webhook próprio de formulário)
-// Rate limit específico para JotForms webhook
-app.use('/jotforms', jotformsLimiter, require('./routes/jotforms'));
 
 // Rotas de jobs de processamento (monitorização)
 // Rate limit padrão por API Key

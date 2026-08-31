@@ -18,10 +18,10 @@ const fromBase64Url = (value) => {
 };
 
 const getSecret = () => {
-  const secret = process.env.PUBLIC_FORM_LINK_SECRET || process.env.JOTFORM_WEBHOOK_SECRET;
+  const secret = process.env.PUBLIC_FORM_LINK_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('PUBLIC_FORM_LINK_SECRET ou JOTFORM_WEBHOOK_SECRET deve ser configurado em produção');
+      throw new Error('PUBLIC_FORM_LINK_SECRET deve ser configurado em produção');
     }
     return 'dev_only_form_link_secret_not_for_production';
   }

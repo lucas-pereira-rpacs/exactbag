@@ -10,7 +10,7 @@
  * API keys are read only from:
  *   PARTNER_API_KEY, PARTNER_API_KEYS, WEBHOOK_API_KEY, WEBHOOK_API_KEYS
  *
- * The script intentionally does not treat EMAIL_API_KEY, JOTFORM_API_KEY,
+ * The script intentionally does not treat EMAIL_API_KEY,
  * WhatsApp tokens, or other service credentials as partner API keys.
  */
 

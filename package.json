@@ -10,6 +10,7 @@
     "test": "jest",
     "test:time-boundary": "node scripts/test_48h_reminder.js",
     "test:agenda-jobs": "node scripts/test_agenda_job_migration.js",
+    "test:native-links": "node scripts/test_native_registration_links.js",
     "test:webhooks:sales": "node scripts/test_webhooks_sales.js",
     "test:prod": "node test_production.js",
     "stress:prod": "node scripts/stress_production.js"

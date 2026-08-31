@@ -1,4 +1,4 @@
-// Validações do módulo de Registro Nativo (substitui JotForm)
+// Validações do módulo de Registro Nativo
 const xss = require('xss');
 
 const CPF_REGEX = /^\d{11}$/;
