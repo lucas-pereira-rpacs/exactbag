@@ -590,6 +590,10 @@ tr{cursor:pointer;transition:background 0.1s}
             <input type="email" id="tagCustomerEmail" placeholder="cliente@email.com" />
           </div>
           <div class="form-group">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="tagCustomerPhone" placeholder="+55 11 99999-9999" />
+          </div>
+          <div class="form-group">
             <label>Data de ida</label>
             <input type="date" id="tagOutboundDate" />
           </div>
@@ -1548,6 +1552,7 @@ tr{cursor:pointer;transition:background 0.1s}
     document.getElementById('tagProduct').value = 'exactbag-essencial';
     document.getElementById('tagCustomerName').value = '';
     document.getElementById('tagCustomerEmail').value = '';
+    document.getElementById('tagCustomerPhone').value = '';
     document.getElementById('tagOutboundDate').value = '';
     document.getElementById('tagQuantity').value = '1';
     document.getElementById('tagNotes').value = '';
@@ -1567,6 +1572,7 @@ tr{cursor:pointer;transition:background 0.1s}
       product: document.getElementById('tagProduct').value,
       customerName: document.getElementById('tagCustomerName').value.trim(),
       customerEmail: document.getElementById('tagCustomerEmail').value.trim(),
+      customerPhone: document.getElementById('tagCustomerPhone').value.trim(),
       outboundDate: document.getElementById('tagOutboundDate').value,
       partnerId: document.getElementById('tagPartnerId').value,
       quantity: parseInt(document.getElementById('tagQuantity').value, 10) || 1,
@@ -1574,8 +1580,8 @@ tr{cursor:pointer;transition:background 0.1s}
       notes: document.getElementById('tagNotes').value.trim()
     };
 
-    if (!payload.customerName || !payload.customerEmail || !payload.outboundDate) {
-      errorEl.textContent = 'Nome, e-mail e data de ida s\u00e3o obrigat\u00f3rios.';
+    if (!payload.customerName || !payload.customerEmail || !payload.customerPhone || !payload.outboundDate) {
+      errorEl.textContent = 'Nome, e-mail, telefone e data de ida s\u00e3o obrigat\u00f3rios.';
       errorEl.style.display = 'block';
       return;
     }
@@ -1591,7 +1597,10 @@ tr{cursor:pointer;transition:background 0.1s}
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Falha ao registrar pedido');
-      toast(`Pedido #${data.orderNumber} registrado! Recibo enviado por e-mail.`, 'success');
+      const allSent = data.notifications && (
+        data.notifications.receipt || (data.notifications.email && data.notifications.whatsapp)
+      );
+      toast(data.message || `Pedido #${data.orderNumber} registrado!`, allSent ? 'success' : 'error');
       clearPhysicalTagForm();
       togglePhysicalTagCard(false);
     } catch (e) {

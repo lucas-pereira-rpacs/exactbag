@@ -1,10 +1,11 @@
 // Physical Tag Sale Controller
 // Processa vendas de tags físicas (Exact Bag Essencial / Exact Bag Cover).
-// Gera recibo por e-mail com número de pedido sequencial — NÃO aciona funil WhatsApp.
+// Registra o pedido e envia a confirmação de reserva por e-mail e WhatsApp.
 
 const crypto = require('crypto');
 const { prisma } = require('../config');
 const emailGateway = require('../gateways/emailGateway');
+const whatsappGateway = require('../gateways/whatsappGateway');
 
 const PRODUCTS = {
   'exactbag-essencial': {
@@ -16,6 +17,8 @@ const PRODUCTS = {
     insuranceLocked: true  // seguro sempre incluso
   }
 };
+
+const PHYSICAL_TAG_RECEIPT_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 /**
  * Retorna o próximo número de pedido sequencial (começa em 1001).
@@ -36,6 +39,7 @@ async function getNextOrderNumber() {
  *   product        — 'exactbag-essencial' | 'exactbag-cover'
  *   customerName   — string (obrigatório)
  *   customerEmail  — string (obrigatório)
+ *   customerPhone  — string (obrigatório)
  *   outboundDate   — data de ida no formato YYYY-MM-DD (obrigatório)
  *   quantity       — integer 1–50 (padrão 1)
  *   hasInsurance   — boolean (ignorado se Cover — sempre true)
@@ -51,6 +55,7 @@ exports.handlePhysicalTagSale = async (req, res) => {
     const product = (body.product || '').trim();
     const customerName = (body.customerName || '').trim();
     const customerEmail = (body.customerEmail || '').trim().toLowerCase();
+    const customerPhone = (body.customerPhone || '').trim();
     const outboundDateInput = (body.outboundDate || '').trim();
     const quantity = Math.max(1, Math.min(50, parseInt(body.quantity, 10) || 1));
     const notes = (body.notes || '').trim() || null;
@@ -64,6 +69,9 @@ exports.handlePhysicalTagSale = async (req, res) => {
     }
     if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
       return res.status(400).json({ success: false, error: 'E-mail inválido.' });
+    }
+    if (customerPhone.replace(/\D/g, '').length < 10) {
+      return res.status(400).json({ success: false, error: 'Telefone inválido.' });
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(outboundDateInput)) {
       return res.status(400).json({ success: false, error: 'Data de ida é obrigatória.' });
@@ -85,25 +93,71 @@ exports.handlePhysicalTagSale = async (req, res) => {
       await prisma.$executeRaw`
         INSERT INTO "PhysicalTagOrder"
           ("id", "orderNumber", "product", "customerName", "customerEmail",
-           "outboundDate", "quantity", "hasInsurance", "notes", "partnerId", "operatorEmail", "createdAt")
+           "customerPhone", "outboundDate", "quantity", "hasInsurance", "notes", "partnerId", "operatorEmail", "createdAt")
         VALUES (
           ${id}, ${orderNumber}, ${product}, ${customerName}, ${customerEmail},
-          ${outboundDate}, ${quantity}, ${hasInsurance}, ${notes}, ${partnerId},
+          ${customerPhone}, ${outboundDate}, ${quantity}, ${hasInsurance}, ${notes}, ${partnerId},
           ${req.dashboardUser?.email ?? null}, NOW()
         )
       `;
     }
 
-    await emailGateway.sendPhysicalTagReceiptEmail({
-      name: customerName,
-      email: customerEmail,
-      product: productInfo.label,
-      quantity,
-      orderNumber,
-      outboundDate: outboundDateInput,
-      hasInsurance,
-      notes
-    });
+    const isWithinReceiptWindow = outboundDate.getTime() - Date.now() <= PHYSICAL_TAG_RECEIPT_WINDOW_MS;
+    let notificationStatus;
+    let responseMessage;
+
+    if (isWithinReceiptWindow) {
+      let receiptSent = false;
+      try {
+        receiptSent = Boolean(await emailGateway.sendPhysicalTagReceiptEmail({
+          name: customerName,
+          email: customerEmail,
+          product: productInfo.label,
+          quantity,
+          orderNumber,
+          outboundDate: outboundDateInput,
+          hasInsurance,
+          notes
+        }));
+        if (receiptSent && prisma) {
+          await prisma.$executeRaw`
+            UPDATE "PhysicalTagOrder"
+            SET "receiptSentAt" = NOW()
+            WHERE id = ${id} AND "receiptSentAt" IS NULL
+          `;
+        }
+      } catch (error) {
+        console.error('[PhysicalTagSale] Falha no envio imediato do comprovante:', error.message);
+      }
+      notificationStatus = { receipt: receiptSent, email: receiptSent, whatsapp: false };
+      responseMessage = receiptSent
+        ? `Pedido #${orderNumber} registrado e comprovante enviado imediatamente por e-mail.`
+        : `Pedido #${orderNumber} registrado, mas o envio imediato do comprovante falhou.`;
+    } else {
+      const customerData = { name: customerName, email: customerEmail, phone: customerPhone };
+      const reservationData = {
+        outboundDate: outboundDateInput,
+        roundTrip: false,
+        reservationType: 'physical-tag'
+      };
+      const notifications = await Promise.allSettled([
+        emailGateway.sendPurchaseConfirmationTemplateEmail(customerData, reservationData),
+        whatsappGateway.sendReservationConfirmationMessage(customerData, reservationData)
+      ]);
+      notifications.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error(`[PhysicalTagSale] Falha no ${index === 0 ? 'e-mail' : 'WhatsApp'} de reserva:`, result.reason?.message);
+        }
+      });
+      notificationStatus = {
+        receipt: false,
+        email: notifications[0].status === 'fulfilled' && Boolean(notifications[0].value),
+        whatsapp: notifications[1].status === 'fulfilled' && Boolean(notifications[1].value)
+      };
+      responseMessage = notificationStatus.email && notificationStatus.whatsapp
+        ? `Pedido #${orderNumber} registrado e confirmação de reserva enviada por e-mail e WhatsApp.`
+        : `Pedido #${orderNumber} registrado, mas um ou mais canais de confirmação falharam.`;
+    }
 
     console.info(
       `[PhysicalTagSale] Pedido #${orderNumber} criado — operator=${req.dashboardUser?.email} product=${product} qty=${quantity} partner=${partnerId}`
@@ -112,7 +166,8 @@ exports.handlePhysicalTagSale = async (req, res) => {
     return res.status(201).json({
       success: true,
       orderNumber,
-      message: `Pedido #${orderNumber} registrado e recibo enviado para ${customerEmail}.`
+      notifications: notificationStatus,
+      message: responseMessage
     });
   } catch (err) {
     console.error('[PhysicalTagSale] Erro:', err);

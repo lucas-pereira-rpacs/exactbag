@@ -7,6 +7,7 @@
 const schedule = require('node-schedule');
 const { prisma } = require('../config');
 const notificationService = require('./notificationService');
+const emailGateway = require('../gateways/emailGateway');
 
 class VesperaScheduler {
   constructor() {
@@ -45,6 +46,51 @@ class VesperaScheduler {
       // "Amanhã" em Brasília
       const tomorrowStart = windowStart;
       const tomorrowEnd = windowEnd;
+
+      // O comprovante da TAG física é enviado na mesma janela de 48 horas.
+      // receiptSentAt garante que cada pedido seja disparado uma única vez.
+      const physicalTagOrders = await prisma.$queryRaw`
+        SELECT id, "orderNumber", product, "customerName", "customerEmail",
+               quantity, "hasInsurance", notes, "outboundDate"
+        FROM "PhysicalTagOrder"
+        WHERE "outboundDate" >= ${tomorrowStart}
+          AND "outboundDate" <= ${tomorrowEnd}
+          AND "receiptSentAt" IS NULL
+        ORDER BY "outboundDate" ASC
+      `;
+
+      for (const order of physicalTagOrders) {
+        try {
+          const product = order.product === 'exactbag-cover'
+            ? 'Tag Exact Bag Cover'
+            : 'Tag Exact Bag Essencial';
+          const sentResult = await emailGateway.sendPhysicalTagReceiptEmail({
+            name: order.customerName,
+            email: order.customerEmail,
+            product,
+            quantity: order.quantity,
+            orderNumber: Number(order.orderNumber),
+            outboundDate: order.outboundDate
+              ? new Date(order.outboundDate).toISOString().slice(0, 10)
+              : '',
+            hasInsurance: order.hasInsurance,
+            notes: order.notes
+          });
+
+          if (!sentResult) {
+            throw new Error('Gateway de e-mail não confirmou o envio');
+          }
+
+          await prisma.$executeRaw`
+            UPDATE "PhysicalTagOrder"
+            SET "receiptSentAt" = NOW()
+            WHERE id = ${order.id} AND "receiptSentAt" IS NULL
+          `;
+          console.log(`[VesperaScheduler] Comprovante da TAG física #${Number(order.orderNumber)} enviado para ${order.customerEmail}`);
+        } catch (err) {
+          console.error(`[VesperaScheduler] Erro ao enviar comprovante da TAG física #${Number(order.orderNumber)}:`, err.message);
+        }
+      }
 
       // Busca todas as vendas processadas com voo na janela de 48h que ainda
       // não receberam a notificação de véspera.

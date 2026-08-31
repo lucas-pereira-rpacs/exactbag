@@ -144,6 +144,56 @@ Equipe ExactBag`;
     }
   }
 
+  async sendReservationConfirmationMessage(customerData, saleData = {}) {
+    const formatDate = (value) => {
+      if (!value) return '';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    };
+    const tripType = saleData.roundTrip ? 'Ida e volta' : 'Ida';
+    const outboundDate = formatDate(saleData.outboundDate);
+    const deliveryText = saleData.reservationType === 'physical-tag'
+      ? 'O comprovante será enviado assim que faltarem *48 horas para a sua viagem*. Basta apresentá-lo na loja da Protec Bag no aeroporto.'
+      : 'O link de ativação do serviço será enviado assim que faltarem *48 horas para a sua viagem*. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.';
+    const message = `Olá, ${customerData.name}! 👋
+
+Sua compra e reserva do *ExactBag* foram confirmadas com sucesso! ✅
+
+📦 *Detalhes da reserva*
+✈️ Viagem: ${tripType}${outboundDate ? `
+📅 Data da viagem: *${outboundDate}*` : ''}
+
+*Quando vou receber o produto?*
+${deliveryText}
+
+⚠️ *Por enquanto, não é necessário fazer nenhum registro.*
+Apenas aguarde nossa próxima mensagem e mantenha seus dados de contato atualizados.
+
+📞 *Dúvidas? Estamos disponíveis 24 horas:*
++55 12 99758-3157
+✉️ contato@exactbag.com.br
+
+Boa viagem! ✈️
+*Equipe ExactBag*`;
+
+    const templateName = process.env.WHATSAPP_RESERVATION_TEMPLATE || '';
+    if (this.provider === 'meta' && templateName) {
+      return this.sendTemplate(customerData.phone, templateName, 'pt_BR', [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: customerData.name },
+            { type: 'text', text: tripType },
+            { type: 'text', text: outboundDate },
+            { type: 'text', text: deliveryText.replace(/\*/g, '') }
+          ]
+        }
+      ]);
+    }
+    return this._sendMessage(customerData.phone, message);
+  }
+
   /**
    * Envia mensagem com link de download do produto digital
    * @param {Object} customerData - Dados do cliente

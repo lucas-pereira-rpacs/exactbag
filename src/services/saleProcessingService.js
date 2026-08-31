@@ -5,9 +5,6 @@ const partnerRepository = require("../repositories/partnerRepository");
 
 const REGISTRATION_WINDOW_MS = 48 * 60 * 60 * 1000;
 
-const isJustTravel = (partnerId) =>
-  String(partnerId || "").replace(/[\s_-]/g, "").toLowerCase() === "justtravel";
-
 const isWithinRegistrationWindow = (outboundDate, now = new Date()) => {
   if (!outboundDate) return true;
   const tripTime = new Date(outboundDate).getTime();
@@ -105,16 +102,19 @@ const processPartnerSale = async (salePayload) => {
       passengerEmail: customerEmail,
       passengerPhone: customerPhone,
     };
-    const notificationSale = { saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate };
+    const notificationSale = {
+      saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate,
+      reservationType: 'digital-assistance'
+    };
 
-    const deferJustTravelRegistration =
-      isManualSale &&
-      isJustTravel(partnerId) &&
-      !isWithinRegistrationWindow(outboundDate);
+    const deferManualRegistration =
+      isManualSale && !isWithinRegistrationWindow(outboundDate);
 
-    if (deferJustTravelRegistration) {
+    if (isManualSale) {
       await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
-    } else {
+    }
+
+    if (!deferManualRegistration) {
       const registrationNotification = await notificationService.sendPurchaseNotification(
         passengerData,
         notificationSale,
@@ -123,7 +123,7 @@ const processPartnerSale = async (salePayload) => {
 
       // Prevent the 48-hour scheduler from sending a duplicate for sales
       // created inside the registration window.
-      if (isManualSale && isJustTravel(partnerId) && registrationNotification.success) {
+      if (isManualSale && registrationNotification.success) {
         await dbService.updateSale(customerRecord.id, { vesperaSentAt: new Date() });
       }
     }

@@ -134,13 +134,19 @@ class NotificationService {
       phone: passengerData.passengerPhone || passengerData.phone,
     };
     console.log(`[NotificationService] Enviando confirmacao de compra para ${passenger.name} <${passenger.email}>`);
-    try {
-      const result = await emailGateway.sendPurchaseConfirmationTemplateEmail(passenger, saleData);
-      return { success: Boolean(result), details: [{ channel: 'email', success: Boolean(result), value: result }] };
-    } catch (err) {
-      console.error('[NotificationService] Erro email confirmacao de compra:', err.message);
-      return { success: false, details: [{ channel: 'email', success: false, error: err.message }] };
-    }
+    const results = await Promise.allSettled([
+      emailGateway.sendPurchaseConfirmationTemplateEmail(passenger, saleData),
+      whatsappGateway.sendReservationConfirmationMessage(passenger, saleData)
+    ]);
+    const channels = ['email', 'whatsapp'];
+    const details = results.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        return { channel: channels[index], success: Boolean(result.value), value: result.value };
+      }
+      console.error(`[NotificationService] Erro ${channels[index]} confirmacao de compra:`, result.reason?.message);
+      return { channel: channels[index], success: false, error: result.reason?.message };
+    });
+    return { success: details.some(detail => detail.success), details };
   }
 
   async sendPurchaseReminderNotification(customerData, saleData, registrationLink) {

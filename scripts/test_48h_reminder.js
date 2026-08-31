@@ -27,9 +27,25 @@ global.Date = FrozenDate;
 const sales = new Map();
 const reminders = [];
 const updates = [];
+const physicalTagOrders = [];
+const physicalTagReceipts = [];
 let returnStaleFetch = false;
 
 const prismaMock = {
+  async $queryRaw(_query, windowStart, windowEnd) {
+    return physicalTagOrders.filter((order) => {
+      const outbound = new realDate(order.outboundDate).getTime();
+      return order.receiptSentAt === null
+        && outbound >= windowStart.getTime()
+        && outbound <= windowEnd.getTime();
+    });
+  },
+  async $executeRaw(_query, orderId) {
+    const order = physicalTagOrders.find(item => item.id === orderId);
+    if (!order || order.receiptSentAt) return 0;
+    order.receiptSentAt = new realDate(currentTime);
+    return 1;
+  },
   sale: {
     async findMany({ where }) {
       return Array.from(sales.values()).map((sale) => {
@@ -60,9 +76,14 @@ config.prisma = prismaMock;
 
 const scheduler = require('../src/services/vesperaScheduler');
 const notificationService = require('../src/services/notificationService');
+const emailGateway = require('../src/gateways/emailGateway');
 notificationService.sendPurchaseReminderNotification = async (customer, sale, link) => {
   reminders.push({ customer, sale, link });
   return { success: true };
+};
+emailGateway.sendPhysicalTagReceiptEmail = async (order) => {
+  physicalTagReceipts.push(order);
+  return true;
 };
 
 const flightTime = currentTime + (48 * 60 * 60 * 1000);
@@ -122,9 +143,27 @@ async function runAt(hoursFromBase) {
   await scheduler.run();
   assert.deepStrictEqual({ reminders: reminders.length, updates: updates.length }, { reminders: 0, updates: 0 }, 'sandbox partners must be suppressed');
 
+  currentTime = realDate.parse('2026-08-23T12:00:00.000Z');
+  physicalTagOrders.push({
+    id: 'physical-order-time-boundary',
+    orderNumber: 1001,
+    product: 'exactbag-essencial',
+    customerName: 'Cliente Tag',
+    customerEmail: 'tag@example.com',
+    quantity: 1,
+    hasInsurance: false,
+    notes: null,
+    outboundDate: new realDate(currentTime + (48 * 60 * 60 * 1000)),
+    receiptSentAt: null
+  });
+  await scheduler.run();
+  await scheduler.run();
+  assert.strictEqual(physicalTagReceipts.length, 1, 'physical tag receipt must be sent once in the 48h window');
+  assert(physicalTagOrders[0].receiptSentAt, 'physical tag receipt must be marked as sent');
+
   const template = fs.readFileSync(path.resolve(__dirname, '..', 'email_template_confirmacao_compra.html'), 'utf8');
   assert(template.includes('Compra e reserva confirmadas'));
-  assert(template.includes('48 horas'));
+  assert(template.includes('{{texto_entrega}}'), 'confirmation template must render the reservation variant');
   assert(template.includes('Orientações gerais'));
   assert(!template.includes('Ã'), 'confirmation template must not contain mojibake');
 

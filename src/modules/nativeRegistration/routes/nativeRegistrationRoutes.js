@@ -147,7 +147,7 @@ router.get('/sales-log', dashboardAuthMiddleware, requireRole('gestor'), async (
         }),
         prisma.$queryRaw`
           SELECT id, "orderNumber", product, "customerName", "customerEmail",
-                 "outboundDate", quantity, "hasInsurance", "partnerId", "operatorEmail", "createdAt"
+                 "customerPhone", "outboundDate", "receiptSentAt", quantity, "hasInsurance", "partnerId", "operatorEmail", "createdAt"
           FROM "PhysicalTagOrder"
           ORDER BY "createdAt" DESC
           LIMIT ${limit}
