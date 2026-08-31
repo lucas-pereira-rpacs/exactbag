@@ -1,0 +1,2 @@
+ALTER TABLE "PhysicalTagOrder"
+ADD COLUMN IF NOT EXISTS "outboundDate" TIMESTAMP(3);

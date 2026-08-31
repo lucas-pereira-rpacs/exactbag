@@ -590,6 +590,10 @@ tr{cursor:pointer;transition:background 0.1s}
             <input type="email" id="tagCustomerEmail" placeholder="cliente@email.com" />
           </div>
           <div class="form-group">
+            <label>Data de ida</label>
+            <input type="date" id="tagOutboundDate" />
+          </div>
+          <div class="form-group">
             <label>Parceiro</label>
             <select id="tagPartnerId"><option value="">Carregando...</option></select>
           </div>
@@ -1544,6 +1548,7 @@ tr{cursor:pointer;transition:background 0.1s}
     document.getElementById('tagProduct').value = 'exactbag-essencial';
     document.getElementById('tagCustomerName').value = '';
     document.getElementById('tagCustomerEmail').value = '';
+    document.getElementById('tagOutboundDate').value = '';
     document.getElementById('tagQuantity').value = '1';
     document.getElementById('tagNotes').value = '';
     const insEl = document.getElementById('tagHasInsurance');
@@ -1562,14 +1567,15 @@ tr{cursor:pointer;transition:background 0.1s}
       product: document.getElementById('tagProduct').value,
       customerName: document.getElementById('tagCustomerName').value.trim(),
       customerEmail: document.getElementById('tagCustomerEmail').value.trim(),
+      outboundDate: document.getElementById('tagOutboundDate').value,
       partnerId: document.getElementById('tagPartnerId').value,
       quantity: parseInt(document.getElementById('tagQuantity').value, 10) || 1,
       hasInsurance: document.getElementById('tagHasInsurance').value === 'true',
       notes: document.getElementById('tagNotes').value.trim()
     };
 
-    if (!payload.customerName || !payload.customerEmail) {
-      errorEl.textContent = 'Nome e e-mail do cliente s\u00e3o obrigat\u00f3rios.';
+    if (!payload.customerName || !payload.customerEmail || !payload.outboundDate) {
+      errorEl.textContent = 'Nome, e-mail e data de ida s\u00e3o obrigat\u00f3rios.';
       errorEl.style.display = 'block';
       return;
     }
@@ -1960,6 +1966,7 @@ tr{cursor:pointer;transition:background 0.1s}
         '<td style="font-family:monospace;font-weight:700;font-size:11px;white-space:nowrap">#' + r.orderNumber + '</td>' +
         '<td style="font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.customerName) + '</td>' +
         '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.customerEmail) + '</td>' +
+        '<td style="white-space:nowrap">' + fmtDate(r.outboundDate) + '</td>' +
         '<td>' + prodBadge + '</td>' +
         '<td style="text-align:center;font-weight:600">' + r.quantity + '</td>' +
         '<td><code style="font-size:10px;background:#f3f4f6;padding:2px 5px;border-radius:3px">' + esc(r.partnerId || '—') + '</code></td>' +
@@ -1967,7 +1974,7 @@ tr{cursor:pointer;transition:background 0.1s}
     }).join('');
     el.innerHTML = '<table>' +
       '<thead><tr>' +
-        '<th>Data</th><th>Pedido</th><th>Cliente</th><th>E-mail</th><th>Produto</th><th>Qtd</th><th>Parceiro</th>' +
+        '<th>Data</th><th>Pedido</th><th>Cliente</th><th>E-mail</th><th>Ida</th><th>Produto</th><th>Qtd</th><th>Parceiro</th>' +
       '</tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
     '</table>';

@@ -36,6 +36,7 @@ async function getNextOrderNumber() {
  *   product        — 'exactbag-essencial' | 'exactbag-cover'
  *   customerName   — string (obrigatório)
  *   customerEmail  — string (obrigatório)
+ *   outboundDate   — data de ida no formato YYYY-MM-DD (obrigatório)
  *   quantity       — integer 1–50 (padrão 1)
  *   hasInsurance   — boolean (ignorado se Cover — sempre true)
  *   partnerId      — string (opcional)
@@ -50,6 +51,7 @@ exports.handlePhysicalTagSale = async (req, res) => {
     const product = (body.product || '').trim();
     const customerName = (body.customerName || '').trim();
     const customerEmail = (body.customerEmail || '').trim().toLowerCase();
+    const outboundDateInput = (body.outboundDate || '').trim();
     const quantity = Math.max(1, Math.min(50, parseInt(body.quantity, 10) || 1));
     const notes = (body.notes || '').trim() || null;
     const partnerId = (body.partnerId || '').trim() || null;
@@ -62,6 +64,13 @@ exports.handlePhysicalTagSale = async (req, res) => {
     }
     if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
       return res.status(400).json({ success: false, error: 'E-mail inválido.' });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(outboundDateInput)) {
+      return res.status(400).json({ success: false, error: 'Data de ida é obrigatória.' });
+    }
+    const outboundDate = new Date(`${outboundDateInput}T12:00:00.000Z`);
+    if (Number.isNaN(outboundDate.getTime()) || outboundDate.toISOString().slice(0, 10) !== outboundDateInput) {
+      return res.status(400).json({ success: false, error: 'Data de ida inválida.' });
     }
 
     const productInfo = PRODUCTS[product];
@@ -76,10 +85,10 @@ exports.handlePhysicalTagSale = async (req, res) => {
       await prisma.$executeRaw`
         INSERT INTO "PhysicalTagOrder"
           ("id", "orderNumber", "product", "customerName", "customerEmail",
-           "quantity", "hasInsurance", "notes", "partnerId", "operatorEmail", "createdAt")
+           "outboundDate", "quantity", "hasInsurance", "notes", "partnerId", "operatorEmail", "createdAt")
         VALUES (
           ${id}, ${orderNumber}, ${product}, ${customerName}, ${customerEmail},
-          ${quantity}, ${hasInsurance}, ${notes}, ${partnerId},
+          ${outboundDate}, ${quantity}, ${hasInsurance}, ${notes}, ${partnerId},
           ${req.dashboardUser?.email ?? null}, NOW()
         )
       `;
@@ -91,6 +100,7 @@ exports.handlePhysicalTagSale = async (req, res) => {
       product: productInfo.label,
       quantity,
       orderNumber,
+      outboundDate: outboundDateInput,
       hasInsurance,
       notes
     });

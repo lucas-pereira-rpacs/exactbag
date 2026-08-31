@@ -236,7 +236,10 @@ class EmailGateway {
    */
   async sendPhysicalTagReceiptEmail(order) {
     const ins = order.hasInsurance ? 'Com seguro' : 'Sem seguro';
-    const text = `Olá, ${order.name}! Seu pedido #${order.orderNumber} foi confirmado.\n\nProduto: ${order.product}\nQuantidade: ${order.quantity}x\nSeguro: ${ins}\n\nApresente este e-mail ao retirar sua tag. Informe o número do pedido #${order.orderNumber} ao atendente.\n\nExactBag — contato@exactbag.com.br`;
+    const outboundDate = order.outboundDate
+      ? order.outboundDate.split('-').reverse().join('/')
+      : '';
+    const text = `Olá, ${order.name}! Seu pedido #${order.orderNumber} foi confirmado.\n\nProduto: ${order.product}\nQuantidade: ${order.quantity}x\nSeguro: ${ins}${outboundDate ? `\nData de ida: ${outboundDate}` : ''}\n\nApresente este e-mail ao retirar sua tag. Informe o número do pedido #${order.orderNumber} ao atendente.\n\nExactBag — contato@exactbag.com.br`;
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
       *{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f6f6;margin:0;padding:0}
@@ -272,11 +275,12 @@ class EmailGateway {
         <p class="intro">Olá, <strong>${escHtml(order.name)}</strong>! Seu pedido foi registrado com sucesso.</p>
         <h2>Detalhes do Pedido</h2>
         <table>
-          <thead><tr><th>Produto</th><th>Qtd.</th><th>Seguro</th></tr></thead>
+          <thead><tr><th>Produto</th><th>Qtd.</th><th>Seguro</th><th>Data de ida</th></tr></thead>
           <tbody><tr>
             <td><strong>${escHtml(order.product)}</strong></td>
             <td>${order.quantity}x</td>
             <td>${escHtml(ins)}</td>
+            <td>${escHtml(outboundDate || '—')}</td>
           </tr></tbody>
         </table>
         <h2>Cliente</h2>
