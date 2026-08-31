@@ -1,11 +1,11 @@
 // Controller do módulo de Registro Nativo
 const registrationService = require('../services/nativeRegistrationService');
 const repository = require('../repositories/nativeRegistrationRepository');
-const { validateRegistrationInput } = require('../validators/nativeRegistrationValidator');
-const agenda = require('../../../jobs/agendaClient');
-const { validateSun, isTestSun } = require('../../../services/physicalTagSunService');
+const { validateRegistrationInput } = require('../utils/nativeRegistrationValidator');
+const agenda = require('../jobs/agendaClient');
+const { validateSun, isTestSun } = require('../services/physicalTagSunService');
 const { validateToken } = require('../services/dashboardAuthService');
-const { client: minioClient, config: minioConfig } = require('../../../services/minioClient');
+const { client: minioClient, config: minioConfig } = require('../services/minioClient');
 
 const withImageUrls = async (registration) => ({
   ...registration,

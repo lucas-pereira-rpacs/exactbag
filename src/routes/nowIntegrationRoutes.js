@@ -1,6 +1,6 @@
 const axios = require("axios");
 const express = require("express");
-const { prisma } = require("../../../config");
+const { prisma } = require("../config");
 const {
   dashboardAuthMiddleware,
   requireRole,

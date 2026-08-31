@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const QRCode = require('qrcode');
-const { getObjectUrl } = require('../../../services/minioClient');
+const { getObjectUrl } = require('./minioClient');
 
 // QR code cache — evita regenerar QR para o mesmo CPV (5min TTL)
 const _qrCache = new Map();
@@ -22,7 +22,7 @@ const _getCachedQr = async (url, opts) => {
 // Carrega logo ExactBag como data URI para embutir no HTML do CPV
 let LOGO_DATA_URI = '';
 try {
-  const logoPath = path.join(__dirname, '..', 'public', 'logo-exactbag.png');
+  const logoPath = path.join(__dirname, '..', 'views', 'dashboard', 'logo-exactbag.png');
   const logoBuffer = fs.readFileSync(logoPath);
   LOGO_DATA_URI = 'data:image/png;base64,' + logoBuffer.toString('base64');
 } catch (err) {

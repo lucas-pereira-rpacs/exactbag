@@ -9,7 +9,7 @@ const privacyRouter = require('./routes/privacy');
 const reportsRouter = require('./routes/reports');
 const publicFormRouter = require('./routes/publicForm');
 const prettyPublicFormRouter = require('./routes/prettyPublicForm');
-const nativeRegistrationRouter = require('./modules/nativeRegistration/routes/nativeRegistrationRoutes');
+const nativeRegistrationRouter = require('./routes/nativeRegistrationRoutes');
 const testRoutes = require('./routes/testRoutes');
 const authMiddleware = require('./middlewares/authMiddleware');
 const {
@@ -254,7 +254,7 @@ app.use('/form', publicLimiter, prettyPublicFormRouter);
 // ============================================================================
 if (process.env.NATIVE_REGISTRATION_ENABLED !== 'false') {
   // Serve formulário mobile-first estático
-  const nativePath = path.join(__dirname, 'modules', 'nativeRegistration', 'public');
+  const nativePath = path.join(__dirname, 'views', 'dashboard');
 
   // Rotas explícitas para páginas HTML públicas
   app.get("/registrodebagagem", publicLimiter, async (req, res) => {

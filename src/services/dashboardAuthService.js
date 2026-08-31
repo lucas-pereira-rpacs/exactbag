@@ -4,7 +4,7 @@
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { prisma } = require('../../../config');
+const { prisma } = require('../config');
 
 // ===== JWT config =====
 const JWT_SECRET = process.env.DASHBOARD_JWT_SECRET || crypto.randomBytes(32).toString('hex');

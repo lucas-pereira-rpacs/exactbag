@@ -1,9 +1,9 @@
 // Serviço de notificações do módulo Nativo
 // Reaproveita os gateways existentes (emailGateway / whatsappGateway)
 
-const emailGateway = require('../../../gateways/emailGateway');
-const whatsappGateway = require('../../../gateways/whatsappGateway');
-const { supportPhone, supportPhoneRaw } = require('../../../config');
+const emailGateway = require('../gateways/emailGateway');
+const whatsappGateway = require('../gateways/whatsappGateway');
+const { supportPhone, supportPhoneRaw } = require('../config');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,7 +11,7 @@ const path = require('path');
 let CPV_EMAIL_TEMPLATE = null;
 try {
   CPV_EMAIL_TEMPLATE = fs.readFileSync(
-    path.resolve(__dirname, '..', 'templates', 'email_cpv.html'), 'utf-8'
+    path.resolve(__dirname, '..', 'views', 'email_cpv.html'), 'utf-8'
   );
   console.log('[NativeNotification] Template de e-mail CPV carregado');
 } catch (_err) {

@@ -1,5 +1,5 @@
 // Repository para Registro Nativo — acesso a dados via Prisma, com fallback em memória
-const { prisma } = require('../../../config');
+const { prisma } = require('../config');
 const crypto = require('crypto');
 
 let useInMemory = !prisma;

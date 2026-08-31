@@ -2,19 +2,19 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/nativeRegistrationController');
-const { handleDashboardManualSale } = require('../../../controllers/manualSaleController');
-const { handlePhysicalTagSale } = require('../../../controllers/physicalTagSaleController');
+const { handleDashboardManualSale } = require('../controllers/manualSaleController');
+const { handlePhysicalTagSale } = require('../controllers/physicalTagSaleController');
 const {
   validateSun,
   getPhysicalTagFactory,
   updatePhysicalTagFactoryLastNumbers,
   generatePhysicalTagRegistrationQrCode,
   isTestSun
-} = require('../../../services/physicalTagSunService');
-const partnerRepository = require('../../../repositories/partnerRepository');
+} = require('../services/physicalTagSunService');
+const partnerRepository = require('../repositories/partnerRepository');
 const nowIntegrationRoutes = require('./nowIntegrationRoutes');
 const multer = require('multer');
-const { minioStorage } = require('../../../services/minioClient');
+const { minioStorage } = require('../services/minioClient');
 const { dashboardAuthMiddleware, requireRole, login, logout, validateToken,
         listUsers, getUserById, createUser, updateUser, changePassword, toggleUserActive } = require('../services/dashboardAuthService');
 
@@ -130,7 +130,7 @@ router.post('/physical-tag-sale', dashboardAuthMiddleware, handlePhysicalTagSale
 router.get('/sales-log', dashboardAuthMiddleware, requireRole('gestor'), async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 30, 100);
-    const { prisma } = require('../../../config');
+    const { prisma } = require('../config');
     let digital = [], physical = [];
     if (prisma) {
       const [sales, tagRows] = await Promise.all([
@@ -166,7 +166,7 @@ router.get('/sales-log', dashboardAuthMiddleware, requireRole('gestor'), async (
 // GET /native/sales-log/:id/notifications — Histórico e próximo disparo de e-mail da venda.
 router.get('/sales-log/:id/notifications', dashboardAuthMiddleware, requireRole('gestor'), async (req, res) => {
   try {
-    const { prisma } = require('../../../config');
+    const { prisma } = require('../config');
     if (!prisma) return res.status(503).json({ success: false, error: 'Banco de dados indisponível.' });
 
     const sale = await prisma.sale.findUnique({
@@ -227,7 +227,7 @@ router.get('/sales-log/:id/notifications', dashboardAuthMiddleware, requireRole(
 router.get('/integrations/now', dashboardAuthMiddleware, requireRole('gestor'), async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 100);
-    const { prisma } = require('../../../config');
+    const { prisma } = require('../config');
     if (!prisma) return res.json({ success: true, data: [] });
 
     const requests = await prisma.$queryRaw`

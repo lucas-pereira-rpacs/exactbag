@@ -5,7 +5,7 @@
  */
 
 const { prisma } = require('../config');
-const nativeNotificationService = require('../modules/nativeRegistration/services/nativeNotificationService');
+const nativeNotificationService = require('./nativeNotificationService');
 
 class ReturnFlightScheduler {
   constructor() {

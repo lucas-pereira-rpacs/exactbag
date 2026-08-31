@@ -109,7 +109,7 @@ async function gracefulShutdown(signal) {
 
   // Fechar browser singleton de PDF
   try {
-    const { closeBrowser } = require('./modules/nativeRegistration/services/cpvPdfService');
+    const { closeBrowser } = require('./services/cpvPdfService');
     await closeBrowser();
     console.log('✅ Browser singleton closed');
   } catch (_) {}
