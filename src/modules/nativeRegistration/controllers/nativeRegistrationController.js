@@ -2,7 +2,7 @@
 const registrationService = require('../services/nativeRegistrationService');
 const repository = require('../repositories/nativeRegistrationRepository');
 const { validateRegistrationInput } = require('../validators/nativeRegistrationValidator');
-const scheduler = require('../../../jobs/scheduler');
+const agenda = require('../../../jobs/agendaClient');
 const { validateSun, isTestSun } = require('../../../services/physicalTagSunService');
 const { validateToken } = require('../services/dashboardAuthService');
 const { client: minioClient, config: minioConfig } = require('../../../services/minioClient');
@@ -113,7 +113,7 @@ const createRegistration = async (req, res) => {
     const saleHasInsurance = saleId ? await repository.findSaleHasInsurance(saleId) : null;
 
     if (saleHasInsurance === true) {
-      await scheduler.now("now-integration", {
+      await agenda.now("now-integration", {
         saleId,
         cpvNumber: result.registration.cpvNumber,
       });

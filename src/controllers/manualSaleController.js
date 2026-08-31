@@ -3,7 +3,7 @@
 // existente, sem adicionar nenhuma lógica de notificação ou geração de links.
 
 const crypto = require('crypto');
-const jobQueueService = require('../services/jobQueueService');
+const { enqueueUniqueJob } = require('../jobs/agendaJobService');
 const { validateAndSanitizePartnerSale } = require('../utils/validation');
 const partnerRepository = require('../repositories/partnerRepository');
 
@@ -110,31 +110,30 @@ exports.handleDashboardManualSale = async (req, res) => {
       (body.saleId && String(body.saleId).trim()) || generateManualSaleId();
 
     // Enfileira o job com os mesmos parâmetros da rota /webhooks/sales
-    const job = await jobQueueService.addJob(
-      'processPartnerSale',
-      {
+    const job = await enqueueUniqueJob({
+      name: 'processPartnerSale',
+      data: {
         ...validation.data,
         saleId,
         partnerId,
         expirationDate,
         isManualSale: true,
       },
-      {
-        attempts: 3,
-        retryDelayMs: 2000,
-        dedupeKey: `${partnerId}:${saleId}`,
-      }
-    );
+      maxAttempts: 3,
+      dedupeKey: `processPartnerSale:${partnerId}:${saleId}`,
+    });
+
+    const jobId = String(job.attrs._id);
 
     console.info(
-      `[ManualSale] Venda manual enfileirada — operator=${req.dashboardUser?.email} partner=${partnerId} saleId=${saleId} jobId=${job.id}`
+      `[ManualSale] Venda manual enfileirada — operator=${req.dashboardUser?.email} partner=${partnerId} saleId=${saleId} jobId=${jobId}`
     );
 
     return res.status(202).json({
       success: true,
       message: 'Venda registrada com sucesso e em processamento.',
       saleId,
-      jobId: job.id,
+      jobId,
     });
   } catch (error) {
     console.error('[ManualSale] Erro ao registrar venda manual:', error);

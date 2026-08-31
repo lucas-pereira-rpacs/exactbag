@@ -1,4 +1,4 @@
-const jobQueueService = require('../services/jobQueueService');
+const agendaJobService = require('../jobs/agendaJobService');
 
 exports.getJobStatus = async (req, res) => {
   const { jobId } = req.params;
@@ -7,7 +7,7 @@ exports.getJobStatus = async (req, res) => {
     return res.status(400).json({ success: false, error: 'jobId is required' });
   }
 
-  const job = jobQueueService.getJob(jobId);
+  const job = await agendaJobService.getJobById(jobId, req.partner?.partnerId);
   if (!job) {
     return res.status(404).json({ success: false, error: 'Job not found' });
   }
@@ -21,23 +21,21 @@ exports.getJobs = async (req, res) => {
   const offset = parseInt(req.query.offset) || 0;
   const status = req.query.status;
 
-  const allJobs = jobQueueService.getJobs(0);
-  
-  // Filtrar por status se fornecido
-  const filteredJobs = status 
-    ? allJobs.filter(j => j.status === status)
-    : allJobs;
-
-  const paginatedJobs = filteredJobs.slice(offset, offset + limit);
+  const result = await agendaJobService.getJobs({
+    partnerId: req.partner?.partnerId,
+    status,
+    limit,
+    offset,
+  });
 
   return res.status(200).json({
     success: true,
-    jobs: paginatedJobs,
+    jobs: result.jobs,
     pagination: {
       limit,
       offset,
-      total: filteredJobs.length,
-      hasMore: offset + limit < filteredJobs.length
+      total: result.total,
+      hasMore: offset + limit < result.total
     }
   });
 };

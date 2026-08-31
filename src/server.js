@@ -1,8 +1,7 @@
 const app = require('./app');
-const jobQueueService = require('./services/jobQueueService');
-const partnerCallbackService = require('./services/partnerCallbackService');
 const jotformPollingService = require('./services/jotformPollingService');
 const agenda = require('./jobs/scheduler');
+const { getJobCounts } = require('./jobs/agendaJobService');
 const { initializeDatabase } = require('./services/databaseBootstrapService');
 const { runProductionMigrations } = require('./services/productionMigrationService');
 const { ensureBucket } = require('./services/minioClient');
@@ -30,25 +29,6 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-// ========== JOB QUEUE HANDLERS ==========
-// Registrar handler para callbacks de parceiros
-jobQueueService.registerHandler('PARTNER_CALLBACK', async (data, job) => {
-  // data contém os campos do callback; job contém metadata de execução da fila
-  const result = await partnerCallbackService.executeCallback({
-    ...data,
-    attempt: Math.max(0, job.attempt - 1),
-    maxAttempts: job.attempts
-  });
-  
-  if (!result.success && result.retry) {
-    throw new Error('Retry scheduled for partner callback');
-  }
-  
-  if (!result.success && !result.retry) {
-    console.warn(`[JobQueue] Partner callback failed after max attempts: ${job.partnerId}`);
-  }
-});
-
 let server;
 
 const startServer = async () => {
@@ -67,7 +47,13 @@ const startServer = async () => {
     console.warn('[ServerInit] Failed to initialize MinIO bucket:', error.message);
   }
 
-  server = app.listen(PORT, HOST, async () => {
+  // Queued HTTP operations depend on Agenda, so the worker must be ready
+  // before the server starts accepting traffic.
+  await agenda.start();
+  await agenda.initializeRecurringJobs();
+  console.log('✅ Agenda scheduler started');
+
+  server = app.listen(PORT, HOST, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║         ExactBag Partner Sales API - Production            ║
@@ -88,20 +74,16 @@ const startServer = async () => {
       console.warn('[ServerInit] Failed to start JotForm polling:', err.message);
     }
 
-    // Start Agenda and register all persistent recurring jobs.
-    try {
-      await agenda.start();
-      await agenda.initializeRecurringJobs();
-      console.log('✅ Agenda scheduler started');
-    } catch (err) {
-      console.warn('[ServerInit] Failed to start Agenda scheduler:', err.message);
-    }
-
     // Registrar health check apenas em debug mode
     // Em produção, Railway monitora via health check endpoint próprio
     if (process.env.DEBUG_LOGS === 'true') {
-      setInterval(() => {
-        console.log(`[${new Date().toISOString()}] ✓ Health check OK - Jobs: ${jobQueueService.getJobCounts().total}`);
+      setInterval(async () => {
+        try {
+          const counts = await getJobCounts();
+          console.log(`[${new Date().toISOString()}] ✓ Health check OK - Jobs: ${counts.total}`);
+        } catch (error) {
+          console.warn('[Agenda] Failed to read job counts:', error.message);
+        }
       }, 60000); // A cada 1 minuto
     }
   });
@@ -119,12 +101,6 @@ async function gracefulShutdown(signal) {
   // Fechar servidor HTTP
   if (server) {
     server.close(() => console.log('✅ Server closed'));
-  }
-
-  // Fechar worker de jobs
-  if (jobQueueService && typeof jobQueueService.shutdown === 'function') {
-    jobQueueService.shutdown();
-    console.log('✅ Job queue service stopped');
   }
 
   // Parar polling JotForm

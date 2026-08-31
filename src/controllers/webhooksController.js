@@ -1,11 +1,5 @@
-const jobQueueService = require('../services/jobQueueService');
-const { processPartnerSale } = require('../services/saleProcessingService');
+const { enqueueUniqueJob } = require('../jobs/agendaJobService');
 const { validateAndSanitizePartnerSale } = require('../utils/validation');
-
-// Registra o handler de fila (um só registro é suficiente)
-jobQueueService.registerHandler('processPartnerSale', async (data) => {
-  await processPartnerSale(data);
-});
 
 exports.handlePartnerSale = async (req, res) => {
   try {
@@ -54,20 +48,21 @@ exports.handlePartnerSale = async (req, res) => {
     }
 
     // Adiciona job na fila (assíncrono) com dados sanitizados
-    const job = await jobQueueService.addJob('processPartnerSale', {
-      ...validation.data,
-      saleId,
-      partnerId
-    }, {
-      attempts: 3,
-      retryDelayMs: 2000,
-      dedupeKey: `${partnerId}:${saleId}`
+    const job = await enqueueUniqueJob({
+      name: 'processPartnerSale',
+      data: {
+        ...validation.data,
+        saleId,
+        partnerId
+      },
+      maxAttempts: 3,
+      dedupeKey: `processPartnerSale:${partnerId}:${saleId}`
     });
 
     return res.status(202).json({
       success: true,
       message: 'Venda recebida e em processamento.',
-      jobId: job.id
+      jobId: String(job.attrs._id)
     });
   } catch (error) {
     console.error('Error scheduling partner sale job:', error);

@@ -28,21 +28,31 @@ const processPartnerSale = async (salePayload) => {
     isManualSale: manualSaleFlag,
   } = salePayload;
 
-  // Salva o cliente no BD
-  const customerRecord = await dbService.saveCustomer({
-    name: customerName,
-    email: customerEmail,
-    phone: customerPhone,
-    saleId,
-    partnerId,
-    roundTrip,
-    baggageQty,
-    hasInsurance,
-    expirationDate,
-    outboundDate,
-    returnDate,
-    isManualSale: manualSaleFlag === true,
-  });
+  // Agenda may retry after a process restart. Resume the persisted sale instead
+  // of creating a second record for the same partner business identifier.
+  let customerRecord = await dbService.findSaleByPartnerAndExternalSaleId(partnerId, saleId);
+  if (customerRecord?.status === 'processed') {
+    console.log(`[SaleProcessing] Venda já processada; ignorando job duplicado partner=${partnerId} saleId=${saleId}`);
+    return { customerRecord, formLink: customerRecord.formLink };
+  }
+  if (!customerRecord) {
+    customerRecord = await dbService.saveCustomer({
+      name: customerName,
+      email: customerEmail,
+      phone: customerPhone,
+      saleId,
+      partnerId,
+      roundTrip,
+      baggageQty,
+      hasInsurance,
+      expirationDate,
+      outboundDate,
+      returnDate,
+      isManualSale: manualSaleFlag === true,
+    });
+  } else {
+    console.log(`[SaleProcessing] Retomando venda incompleta partner=${partnerId} saleId=${saleId}`);
+  }
 
   // Prepara dados enriquecidos com todos os campos necessários para gateways
   // Usa valores originais do payload como fallback

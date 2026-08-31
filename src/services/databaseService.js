@@ -128,6 +128,19 @@ const findSaleByExternalSaleId = async (saleId) => {
   });
 };
 
+const findSaleByPartnerAndExternalSaleId = async (partnerId, saleId) => {
+  if (useInMemoryRepository) {
+    return Array.from(memorySales.values()).find(
+      sale => sale.partnerId === partnerId && sale.saleId === saleId
+    ) || null;
+  }
+
+  return prisma.sale.findFirst({
+    where: { partnerId, saleId },
+    orderBy: { createdAt: 'desc' }
+  });
+};
+
 const _findInMemory = (normalizedSearch, tokens) => {
   const matches = Array.from(memorySales.values())
     .filter((sale) => {
@@ -231,6 +244,7 @@ module.exports = {
   updateSale,
   findSaleById,
   findSaleByExternalSaleId,
+  findSaleByPartnerAndExternalSaleId,
   findLatestSaleByCustomerName,
   findSaleBySlug
 };

@@ -1,9 +1,9 @@
 /**
  * Partner Callback Service - Notificar parceiro quando cliente completa registro
- * Implementação minimalista: Reutiliza job queue existente, sem retry persistente
+ * Usa Agenda/PostgreSQL para entrega persistente e retry.
  * 
  * ARQUITETURA DE CUSTO MÍNIMO:
- * - Usa jobQueueService (grátis, já existe)
+ * - Usa o Agenda já compartilhado pelos jobs da aplicação
  * - Fallback para email se webhook falhar (já temos SES)
  * - Sem database extra, sem Redis, sem blob storage
  * - HMAC signature para segurança
@@ -12,14 +12,14 @@
 const crypto = require('crypto');
 const https = require('https');
 const http = require('http');
-const jobQueueService = require('./jobQueueService');
+const { enqueueUniqueJob } = require('../jobs/agendaJobService');
 const notificationService = require('./notificationService');
 const prisma = require('../config').prisma;
 
 const partnerCallbackService = {
   /**
    * Agendar callback do parceiro quando cliente completa
-   * Implementação: Usa jobQueueService existente
+   * Persiste o callback no Agenda antes de retornar.
    */
   async schedulePartnerCallback(sale, submission) {
     try {
@@ -59,18 +59,21 @@ const partnerCallbackService = {
       // Adicionar signature ao payload
       callbackPayload.signature = signature;
 
-      // Agendar callback como job na fila existente
-      const job = await jobQueueService.addJob('PARTNER_CALLBACK', {
-        partnerId: partner.partnerId,
-        webhookUrl: partner.webhookUrl,
-        payload: callbackPayload,
-        attempt: 0,
-        maxAttempts: 2  // Max 2 tentativas (simples, economical)
-      }, {
-        attempts: 2
+      // Agendar callback como job persistente no Agenda
+      const eventId = submission?.id || `${sale.id}:${callbackPayload.event}`;
+      const job = await enqueueUniqueJob({
+        name: 'PARTNER_CALLBACK',
+        data: {
+          partnerId: partner.partnerId,
+          webhookUrl: partner.webhookUrl,
+          payload: callbackPayload,
+          maxAttempts: 2
+        },
+        maxAttempts: 2,
+        dedupeKey: `partnerCallback:${partner.partnerId}:${eventId}`
       });
 
-      console.log(`[PartnerCallback] Job agendado para ${partner.partnerId}: ${job.id}`);
+      console.log(`[PartnerCallback] Job agendado para ${partner.partnerId}: ${String(job.attrs._id)}`);
       return true;
     } catch (error) {
       console.error('[PartnerCallback] Erro ao agendar callback:', error.message);
@@ -79,7 +82,7 @@ const partnerCallbackService = {
   },
 
   /**
-   * Executar callback para parceiro (chamado por jobQueueService)
+   * Executar callback para parceiro (chamado pelo handler do Agenda)
    * Implementação: HTTP POST simples com timeout de 5s
    */
   async executeCallback(job) {
@@ -95,12 +98,7 @@ const partnerCallbackService = {
         console.log(`[PartnerCallback] ✓ Callback bem-sucedido para ${partnerId}`);
         return { success: true };
       } else if (attempt < maxAttempts - 1) {
-        // Retry com delay exponencial (simples, sem database)
-        const delayMs = Math.pow(2, attempt) * 1000; // 1s, 2s
-        console.log(`[PartnerCallback] Retry agendado em ${delayMs}ms para ${partnerId}`);
-        
-        // Adicionar de volta à fila com delay
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        console.log(`[PartnerCallback] Retry persistente solicitado para ${partnerId}`);
         return { success: false, retry: true };
       } else {
         // Max tentativas atingidas, fallback para email
@@ -120,10 +118,7 @@ const partnerCallbackService = {
       console.error(`[PartnerCallback] Erro ao executar callback: ${error.message}`);
 
       if (attempt < maxAttempts - 1) {
-        const delayMs = Math.pow(2, attempt) * 1000;
-        console.log(`[PartnerCallback] Retry agendado em ${delayMs}ms devido a erro`);
-        
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        console.log('[PartnerCallback] Retry persistente solicitado devido a erro');
         return { success: false, retry: true };
       } else {
         return { success: false, retry: false };

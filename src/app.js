@@ -24,6 +24,7 @@ const {
 const { engine } = require('express-handlebars');
 
 const { prisma } = require('./config');
+const { getJobCounts } = require('./jobs/agendaJobService');
 
 const app = express();
 
@@ -154,11 +155,11 @@ app.get('/privacy-policy', (req, res) => {
 
 // ============== HEALTH CHECK (com DB ping) ==============
 app.get('/health', async (req, res) => {
-  const jobQueueService = require('./services/jobQueueService');
-  const counts = jobQueueService.getJobCounts();
   const { prisma } = require('./config');
 
   let dbStatus = 'disconnected';
+  let agendaStatus = 'disconnected';
+  let counts = { pending: 0, running: 0, retrying: 0, completed: 0, failed: 0, total: 0 };
   if (prisma) {
     try {
       await prisma.$queryRaw`SELECT 1`;
@@ -168,11 +169,19 @@ app.get('/health', async (req, res) => {
     }
   }
 
-  const healthy = dbStatus !== 'error';
+  try {
+    counts = await getJobCounts();
+    agendaStatus = 'connected';
+  } catch (_) {
+    agendaStatus = 'error';
+  }
+
+  const healthy = dbStatus !== 'error' && agendaStatus !== 'error';
   res.status(healthy ? 200 : 503).json({
     status: healthy ? 'ExactBag API Online' : 'degraded',
     timestamp: new Date().toISOString(),
     db: dbStatus,
+    agenda: agendaStatus,
     jobs: counts,
     uptime: process.uptime(),
     memory: {
