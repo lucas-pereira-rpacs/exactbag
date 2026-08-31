@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { PostgresBackend } = require('@agendajs/postgres-backend');
 const { Agenda } = require('agenda');
 const { Pool } = require('pg');
