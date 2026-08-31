@@ -1,9 +1,6 @@
 const app = require('./app');
 const jobQueueService = require('./services/jobQueueService');
 const partnerCallbackService = require('./services/partnerCallbackService');
-const reportScheduler = require('./services/reportScheduler');
-const vesperaScheduler = require('./services/vesperaScheduler');
-const returnFlightScheduler = require('./services/returnFlightScheduler');
 const jotformPollingService = require('./services/jotformPollingService');
 const agenda = require('./jobs/scheduler');
 const { initializeDatabase } = require('./services/databaseBootstrapService');
@@ -84,25 +81,6 @@ const startServer = async () => {
 
     
 
-    // Initialize report scheduler for automated reports
-    reportScheduler.initialize().catch(err => {
-      console.warn('[ServerInit] Failed to initialize report scheduler:', err.message);
-    });
-
-    // Initialize véspera scheduler (daily notification for flights tomorrow)
-    try {
-      vesperaScheduler.initialize();
-    } catch (err) {
-      console.warn('[ServerInit] Failed to initialize véspera scheduler:', err.message);
-    }
-
-    // Initialize return flight reminder scheduler (daily notification for return flights tomorrow)
-    try {
-      returnFlightScheduler.initialize();
-    } catch (err) {
-      console.warn('[ServerInit] Failed to initialize return flight scheduler:', err.message);
-    }
-
     // Initialize JotForm polling (fallback when webhook is not configured)
     try {
       jotformPollingService.start();
@@ -110,9 +88,10 @@ const startServer = async () => {
       console.warn('[ServerInit] Failed to start JotForm polling:', err.message);
     }
 
-    // Start Agenda worker for now-integration jobs
+    // Start Agenda and register all persistent recurring jobs.
     try {
       await agenda.start();
+      await agenda.initializeRecurringJobs();
       console.log('✅ Agenda scheduler started');
     } catch (err) {
       console.warn('[ServerInit] Failed to start Agenda scheduler:', err.message);
@@ -146,24 +125,6 @@ async function gracefulShutdown(signal) {
   if (jobQueueService && typeof jobQueueService.shutdown === 'function') {
     jobQueueService.shutdown();
     console.log('✅ Job queue service stopped');
-  }
-
-  // Desligar scheduler de relatórios
-  if (reportScheduler && typeof reportScheduler.shutdown === 'function') {
-    reportScheduler.shutdown();
-    console.log('✅ Report scheduler stopped');
-  }
-
-  // Desligar véspera scheduler
-  if (vesperaScheduler && typeof vesperaScheduler.shutdown === 'function') {
-    vesperaScheduler.shutdown();
-    console.log('✅ Véspera scheduler stopped');
-  }
-
-  // Desligar return flight scheduler
-  if (returnFlightScheduler && typeof returnFlightScheduler.shutdown === 'function') {
-    returnFlightScheduler.shutdown();
-    console.log('✅ Return flight scheduler stopped');
   }
 
   // Parar polling JotForm

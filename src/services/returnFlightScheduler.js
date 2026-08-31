@@ -4,35 +4,12 @@
  * Deduplicação: marca returnReminderSentAt na NativeRegistration para não reenviar.
  */
 
-const schedule = require('node-schedule');
 const { prisma } = require('../config');
 const nativeNotificationService = require('../modules/nativeRegistration/services/nativeNotificationService');
 
 class ReturnFlightScheduler {
   constructor() {
-    this.job = null;
     this._isRunning = false;
-  }
-
-  /**
-   * Inicializa o scheduler — roda todo dia às 09:00 (horário de Brasília, UTC-3 = 12:00 UTC)
-   */
-  initialize() {
-    if (!prisma) {
-      console.warn('[ReturnFlightScheduler] Prisma não disponível, scheduler desabilitado');
-      return;
-    }
-
-    const hour = Number(process.env.RETURN_REMINDER_HOUR_UTC || 12); // 12 UTC = 09:00 BRT
-    const minute = Number(process.env.RETURN_REMINDER_MINUTE_UTC || 0);
-
-    const rule = new schedule.RecurrenceRule();
-    rule.hour = hour;
-    rule.minute = minute;
-
-    this.job = schedule.scheduleJob(rule, () => this.run());
-
-    console.log(`[ReturnFlightScheduler] ✓ Agendado para rodar diariamente às ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} UTC`);
   }
 
   /**
@@ -114,13 +91,6 @@ class ReturnFlightScheduler {
     }
   }
 
-  shutdown() {
-    if (this.job) {
-      this.job.cancel();
-      this.job = null;
-      console.log('[ReturnFlightScheduler] Scheduler parado');
-    }
-  }
 }
 
 module.exports = new ReturnFlightScheduler();

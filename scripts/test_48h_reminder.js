@@ -74,7 +74,10 @@ const prismaMock = {
 const config = require('../src/config');
 config.prisma = prismaMock;
 
-const scheduler = require('../src/services/vesperaScheduler');
+const outboundNotificationHandler = require('../src/jobs/outboundNotificationHandler');
+
+const runOutboundNotifications = () =>
+  outboundNotificationHandler({ attrs: { name: 'outbound-notifications' } });
 const notificationService = require('../src/services/notificationService');
 const emailGateway = require('../src/gateways/emailGateway');
 notificationService.sendPurchaseReminderNotification = async (customer, sale, link) => {
@@ -106,7 +109,7 @@ async function runAt(hoursFromBase) {
   reminders.length = 0;
   updates.length = 0;
   sale.vesperaSentAt = null;
-  await scheduler.run();
+  await runOutboundNotifications();
   return { reminders: reminders.length, updates: updates.length };
 }
 
@@ -115,13 +118,13 @@ async function runAt(hoursFromBase) {
   assert.deepStrictEqual(await runAt(-1), { reminders: 1, updates: 1 }, '49h before must send');
   assert.deepStrictEqual(await runAt(0), { reminders: 1, updates: 1 }, '48h before must send');
   assert.deepStrictEqual(await runAt(1), { reminders: 1, updates: 1 }, '47h before must send');
-  assert.deepStrictEqual(await runAt(2), { reminders: 0, updates: 0 }, '46h before must not send');
+  assert.deepStrictEqual(await runAt(2), { reminders: 1, updates: 1 }, '46h before must catch up an unsent notification');
 
   currentTime = realDate.parse('2026-08-23T12:00:00.000Z');
   sale.vesperaSentAt = null;
   reminders.length = 0;
-  await scheduler.run();
-  await scheduler.run();
+  await runOutboundNotifications();
+  await runOutboundNotifications();
   assert.strictEqual(reminders.length, 1, 'a sent reminder must be deduplicated');
 
   sale.vesperaSentAt = null;
@@ -131,7 +134,7 @@ async function runAt(hoursFromBase) {
   returnStaleFetch = true;
   reminders.length = 0;
   updates.length = 0;
-  await scheduler.run();
+  await runOutboundNotifications();
   assert.deepStrictEqual({ reminders: reminders.length, updates: updates.length }, { reminders: 0, updates: 0 }, 'cancelled sales must not receive reminders');
   returnStaleFetch = false;
   sale.status = originalStatus;
@@ -140,7 +143,7 @@ async function runAt(hoursFromBase) {
   sale.partner = { isSandbox: true };
   reminders.length = 0;
   updates.length = 0;
-  await scheduler.run();
+  await runOutboundNotifications();
   assert.deepStrictEqual({ reminders: reminders.length, updates: updates.length }, { reminders: 0, updates: 0 }, 'sandbox partners must be suppressed');
 
   currentTime = realDate.parse('2026-08-23T12:00:00.000Z');
@@ -156,8 +159,8 @@ async function runAt(hoursFromBase) {
     outboundDate: new realDate(currentTime + (48 * 60 * 60 * 1000)),
     receiptSentAt: null
   });
-  await scheduler.run();
-  await scheduler.run();
+  await runOutboundNotifications();
+  await runOutboundNotifications();
   assert.strictEqual(physicalTagReceipts.length, 1, 'physical tag receipt must be sent once in the 48h window');
   assert(physicalTagOrders[0].receiptSentAt, 'physical tag receipt must be marked as sent');
 

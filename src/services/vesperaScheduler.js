@@ -4,29 +4,13 @@
  * Deduplicação: marca vesperaSentAt na Sale para não reenviar.
  */
 
-const schedule = require('node-schedule');
 const { prisma } = require('../config');
 const notificationService = require('./notificationService');
 const emailGateway = require('../gateways/emailGateway');
 
 class VesperaScheduler {
   constructor() {
-    this.job = null;
     this._isRunning = false;
-  }
-
-  /**
-   * Inicializa o scheduler — roda todo dia às 09:00 (horário de Brasília, UTC-3 = 12:00 UTC)
-   */
-  initialize() {
-    if (!prisma) {
-      console.warn('[VesperaScheduler] Prisma não disponível, scheduler desabilitado');
-      return;
-    }
-
-    this.job = schedule.scheduleJob('0 * * * *', () => this.run());
-
-    console.log('[VesperaScheduler] Agendado para verificar lembretes de 48h a cada hora');
   }
 
   /**
@@ -40,7 +24,7 @@ class VesperaScheduler {
 
       // Calcula "amanhã" no fuso de Brasília (UTC-3)
       const now = new Date();
-      const windowStart = new Date(now.getTime() + (47 * 60 * 60 * 1000));
+      const windowStart = now;
       const windowEnd = new Date(now.getTime() + (49 * 60 * 60 * 1000));
 
       // "Amanhã" em Brasília
@@ -167,13 +151,6 @@ class VesperaScheduler {
     }
   }
 
-  shutdown() {
-    if (this.job) {
-      this.job.cancel();
-      this.job = null;
-      console.log('[VesperaScheduler] Scheduler parado');
-    }
-  }
 }
 
 module.exports = new VesperaScheduler();
