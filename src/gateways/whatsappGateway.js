@@ -167,7 +167,7 @@ Sua compra e reserva do *ExactBag* foram confirmadas com sucesso! ✅
 *Quando vou receber o produto?*
 ${deliveryText}
 
-⚠️ *Por enquanto, não é necessário fazer nenhum registro.*
+⚠️ *Você receberá 48 horas antes da viagem o acesso ao seu produto/serviço.*
 Apenas aguarde nossa próxima mensagem e mantenha seus dados de contato atualizados.
 
 📞 *Dúvidas? Estamos disponíveis 24 horas:*
