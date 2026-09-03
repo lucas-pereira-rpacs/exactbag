@@ -115,7 +115,7 @@ async function runAt(hoursFromBase) {
 
 (async () => {
   assert.deepStrictEqual(await runAt(-2), { reminders: 0, updates: 0 }, '50h before must not send');
-  assert.deepStrictEqual(await runAt(-1), { reminders: 1, updates: 1 }, '49h before must send');
+  assert.deepStrictEqual(await runAt(-1), { reminders: 0, updates: 0 }, '49h before must not send');
   assert.deepStrictEqual(await runAt(0), { reminders: 1, updates: 1 }, '48h before must send');
   assert.deepStrictEqual(await runAt(1), { reminders: 1, updates: 1 }, '47h before must send');
   assert.deepStrictEqual(await runAt(2), { reminders: 1, updates: 1 }, '46h before must catch up an unsent notification');

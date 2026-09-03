@@ -26,7 +26,10 @@ class VesperaScheduler {
       // Calcula "amanhã" no fuso de Brasília (UTC-3)
       const now = new Date();
       const windowStart = now;
-      const windowEnd = new Date(now.getTime() + (49 * 60 * 60 * 1000));
+      // Send at the 48-hour threshold. Because the scheduler may run late,
+      // the lower bound is now and the upper bound is exactly 48 hours ahead;
+      // a late run still catches any unsent notification that is now due.
+      const windowEnd = new Date(now.getTime() + (48 * 60 * 60 * 1000));
 
       // "Amanhã" em Brasília
       const tomorrowStart = windowStart;

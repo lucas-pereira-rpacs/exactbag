@@ -85,14 +85,16 @@ const processPartnerSale = async (salePayload) => {
       reservationType: 'digital-assistance'
     };
 
-    const deferManualRegistration =
-      isManualSale && !isWithinRegistrationWindow(outboundDate);
+    const deferRegistration = !isWithinRegistrationWindow(outboundDate);
 
-    if (isManualSale) {
+    if (deferRegistration) {
+      // For trips more than 48 hours away, send only the confirmation now.
+      // The registration/link notification is sent by the 48-hour scheduler.
       await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
-    }
-
-    if (!deferManualRegistration) {
+    } else {
+      // For trips within the 48-hour window, send the registration now and
+      // skip the confirmation so the passenger receives only the actionable
+      // message.
       const registrationNotification = await notificationService.sendPurchaseNotification(
         passengerData,
         notificationSale,
@@ -101,7 +103,7 @@ const processPartnerSale = async (salePayload) => {
 
       // Prevent the 48-hour scheduler from sending a duplicate for sales
       // created inside the registration window.
-      if (isManualSale && registrationNotification.success) {
+      if (registrationNotification.success) {
         await dbService.updateSale(customerRecord.id, { vesperaSentAt: new Date() });
       }
     }
