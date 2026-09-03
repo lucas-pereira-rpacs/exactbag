@@ -4,9 +4,37 @@ const { getJobCounts } = require('./jobs/agendaJobService');
 const { initializeDatabase } = require('./services/databaseBootstrapService');
 const { runProductionMigrations } = require('./services/productionMigrationService');
 const { ensureBucket } = require('./services/minioClient');
+const { execFileSync } = require('child_process');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+
+const getBuildVersion = () => {
+  try {
+    const version = execFileSync(
+      'git',
+      ['log', '-1', '--pretty=format:%h|%s'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+    ).trim();
+    const separatorIndex = version.indexOf('|');
+
+    if (separatorIndex >= 0) {
+      return {
+        hash: version.slice(0, separatorIndex),
+        message: version.slice(separatorIndex + 1),
+      };
+    }
+  } catch (_) {
+    // Production deployments may not include the .git directory.
+  }
+
+  return {
+    hash: process.env.COMMIT_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || 'unknown',
+    message: process.env.COMMIT_MESSAGE || process.env.RAILWAY_GIT_COMMIT_MESSAGE || 'unknown',
+  };
+};
+
+const buildVersion = getBuildVersion();
 
 
 // ========== VALIDAÇÃO DE ENV VARS OBRIGATÓRIAS ==========
@@ -52,6 +80,7 @@ const startServer = async () => {
 
   server = app.listen(PORT, HOST, () => {
     console.log(`
+Version: ${buildVersion.hash} — ${buildVersion.message}
 ╔════════════════════════════════════════════════════════════╗
 ║         ExactBag Partner Sales API - Production            ║
 ╚════════════════════════════════════════════════════════════╝
