@@ -55,6 +55,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 let server;
+let shutdownPromise = null;
+let healthCheckInterval = null;
 
 const startServer = async () => {
   // Production must not accept traffic until every tracked migration succeeds.
@@ -96,7 +98,7 @@ Version: ${buildVersion.hash} — ${buildVersion.message}
     // Registrar health check apenas em debug mode
     // Em produção, Railway monitora via health check endpoint próprio
     if (process.env.DEBUG_LOGS === 'true') {
-      setInterval(async () => {
+      healthCheckInterval = setInterval(async () => {
         try {
           const counts = await getJobCounts();
           console.log(`[${new Date().toISOString()}] ✓ Health check OK - Jobs: ${counts.total}`);
@@ -115,39 +117,64 @@ startServer().catch((error) => {
 
 // ========== GRACEFUL SHUTDOWN ==========
 async function gracefulShutdown(signal) {
-  console.log(`\n🛑 ${signal} received. Starting graceful shutdown...`);
+  if (shutdownPromise) return shutdownPromise;
 
-  // Fechar servidor HTTP
-  if (server) {
-    server.close(() => console.log('✅ Server closed'));
-  }
+  shutdownPromise = (async () => {
+    console.log(`\n🛑 ${signal} received. Starting graceful shutdown...`);
 
-  if (agenda && typeof agenda.stop === 'function') {
-    // Stop unlocks active jobs without deleting queued work. The next server
-    // start can therefore pick up persisted jobs from PostgreSQL.
-    await agenda.stop().catch((error) => {
-      console.warn('[Agenda] Could not stop scheduler cleanly:', error.message);
-    });
-    if (agenda.databasePool) {
-      await agenda.databasePool.end().catch((error) => {
-        console.warn('[Agenda] Could not close dedicated database pool:', error.message);
-      });
+    let forceExitTimer;
+    try {
+      // Keep a last-resort timeout for shutdowns that hang, but do not let the
+      // timer keep an otherwise-clean process alive after graceful shutdown.
+      forceExitTimer = setTimeout(() => {
+        console.log('❌ Forced exit after 30 seconds');
+        process.exit(1);
+      }, 30000);
+      forceExitTimer.unref?.();
+
+      // Fechar servidor HTTP and wait for existing connections to finish.
+      if (server) {
+        await new Promise((resolve) => {
+          server.close(() => {
+            console.log('✅ Server closed');
+            resolve();
+          });
+        });
+      }
+
+      if (healthCheckInterval) {
+        clearInterval(healthCheckInterval);
+        healthCheckInterval = null;
+      }
+
+      if (agenda && typeof agenda.stop === 'function') {
+        // Stop unlocks active jobs without deleting queued work. The next server
+        // start can therefore pick up persisted jobs from PostgreSQL.
+        await agenda.stop();
+        if (agenda.databasePool) {
+          await agenda.databasePool.end();
+        }
+        console.log('✅ Agenda scheduler stopped');
+      }
+
+      // Fechar browser singleton de PDF
+      try {
+        const { closeBrowser } = require('./services/cpvPdfService');
+        await closeBrowser();
+        console.log('✅ Browser singleton closed');
+      } catch (_) {}
+
+      clearTimeout(forceExitTimer);
+      process.exitCode = 0;
+      console.log('✅ Graceful shutdown completed');
+    } catch (error) {
+      console.error('[Shutdown] Graceful shutdown failed:', error.message);
+      // Leave the force-exit timer active so a stuck handle cannot keep the
+      // deployment alive indefinitely.
     }
-    console.log('✅ Agenda scheduler stopped');
-  }
+  })();
 
-  // Fechar browser singleton de PDF
-  try {
-    const { closeBrowser } = require('./services/cpvPdfService');
-    await closeBrowser();
-    console.log('✅ Browser singleton closed');
-  } catch (_) {}
-
-  // Dar 30 segundos para cleanup
-  setTimeout(() => {
-    console.log('❌ Forced exit after 30 seconds');
-    process.exit(1);
-  }, 30000);
+  return shutdownPromise;
 }
 
 process.once('SIGTERM', () => gracefulShutdown('SIGTERM'));
