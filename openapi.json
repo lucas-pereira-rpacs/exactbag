@@ -66,6 +66,7 @@
                 "customerName": "Maria Santos",
                 "customerEmail": "maria.santos@email.com",
                 "customerPhone": "+5511988887777",
+                "productCode": "5383660",
                 "roundTrip": true,
                 "outboundDate": "2026-04-15",
                 "returnDate": "2026-04-22",
@@ -701,6 +702,12 @@
             "description": "Indica se a venda inclui seguro de bagagem. Propaga para o registro do passageiro e fica visível no painel.",
             "default": false,
             "example": true
+          },
+          "productCode": {
+            "type": "string",
+            "description": "Product code for the sale. To trigger the physical TAG flow, provide `5383660` (Essencial X2) or `5383661` (Cover X2). If omitted, the sale uses the digital flow.",
+            "enum": ["5383660", "5383661"],
+            "example": "5383660"
           }
         }
       },

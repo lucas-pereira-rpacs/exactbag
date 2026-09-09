@@ -2,6 +2,7 @@ const dbService = require("../services/databaseService");
 const notificationService = require("./notificationService");
 const partnerRepository = require("../repositories/partnerRepository");
 const { buildNativeRegistrationLink } = require('./nativeRegistrationLinkService');
+const { PHYSICAL_TAG_PRODUCT_CODES } = require('../config/insuranceProducts');
 
 const REGISTRATION_WINDOW_MS = 48 * 60 * 60 * 1000;
 
@@ -25,8 +26,10 @@ const processPartnerSale = async (salePayload) => {
     expirationDate,
     outboundDate,
     returnDate,
+    productCode,
     isManualSale: manualSaleFlag,
   } = salePayload;
+  const isPhysicalTag = PHYSICAL_TAG_PRODUCT_CODES.includes(String(productCode || ''));
 
   // Agenda may retry after a process restart. Resume the persisted sale instead
   // of creating a second record for the same partner business identifier.
@@ -82,14 +85,19 @@ const processPartnerSale = async (salePayload) => {
     };
     const notificationSale = {
       saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate,
-      reservationType: 'digital-assistance'
+      productCode,
+      reservationType: isPhysicalTag ? 'physical-tag' : 'digital-assistance'
     };
 
-    const deferRegistration = !isWithinRegistrationWindow(outboundDate);
+    const deferRegistration = !isPhysicalTag && !isWithinRegistrationWindow(outboundDate);
 
     if (deferRegistration) {
       // For trips more than 48 hours away, send only the confirmation now.
       // The registration/link notification is sent by the 48-hour scheduler.
+      await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
+    } else if (isPhysicalTag) {
+      // Physical-tag products use the confirmation email with airport/store
+      // instructions and do not enter the digital registration flow.
       await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
     } else {
       // For trips within the 48-hour window, send the registration now and

@@ -1,5 +1,6 @@
 const { enqueueUniqueJob } = require('../jobs/agendaJobService');
 const { validateAndSanitizePartnerSale } = require('../utils/validation');
+const { PHYSICAL_TAG_PRODUCT_CODES } = require('../config/insuranceProducts');
 
 exports.handlePartnerSale = async (req, res) => {
   try {
@@ -31,6 +32,9 @@ exports.handlePartnerSale = async (req, res) => {
     // Use sanitized data
     const saleId = body.saleId;
     const partnerId = body.partnerId;
+    const productCode = body.productCode === undefined || body.productCode === null
+      ? null
+      : String(body.productCode).trim();
 
     if (!saleId || !partnerId) {
       return res.status(400).json({ 
@@ -53,7 +57,8 @@ exports.handlePartnerSale = async (req, res) => {
       data: {
         ...validation.data,
         saleId,
-        partnerId
+        partnerId,
+        productCode
       },
       maxAttempts: 3,
       dedupeKey: `processPartnerSale:${partnerId}:${saleId}`

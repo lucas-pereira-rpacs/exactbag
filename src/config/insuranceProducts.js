@@ -25,6 +25,8 @@ const EXACTBAG_PROVIDER = {
   localTrip: false
 };
 
+const PHYSICAL_TAG_PRODUCT_CODES = ['5383660', '5383661'];
+
 const PRODUCTS = [
   {
     code: '5383656',
@@ -302,5 +304,6 @@ const PRODUCTS = [
 
 module.exports = {
   EXACTBAG_PROVIDER,
+  PHYSICAL_TAG_PRODUCT_CODES,
   PRODUCTS
 };

@@ -39,6 +39,7 @@ const mapAgendaStatus = (job) => {
 const sanitizeData = (data = {}) => ({
   saleId: data.saleId || data.payload?.saleId || null,
   partnerId: data.partnerId || null,
+  productCode: data.productCode || null,
   event: data.payload?.event || null,
   submissionId: data.payload?.submissionId || null,
   isManualSale: data.isManualSale === true,
