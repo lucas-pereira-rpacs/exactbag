@@ -22,16 +22,49 @@ const PHYSICAL_TAG_RECEIPT_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 function getErrorDetails(error) {
   if (!error) return error;
-  if (typeof error.toJSON === 'function') return error.toJSON();
+
+  const response = error.response;
+  const config = error.config;
+  let requestBody = config?.data;
+
+  if (typeof requestBody === 'string') {
+    try {
+      requestBody = JSON.parse(requestBody);
+    } catch (_parseError) {
+      requestBody = null;
+    }
+  }
+
+  const template = requestBody?.template;
+  const components = Array.isArray(template?.components) ? template.components : [];
+
   return {
     name: error.name,
     message: error.message,
-    stack: error.stack,
     code: error.code,
-    status: error.status,
-    response: error.response?.data,
-    responseStatus: error.response?.status,
-    responseHeaders: error.response?.headers
+    status: response?.status ?? error.status,
+    providerResponse: response?.data,
+    providerTraceId: response?.headers?.['x-fb-trace-id'] || response?.headers?.['x-fb-rev'],
+    request: {
+      method: config?.method,
+      baseURL: config?.baseURL,
+      url: config?.url
+    },
+    requestPayload: template ? {
+      messagingProduct: requestBody.messaging_product,
+      type: requestBody.type,
+      template: {
+        name: template.name,
+        language: template.language,
+        components: components.map((component) => ({
+          type: component.type,
+          parameterCount: Array.isArray(component.parameters) ? component.parameters.length : 0,
+          parameterTypes: Array.isArray(component.parameters)
+            ? component.parameters.map((parameter) => parameter.type)
+            : []
+        }))
+      }
+    } : undefined
   };
 }
 
@@ -145,8 +178,11 @@ exports.handlePhysicalTagSale = async (req, res) => {
         console.error('[PhysicalTagSale] Falha no envio imediato do comprovante:', {
           orderNumber,
           product,
-          customer: { name: customerName, email: customerEmail, phone: customerPhone },
-          error,
+          customer: {
+            namePresent: Boolean(customerName),
+            emailPresent: Boolean(customerEmail),
+            phonePresent: Boolean(customerPhone)
+          },
           errorDetails: getErrorDetails(error)
         });
       }
@@ -173,9 +209,12 @@ exports.handlePhysicalTagSale = async (req, res) => {
             id,
             channel,
             product,
-            customer: customerData,
+            customer: {
+              namePresent: Boolean(customerData.name),
+              emailPresent: Boolean(customerData.email),
+              phonePresent: Boolean(customerData.phone)
+            },
             reservation: reservationData,
-            error: result.reason,
             errorDetails: getErrorDetails(result.reason)
           });
         }
