@@ -210,6 +210,93 @@ const PRODUCTS = [
         }
       ]
     }
+  },
+  {
+    code: '5383660',
+    name: 'TAG EXACTBAG ESSENCIAL X2 - IDENTIFICAÇÃO E ASSISTÊNCIA PARA SUA BAGAGEM',
+    shortName: 'Tag ExactBag Essencial X2',
+    description:
+      'A TAG ExactBag Essencial une identificação física, registro digital e assistência especializada para proteger e acompanhar a bagagem do passageiro em viagens nacionais e internacionais. ' +
+      'Inclui duas tags físicas ExactBag, suporte humano 24 horas por dia, 7 dias por semana, acompanhamento junto às companhias aéreas e auxílio na localização e recuperação da bagagem. ' +
+      'A retirada é feita nas lojas conveniadas da Protec Bag em aeroportos selecionados, mediante comprovante enviado até 48 horas antes da viagem.',
+    image: 'https://app.exactbag.com.br/native/assets/tag-exactbag-essencial-x2.png',
+    salePrice: 79.9,
+    netPrice: 55.93,
+    currency: 'BRL',
+    bagCount: 2,
+    coverages: [],
+    usagePolicy: [
+      'Duas TAGs de identificação física exclusivas ExactBag.',
+      'Registro digital das bagagens com fotos e informações.',
+      'Identificação das bagagens antes do embarque.',
+      'Suporte humano especializado 24 horas por dia, 7 dias por semana.',
+      'Acompanhamento junto às companhias aéreas.',
+      'Auxílio na localização e recuperação das bagagens.',
+      'Retirada das TAGs nas lojas conveniadas da Protec Bag em Guarulhos (GRU), Viracopos (VCP), Curitiba (CWB), Recife (REC), Porto Alegre (POA), Florianópolis (FLN), João Pessoa (JPA) e Londrina (LDB).',
+      'Após retirar as TAGs, leia o QR Code no verso e registre as informações solicitadas.',
+      'Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.',
+      'Seguro extravio: não incluso.'
+    ],
+    cancellationPolicy: {
+      refundable: true,
+      hoursBeforeService: 48,
+      immediateFine: false,
+      penalties: [
+        {
+          name: 'Não reembolsável dentro de 48 horas da utilização',
+          description:
+            'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
+          price: { currency: 'BRL', amount: 0 }
+        }
+      ]
+    }
+  },
+  {
+    code: '5383661',
+    name: 'TAG EXACTBAG COVER X2 - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500',
+    shortName: 'Tag ExactBag Cover X2',
+    description:
+      'A TAG ExactBag Cover une identificação física, registro digital e assistência especializada para proteger e acompanhar a bagagem do passageiro em viagens nacionais e internacionais. ' +
+      'Inclui duas tags físicas ExactBag, suporte humano 24 horas por dia, 7 dias por semana, acompanhamento junto às companhias aéreas, auxílio na localização e recuperação da bagagem e seguro extravio de R$ 2.500,00 em caso de não localização. ' +
+      'A retirada é feita nas lojas conveniadas da Protec Bag em aeroportos selecionados, mediante comprovante enviado até 48 horas antes da viagem.',
+    image: 'https://app.exactbag.com.br/native/assets/tag-exactbag-cover-x2.png',
+    salePrice: 99.9,
+    netPrice: 69.93,
+    currency: 'BRL',
+    bagCount: 2,
+    coverages: [
+      {
+        code: '2898',
+        name: 'assistencia de bagagem com seguro',
+        minPrice: 'R$ 2.500,00',
+        maxPrice: 'R$ 2.500,00'
+      }
+    ],
+    usagePolicy: [
+      'Duas TAGs de identificação física exclusivas ExactBag.',
+      'Registro digital das bagagens com fotos e informações.',
+      'Identificação das bagagens antes do embarque.',
+      'Suporte humano especializado 24 horas por dia, 7 dias por semana.',
+      'Acompanhamento junto às companhias aéreas.',
+      'Auxílio na localização e recuperação das bagagens.',
+      'Seguro extravio de R$ 2.500,00 em caso de não localização, conforme as condições da cobertura contratada.',
+      'Retirada das TAGs nas lojas conveniadas da Protec Bag em Guarulhos (GRU), Viracopos (VCP), Curitiba (CWB), Recife (REC), Porto Alegre (POA), Florianópolis (FLN), João Pessoa (JPA) e Londrina (LDB).',
+      'Após retirar as TAGs, leia o QR Code no verso e registre as informações solicitadas.',
+      'Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.'
+    ],
+    cancellationPolicy: {
+      refundable: true,
+      hoursBeforeService: 48,
+      immediateFine: false,
+      penalties: [
+        {
+          name: 'Não reembolsável dentro de 48 horas da utilização',
+          description:
+            'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
+          price: { currency: 'BRL', amount: 0 }
+        }
+      ]
+    }
   }
 ];
 
