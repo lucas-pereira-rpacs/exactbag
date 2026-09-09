@@ -6,9 +6,10 @@ const { handlePartnerSale } = require('../controllers/webhooksController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const partnerCallbackService = require('../services/partnerCallbackService');
 const saleCancellationService = require('../services/saleCancellationService');
+const webhookRequestLogger = require('../middlewares/webhookRequestLogger');
 
 // POST /webhooks/sales
-router.post('/sales', handlePartnerSale);
+router.post('/sales', webhookRequestLogger, handlePartnerSale);
 
 // ============================================================================
 // Cancelamento de Venda
