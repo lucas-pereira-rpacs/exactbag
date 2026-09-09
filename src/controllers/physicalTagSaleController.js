@@ -183,7 +183,7 @@ exports.handlePhysicalTagSale = async (req, res) => {
             emailPresent: Boolean(customerEmail),
             phonePresent: Boolean(customerPhone)
           },
-          errorDetails: getErrorDetails(error)
+          errorDetails: JSON.stringify(getErrorDetails(error))
         });
       }
       notificationStatus = { receipt: receiptSent, email: receiptSent, whatsapp: false };
@@ -215,7 +215,7 @@ exports.handlePhysicalTagSale = async (req, res) => {
               phonePresent: Boolean(customerData.phone)
             },
             reservation: reservationData,
-            errorDetails: getErrorDetails(result.reason)
+            errorDetails: JSON.stringify(getErrorDetails(result.reason))
           });
         }
       });
