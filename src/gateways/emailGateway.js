@@ -34,12 +34,14 @@ const EMAIL_CONFIG = {
 // Carrega templates HTML do disco (fallback para texto simples)
 let TEMPLATE_COMPRA_HTML = null;
 let TEMPLATE_CONFIRMATION_COMPRA_HTML = null;
+let TEMPLATE_CONFIRMATION_TAG_FISICA_HTML = null;
 let TEMPLATE_VESPERA_HTML = null;
 let TEMPLATE_VOLTA_HTML = null;
 try {
   const rootDir = path.resolve(__dirname, '..', '..');
   TEMPLATE_COMPRA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_compra.html'), 'utf-8'));
   TEMPLATE_CONFIRMATION_COMPRA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_confirmacao_compra.html'), 'utf-8'));
+  TEMPLATE_CONFIRMATION_TAG_FISICA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_confirmacao_tag_fisica.html'), 'utf-8'));
   TEMPLATE_VESPERA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_vespera_voo.html'), 'utf-8'));
   TEMPLATE_VOLTA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_volta.html'), 'utf-8'));
   console.log('[EmailGateway] Templates HTML de compra, véspera e volta carregados com sucesso');
@@ -116,13 +118,17 @@ class EmailGateway {
     const outboundDate = formatDate(saleData.outboundDate);
     const returnDate = formatDate(saleData.returnDate);
     const tripType = saleData.roundTrip ? 'Ida e volta' : 'Ida';
+    const isPhysicalTag = saleData.reservationType === 'physical-tag';
     const deliveryText = saleData.reservationType === 'physical-tag'
       ? 'O comprovante será enviado assim que faltarem 48 horas para a sua viagem. Basta apresentá-lo na loja da Protec Bag no aeroporto.'
       : 'O link de ativação do serviço será enviado assim que faltarem 48 horas para a sua viagem. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.';
     const textBody = `Olá, ${customerData.name}!\n\nSua compra e reserva do ExactBag foram confirmadas com sucesso.\n\nDetalhes da reserva:\n- Tipo de viagem: ${tripType}${outboundDate ? `\n- Data da ida: ${outboundDate}` : ''}${returnDate ? `\n- Data da volta: ${returnDate}` : ''}\n\n${deliveryText}\n\nPor enquanto, não é necessário fazer o registro. Aguarde nossa próxima mensagem e mantenha seus dados de contato atualizados.\n\nDúvidas? Estamos disponíveis 24h.\n${supportPhone}\ncontato@exactbag.com.br\n\nBoa viagem!\nEquipe ExactBag`;
     let html = textBody;
-    if (TEMPLATE_CONFIRMATION_COMPRA_HTML) {
-      html = TEMPLATE_CONFIRMATION_COMPRA_HTML
+    const confirmationTemplate = isPhysicalTag
+      ? TEMPLATE_CONFIRMATION_TAG_FISICA_HTML
+      : TEMPLATE_CONFIRMATION_COMPRA_HTML;
+    if (confirmationTemplate) {
+      html = confirmationTemplate
         .replace(/\{\{nome\}\}/g, escHtml(customerData.name) || 'Cliente')
         .replace(/\{\{tipo_viagem\}\}/g, escHtml(tripType))
         .replace(/\{\{data_ida\}\}/g, escHtml(outboundDate))
@@ -131,7 +137,9 @@ class EmailGateway {
     }
     return this._sendEmail({
       to: customerData.email,
-      subject: 'Compra e reserva ExactBag confirmadas',
+      subject: isPhysicalTag
+        ? 'Compra e reserva da sua TAG ExactBag confirmadas'
+        : 'Compra e reserva ExactBag confirmadas',
       html,
       text: textBody
     });
