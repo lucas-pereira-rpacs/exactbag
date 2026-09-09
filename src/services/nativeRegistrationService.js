@@ -101,7 +101,7 @@ const createRegistration = async (sanitizedData, meta = {}) => {
           status: 'completed'
         });
       } catch (err) {
-        console.error('[NativeRegistration] Erro ao enviar WhatsApp CPV:', err.message);
+        console.error('[NativeRegistration] Erro ao enviar WhatsApp CPV:', err);
       }
     }
   });

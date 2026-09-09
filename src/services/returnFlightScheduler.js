@@ -67,7 +67,7 @@ class ReturnFlightScheduler {
           try {
             await nativeNotificationService.sendReturnReminderByWhatsApp(reg, registrationLink);
           } catch (err) {
-            console.error(`[ReturnFlightScheduler] Erro WhatsApp para ${reg.passengerPhone}:`, err.message);
+            console.error(`[ReturnFlightScheduler] Erro WhatsApp para ${reg.passengerPhone}:`, err);
           }
 
           // Marca como enviado (deduplicação)

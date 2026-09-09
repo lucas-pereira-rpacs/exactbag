@@ -20,6 +20,21 @@ const PRODUCTS = {
 
 const PHYSICAL_TAG_RECEIPT_WINDOW_MS = 48 * 60 * 60 * 1000;
 
+function getErrorDetails(error) {
+  if (!error) return error;
+  if (typeof error.toJSON === 'function') return error.toJSON();
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+    code: error.code,
+    status: error.status,
+    response: error.response?.data,
+    responseStatus: error.response?.status,
+    responseHeaders: error.response?.headers
+  };
+}
+
 /**
  * Retorna o próximo número de pedido sequencial (começa em 1001).
  * Usa SELECT MAX para ser seguro em concurrent inserts no nível de app.
@@ -127,7 +142,13 @@ exports.handlePhysicalTagSale = async (req, res) => {
           `;
         }
       } catch (error) {
-        console.error('[PhysicalTagSale] Falha no envio imediato do comprovante:', error.message);
+        console.error('[PhysicalTagSale] Falha no envio imediato do comprovante:', {
+          orderNumber,
+          product,
+          customer: { name: customerName, email: customerEmail, phone: customerPhone },
+          error,
+          errorDetails: getErrorDetails(error)
+        });
       }
       notificationStatus = { receipt: receiptSent, email: receiptSent, whatsapp: false };
       responseMessage = receiptSent
@@ -146,7 +167,17 @@ exports.handlePhysicalTagSale = async (req, res) => {
       ]);
       notifications.forEach((result, index) => {
         if (result.status === 'rejected') {
-          console.error(`[PhysicalTagSale] Falha no ${index === 0 ? 'e-mail' : 'WhatsApp'} de reserva:`, result.reason?.message);
+          const channel = index === 0 ? 'e-mail' : 'WhatsApp';
+          console.error(`[PhysicalTagSale] Falha no ${channel} de reserva:`, {
+            orderNumber,
+            id,
+            channel,
+            product,
+            customer: customerData,
+            reservation: reservationData,
+            error: result.reason,
+            errorDetails: getErrorDetails(result.reason)
+          });
         }
       });
       notificationStatus = {

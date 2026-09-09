@@ -112,7 +112,7 @@ const sendCpvByWhatsApp = async (registration) => {
     console.log(`[NativeNotification] CPV ${cpvNumber} enviado por WhatsApp (texto) para ${phone}`);
     return true;
   } catch (err) {
-    console.error('[NativeNotification] WhatsApp falhou:', err.message);
+    console.error('[NativeNotification] WhatsApp falhou:', err);
     return false;
   }
 };
@@ -169,7 +169,7 @@ const sendReturnReminderByWhatsApp = async (registration, registrationLink) => {
     console.log(`[NativeNotification] Lembrete volta enviado por WhatsApp (texto) para ${phone}`);
     return true;
   } catch (err) {
-    console.error('[NativeNotification] WhatsApp volta falhou:', err.message);
+    console.error('[NativeNotification] WhatsApp volta falhou:', err);
     return false;
   }
 };

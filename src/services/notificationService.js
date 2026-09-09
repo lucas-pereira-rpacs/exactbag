@@ -45,7 +45,7 @@ class NotificationService {
           customerData,
           saleData
         }).catch(err => {
-          console.error('[NotificationService] Erro ao enviar WhatsApp de confirmação:', err.message);
+          console.error('[NotificationService] Erro ao enviar WhatsApp de confirmação:', err);
           return { success: false, channel: 'whatsapp', error: err.message };
         })
       );
@@ -99,7 +99,7 @@ class NotificationService {
         whatsappGateway.sendTemplate(customerData.phone, 'exactbag_compra_registro', 'pt_BR', [
           { type: 'body', parameters: [{ type: 'text', text: customerData.name }, { type: 'text', text: safeLink }] }
         ]).catch(err => {
-          console.error('[NotificationService] Erro WhatsApp compra:', err.message);
+          console.error('[NotificationService] Erro WhatsApp compra:', err);
           return { channel: 'whatsapp', success: false, error: err.message };
         })
       );
@@ -128,7 +128,7 @@ class NotificationService {
       if (result.status === 'fulfilled') {
         return { channel: channels[index], success: Boolean(result.value), value: result.value };
       }
-      console.error(`[NotificationService] Erro ${channels[index]} confirmacao de compra:`, result.reason?.message);
+      console.error(`[NotificationService] Erro ${channels[index]} confirmacao de compra:`, result.reason);
       return { channel: channels[index], success: false, error: result.reason?.message };
     });
     return { success: details.some(detail => detail.success), details };
@@ -159,7 +159,7 @@ class NotificationService {
         whatsappGateway.sendTemplate(customerData.phone, 'exactbag_vespera_voo', 'pt_BR', [
           { type: 'body', parameters: [{ type: 'text', text: customerData.name }, { type: 'text', text: registrationLink }] }
         ]).catch(err => {
-          console.error('[NotificationService] Erro WhatsApp véspera:', err.message);
+          console.error('[NotificationService] Erro WhatsApp véspera:', err);
           return { channel: 'whatsapp', success: false, error: err.message };
         })
       );
