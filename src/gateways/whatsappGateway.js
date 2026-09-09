@@ -179,15 +179,21 @@ Boa viagem! ✈️
 
     const templateName = process.env.WHATSAPP_RESERVATION_TEMPLATE || '';
     if (this.provider === 'meta' && templateName) {
+      // The approved `exactbag_pedido` template has only one body variable.
+      // Keep its payload aligned with the template definition in Meta.
+      const parameters = templateName === 'exactbag_pedido'
+        ? [{ type: 'text', text: customerData.name }]
+        : [
+          { type: 'text', text: customerData.name },
+          { type: 'text', text: tripType },
+          { type: 'text', text: outboundDate },
+          { type: 'text', text: deliveryText.replace(/\*/g, '') }
+        ];
+
       return this.sendTemplate(customerData.phone, templateName, 'pt_BR', [
         {
           type: 'body',
-          parameters: [
-            { type: 'text', text: customerData.name },
-            { type: 'text', text: tripType },
-            { type: 'text', text: outboundDate },
-            { type: 'text', text: deliveryText.replace(/\*/g, '') }
-          ]
+          parameters
         }
       ]);
     }
