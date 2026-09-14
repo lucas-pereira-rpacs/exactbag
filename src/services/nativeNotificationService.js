@@ -86,7 +86,9 @@ const sendCpvByWhatsApp = async (registration) => {
   }
 
   // Se tiver template aprovado na Meta, usa template (obrigatório fora da janela de 24h)
-  const templateName = process.env.WHATSAPP_CPV_TEMPLATE || '';
+  const templateName = registration.isPhysicalTag
+    ? (process.env.WHATSAPP_PHYSICAL_TAG_CPV_TEMPLATE || process.env.WHATSAPP_CPV_TEMPLATE || '')
+    : (process.env.WHATSAPP_CPV_TEMPLATE || '');
   if (templateName) {
     try {
       await whatsappGateway.sendTemplate(phone, templateName, 'pt_BR', [
@@ -106,7 +108,9 @@ const sendCpvByWhatsApp = async (registration) => {
   }
 
   // Fallback: texto livre (funciona apenas dentro da janela de 24h ou provider não-Meta)
-  const message = `Olá ${name},\n\nSeu Certificado de Propriedade de Volume (CPV) foi emitido com sucesso.\n\n📄 CPV: ${cpvNumber}\n\nO documento foi enviado para seu e-mail. Guarde-o com segurança — ele comprova o registro da sua bagagem.\n\nBoa viagem!\nEquipe ExactBag`;
+  const message = registration.isPhysicalTag
+    ? `Olá ${name}! ✅\nSeu Certificado de Propriedade de Volume (CPV) foi emitido com sucesso:\n\n📄 CPV: ${cpvNumber}\n\nO documento foi enviado para seu e-mail. Guarde-o com segurança, ele comprova o registro da sua bagagem.\nCom a ExactBag, sua bagagem não está mais sozinha!\n\n⚠️ Este número de WhatsApp é exclusivo para notificações automáticas e não monitora mensagens recebidas. Para atendimento, entre em contato pelos canais oficiais abaixo:\n\nWhatsApp (24h): ${supportPhone}\nE-mail: contato@exactbag.com.br\n\nBoa viagem!\nEquipe ExactBag`
+    : `Olá ${name},\n\nSeu Certificado de Propriedade de Volume (CPV) foi emitido com sucesso.\n\n📄 CPV: ${cpvNumber}\n\nO documento foi enviado para seu e-mail. Guarde-o com segurança — ele comprova o registro da sua bagagem.\n\nBoa viagem!\nEquipe ExactBag`;
 
   try {
     await whatsappGateway._sendMessage(phone, message);
