@@ -78,9 +78,10 @@ const sendCpvByWhatsApp = async (registration) => {
   const phone = registration.passengerPhone;
   const name = registration.passengerName;
   const cpvNumber = registration.cpvNumber;
+  const registrationType = registration.isPhysicalTag ? 'physical-tag' : 'digital';
 
   if (!phone) {
-    console.warn('[NativeNotification] Telefone ausente, WhatsApp não enviado');
+    console.warn(`[NativeNotification] Telefone ausente, WhatsApp não enviado (type: ${registrationType}, CPV: ${cpvNumber})`);
     return false;
   }
 
@@ -97,7 +98,7 @@ const sendCpvByWhatsApp = async (registration) => {
           ]
         }
       ]);
-      console.log(`[NativeNotification] CPV ${cpvNumber} enviado por WhatsApp (template: ${templateName}) para ${phone}`);
+      console.log(`[NativeNotification] CPV ${cpvNumber} enviado por WhatsApp (type: ${registrationType}, template: ${templateName}) para ${phone}`);
       return true;
     } catch (err) {
       console.warn('[NativeNotification] Template falhou, tentando texto livre:', err.message);
@@ -109,7 +110,7 @@ const sendCpvByWhatsApp = async (registration) => {
 
   try {
     await whatsappGateway._sendMessage(phone, message);
-    console.log(`[NativeNotification] CPV ${cpvNumber} enviado por WhatsApp (texto) para ${phone}`);
+    console.log(`[NativeNotification] CPV ${cpvNumber} enviado por WhatsApp (type: ${registrationType}, texto) para ${phone}`);
     return true;
   } catch (err) {
     console.error('[NativeNotification] WhatsApp falhou:', err);

@@ -30,6 +30,11 @@ const DEFAULT_CONFIG = {
   NonInsuredSunNumberLast: '91208408'
 };
 
+const SUN_ERROR_MESSAGES = {
+  invalid: 'SUN inválido. Verifique se preencheu corretamente.',
+  expired: 'SUN vencido (mais de 1 ano). Informe uma TAG válida.'
+};
+
 const normalizeSun = (value) => {
   const sun = String(value || '').trim().toUpperCase();
   const insured = sun.startsWith('S');
@@ -91,7 +96,7 @@ const validateSun = async (value) => {
   }
 
   if (!normalized.numeric || !/^\d+$/.test(normalized.numeric)) {
-    return { valid: false, insured: normalized.insured, value: normalized.value, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' };
+    return { valid: false, code: 'SUN_INVALID', insured: normalized.insured, value: normalized.value, error: SUN_ERROR_MESSAGES.invalid };
   }
 
   const config = await readConfig();
@@ -104,7 +109,7 @@ const validateSun = async (value) => {
   const last = ending ? BigInt(normalizeSun(ending).numeric) : null;
 
   if (first === null || last === null || number < first || number > last) {
-    return { valid: false, insured: normalized.insured, value: normalized.value, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' };
+    return { valid: false, code: 'SUN_INVALID', insured: normalized.insured, value: normalized.value, error: SUN_ERROR_MESSAGES.invalid };
   }
 
   const firstUsage = await findFirstSunUsage(normalized.value);
@@ -112,7 +117,7 @@ const validateSun = async (value) => {
     const expirationDate = new Date(firstUsage);
     expirationDate.setFullYear(expirationDate.getFullYear() + 1);
     if (expirationDate <= new Date()) {
-      return { valid: false, insured: normalized.insured, value: normalized.value, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' };
+      return { valid: false, code: 'SUN_EXPIRED', insured: normalized.insured, value: normalized.value, error: SUN_ERROR_MESSAGES.expired };
     }
   }
 

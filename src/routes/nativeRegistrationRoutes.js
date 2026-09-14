@@ -49,7 +49,7 @@ router.post('/physical-tag/validate-sun', async (req, res) => {
     return res.status(result.valid ? 200 : 400).json(result);
   } catch (error) {
     console.error('[PhysicalTag] Erro ao validar SUN:', error);
-    return res.status(500).json({ valid: false, error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.' });
+    return res.status(500).json({ valid: false, error: 'Não foi possível validar o SUN. Tente novamente.' });
   }
 });
 

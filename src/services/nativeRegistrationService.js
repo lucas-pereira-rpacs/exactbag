@@ -10,20 +10,23 @@ const notificationService = require('./nativeNotificationService');
  */
 const createRegistration = async (sanitizedData, meta = {}) => {
   // 0. Deduplicação — evita envio duplo de e-mail em caso de retry/double-click
-  const recent = await repository.findRecent(
-    sanitizedData.passengerEmail,
-    sanitizedData.passengerPhone,
-    60000 // 60 segundos
-  );
-  if (recent) {
-    console.log('[NativeRegistration] Registro duplicado detectado (email+phone <60s), retornando existente CPV:', recent.cpvNumber);
-    return {
-      registration: recent,
-      cpvNumber: recent.cpvNumber,
-      cpvGenerated: !!recent.cpvNumber,
-      deduplicated: true
-    };
-  }
+  // Duplicate protection disabled temporarily so retries can run the
+  // notification flow again. Re-enable after the notification workflow is
+  // moved to a durable background job.
+  // const recent = await repository.findRecent(
+  //   sanitizedData.passengerEmail,
+  //   sanitizedData.passengerPhone,
+  //   60000 // 60 segundos
+  // );
+  // if (recent) {
+  //   console.log('[NativeRegistration] Registro duplicado detectado (email+phone <60s), retornando existente CPV:', recent.cpvNumber);
+  //   return {
+  //     registration: recent,
+  //     cpvNumber: recent.cpvNumber,
+  //     cpvGenerated: !!recent.cpvNumber,
+  //     deduplicated: true
+  //   };
+  // }
 
   // 1. Gera CPV number antecipadamente
   const cpvNumber = cpvPdfService.generateCpvNumber();

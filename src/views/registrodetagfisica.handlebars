@@ -78,11 +78,14 @@ body {
   box-shadow: 0 0 0 3px rgba(15,98,254,0.12);
 }
 .field input.error, .field select.error { border-color: #dc2626; }
+.field.has-error label { color: #b91c1c; }
 .field .error-msg { font-size: 12px; color: #dc2626; margin-top: 4px; display: none; }
 .field .error-msg.visible { display: block; }
 .field .hint { font-size: 11px; color: #9ca3af; margin-top: 2px; }
 .sun-success-msg { font-size: 12px; color: #16a34a; margin-top: 4px; display: none; }
 .sun-success-msg.visible { display: block; }
+.photo-upload-zone.error { border-color: #dc2626; background: #fef2f2; }
+.terms-check.has-error { border: 1.5px solid #dc2626; border-radius: 8px; padding: 10px; }
 
 /* Phone country selector */
 .phone-wrapper{position:relative;display:flex;align-items:stretch}
@@ -256,7 +259,7 @@ body {
     <img src="/native/icon-eb.png" alt="ExactBag" class="header-icon" />
     <div>
       <div class="header-name">ExactBag</div>
-      <div class="header-sub" id="headerSub">Registro de Bagagem — Serviço Digital</div>
+      <div class="header-sub" id="headerSub">Registro de Bagagem — TAG Física</div>
     </div>
   </div>
   <div class="lang-toggle">
@@ -470,7 +473,7 @@ body {
 
         <div class="terms-check">
           <input type="checkbox" id="termsAccepted" name="termsAccepted" />
-          <label for="termsAccepted" id="termsAcceptLabel">Li e aceito os <strong>Termos de Uso</strong> do Serviço Digital ExactBag <span class="required">*</span></label>
+          <label for="termsAccepted" id="termsAcceptLabel">Li e aceito os <strong>Termos de Uso</strong> da TAG Física ExactBag <span class="required">*</span></label>
         </div>
         <div class="error-msg" id="termsAccepted-error" style="margin-top:4px;"></div>
 
@@ -908,7 +911,7 @@ body {
   const LANG = {
     pt: {
       pageTitle: 'ExactBag • Registro de TAG Física',
-      headerSub: 'Registro de TAG Física — Serviço Digital',
+      headerSub: 'Registro de TAG Física',
       step1Label: 'Etapa 1 de 4 — Dados Pessoais',
       step2Label: 'Etapa 2 de 4 — Viagem',
       step3Label: 'Etapa 3 de 4 — Bagagem',
@@ -974,7 +977,7 @@ body {
       termsExpandBtn: '📄 Ver Termos Completos',
       termsModalTitle: 'Termos de Serviço — ExactBag',
       termsContent: '<div class="terms-section"><div class="terms-section-title">1. Objeto do Contrato</div><p>O presente Termo de Serviço regula a contratação do serviço digital oferecido pela EXACTBAG, que consiste no registro informativo de bagagens por meio de fotografias e dados fornecidos pelo CONTRATANTE, com o objetivo de auxiliar na identificação e comprovação de propriedade dos volumes em caso de extravio, dano ou furto durante viagens.</p></div><div class="terms-section"><div class="terms-section-title">2. Descrição do Serviço</div><p>O serviço inclui: (a) Registro fotográfico e descritivo das bagagens do CONTRATANTE; (b) Emissão do CPV — Certificado de Propriedade de Volume, documento digital que comprova o conteúdo e estado das bagagens no momento do registro; (c) Armazenamento seguro dos dados e imagens em plataforma digital; (d) Suporte ao CONTRATANTE em caso de necessidade de comprovação junto a companhias aéreas, seguradoras ou autoridades.</p></div><div class="terms-section"><div class="terms-section-title">3. Obrigações da EXACTBAG</div><p>A EXACTBAG se compromete a: (a) Manter os dados e imagens do CONTRATANTE em sigilo e segurança, conforme a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018); (b) Disponibilizar o CPV em formato digital ao CONTRATANTE após a conclusão do registro; (c) Prestar suporte ao CONTRATANTE durante o período de vigência do serviço; (d) Não compartilhar os dados do CONTRATANTE com terceiros, exceto quando exigido por lei ou autoridade competente.</p></div><div class="terms-section"><div class="terms-section-title">4. Obrigações do CONTRATANTE</div><p>O CONTRATANTE se compromete a: (a) Fornecer informações verdadeiras e precisas sobre suas bagagens; (b) Realizar o registro fotográfico de forma clara e legível; (c) Não utilizar o serviço para fins ilícitos ou fraudulentos; (d) Manter seus dados de contato atualizados.</p></div><div class="terms-section"><div class="terms-section-title">5. Limitação de Responsabilidade</div><p>A EXACTBAG <strong>não se responsabiliza</strong> por: (a) Perda, furto, dano ou extravio de bagagens, sendo o serviço de natureza exclusivamente informativa e probatória; (b) Decisões tomadas por companhias aéreas, seguradoras ou terceiros com base no CPV; (c) Uso indevido do CPV pelo CONTRATANTE ou terceiros; (d) Falhas de conexão, dispositivos ou serviços de terceiros que impeçam o acesso ao sistema.</p></div><div class="terms-section"><div class="terms-section-title">6. CPV — Certificado de Propriedade de Volume</div><p>Ao concluir o registro, será gerado automaticamente um CPV contendo os dados fornecidos e foto(s) da bagagem. O CPV será enviado ao e-mail e WhatsApp informados e constitui prova digital do registro realizado, podendo ser utilizado pelo CONTRATANTE junto a companhias aéreas, seguradoras e autoridades competentes.</p></div><div class="terms-section"><div class="terms-section-title">7. Proteção de Dados (LGPD)</div><p>Os dados pessoais coletados serão tratados exclusivamente para a prestação do serviço contratado, conforme a LGPD. O CONTRATANTE poderá solicitar a exclusão de seus dados a qualquer momento através dos canais de atendimento.</p></div><div class="terms-footer">Ao submeter este formulário, o CONTRATANTE declara ter lido e concordado integralmente com os termos acima.<br><br>📄 <a href="https://drive.google.com/file/d/1_rPhfKcAZ-lA7YM98vd7RQAKaAoKh_86/view?usp=sharing" target="_blank" rel="noopener" style="color:#0f62fe">Clique aqui para ver o documento completo dos Termos de Serviço</a></div>',
-      termsAcceptLabel: 'Li e aceito os <strong>Termos de Uso</strong> do Serviço Digital ExactBag',
+      termsAcceptLabel: 'Li e aceito os <strong>Termos de Uso</strong> da TAG Física ExactBag',
       btnSubmit: 'Registrar Bagagem ✓',
       btnNext: 'Continuar →',
       btnBack: '← Voltar',
@@ -982,6 +985,8 @@ body {
       errCpf: 'CPF deve ter 11 dígitos',
       errPhone: 'Telefone inválido',
       errEmail: 'E-mail inválido',
+      errSunInvalid: 'SUN inválido. Verifique se preencheu corretamente.',
+      errSunExpired: 'SUN vencido (mais de 1 ano). Informe uma TAG válida.',
       errEmailMatch: 'E-mails não conferem',
       errOrigin: 'Origem obrigatória',
       errDest: 'Destino obrigatório',
@@ -1050,7 +1055,7 @@ body {
     },
     en: {
       pageTitle: 'ExactBag • Physical TAG Registration',
-      headerSub: 'Physical TAG Registration — Digital Service',
+      headerSub: 'Physical TAG Registration',
       step1Label: 'Step 1 of 4 — Personal Data',
       step2Label: 'Step 2 of 4 — Trip',
       step3Label: 'Step 3 of 4 — Baggage',
@@ -1116,7 +1121,7 @@ body {
       termsExpandBtn: '📄 View Full Terms',
       termsModalTitle: 'Terms of Service — ExactBag',
       termsContent: '<div class="terms-section"><div class="terms-section-title">1. Purpose of the Agreement</div><p>This Terms of Service governs the contracting of the digital service offered by EXACTBAG, which consists of the informational registration of baggage through photographs and data provided by the CLIENT, aiming to assist in the identification and proof of ownership of volumes in case of loss, damage, or theft during travel.</p></div><div class="terms-section"><div class="terms-section-title">2. Service Description</div><p>The service includes: (a) Photographic and descriptive registration of the CLIENT\'s baggage; (b) Issuance of the CPV — Volume Property Certificate, a digital document that proves the content and condition of the baggage at the time of registration; (c) Secure storage of data and images on a digital platform; (d) Support to the CLIENT in case of need for proof with airlines, insurers, or authorities.</p></div><div class="terms-section"><div class="terms-section-title">3. EXACTBAG Obligations</div><p>EXACTBAG commits to: (a) Keep the CLIENT\'s data and images confidential and secure, in accordance with Brazilian Data Protection Law (LGPD — Law No. 13,709/2018); (b) Make the CPV available in digital format to the CLIENT after registration is completed; (c) Provide support to the CLIENT during the service period; (d) Not share the CLIENT\'s data with third parties, except when required by law.</p></div><div class="terms-section"><div class="terms-section-title">4. CLIENT Obligations</div><p>The CLIENT commits to: (a) Provide truthful and accurate information about their baggage; (b) Take clear and legible photographic records; (c) Not use the service for illegal or fraudulent purposes; (d) Keep their contact information up to date.</p></div><div class="terms-section"><div class="terms-section-title">5. Limitation of Liability</div><p>EXACTBAG is <strong>not responsible</strong> for: (a) Loss, theft, damage, or misplacement of baggage, as the service is exclusively informational and evidentiary; (b) Decisions made by airlines, insurers, or third parties based on the CPV; (c) Misuse of the CPV by the CLIENT or third parties; (d) Connection failures, devices, or third-party services that prevent access to the system.</p></div><div class="terms-section"><div class="terms-section-title">6. CPV — Volume Property Certificate</div><p>Upon completing the registration, a CPV will be automatically generated containing the provided data and photo(s) of the baggage. The CPV will be sent to the email and WhatsApp provided and constitutes digital proof of the registration performed, which can be used by the CLIENT with airlines, insurers, and competent authorities.</p></div><div class="terms-section"><div class="terms-section-title">7. Data Protection (LGPD)</div><p>Personal data collected will be processed exclusively for the provision of the contracted service, in accordance with LGPD. The CLIENT may request the deletion of their data at any time through the service channels.</p></div><div class="terms-footer">By submitting this form, the CLIENT declares having read and fully agreed to the terms above.<br><br>📄 <a href="https://drive.google.com/file/d/1_rPhfKcAZ-lA7YM98vd7RQAKaAoKh_86/view?usp=sharing" target="_blank" rel="noopener" style="color:#0f62fe">Click here to view the full Terms of Service document</a></div>',
-      termsAcceptLabel: 'I have read and accept the <strong>Terms of Use</strong> of the ExactBag Digital Service',
+      termsAcceptLabel: 'I have read and accept the ExactBag Physical TAG <strong>Terms of Use</strong>',
       btnSubmit: 'Register Baggage ✓',
       btnNext: 'Continue →',
       btnBack: '← Back',
@@ -1124,6 +1129,8 @@ body {
       errCpf: 'CPF must have 11 digits',
       errPhone: 'Invalid phone number',
       errEmail: 'Invalid email',
+      errSunInvalid: 'Invalid SUN. Please check that it was entered correctly.',
+      errSunExpired: 'Expired SUN (more than 1 year old). Please enter a valid TAG.',
       errEmailMatch: 'Emails do not match',
       errOrigin: 'Origin required',
       errDest: 'Destination required',
@@ -1368,7 +1375,10 @@ body {
 
   // ========== STEP NAVIGATION ==========
   window.nextStep = function() {
-    if (!validateCurrentStep()) return;
+    if (!validateCurrentStep()) {
+      focusFirstError();
+      return;
+    }
     if (currentStep < totalSteps) {
       showStep(currentStep + 1);
     }
@@ -1415,6 +1425,10 @@ body {
     var input = document.getElementById(fieldId);
     var errorEl = document.getElementById(fieldId + '-error');
     if (input) input.classList.add('error');
+    var field = input && input.closest('.field');
+    var termsCheck = input && input.closest('.terms-check');
+    if (field) field.classList.add('has-error');
+    if (termsCheck) termsCheck.classList.add('has-error');
     if (errorEl) { errorEl.textContent = msg; errorEl.classList.add('visible'); }
   }
 
@@ -1422,16 +1436,28 @@ body {
     var input = document.getElementById(fieldId);
     var errorEl = document.getElementById(fieldId + '-error');
     if (input) input.classList.remove('error');
+    var field = input && input.closest('.field');
+    var termsCheck = input && input.closest('.terms-check');
+    if (field) field.classList.remove('has-error');
+    if (termsCheck) termsCheck.classList.remove('has-error');
     if (errorEl) { errorEl.textContent = ''; errorEl.classList.remove('visible'); }
   }
 
   function clearAllErrors() {
     document.querySelectorAll('.error-msg').forEach(function(el) { el.textContent = ''; el.classList.remove('visible'); });
     document.querySelectorAll('.error').forEach(function(el) { el.classList.remove('error'); });
+    document.querySelectorAll('.has-error').forEach(function(el) { el.classList.remove('has-error'); });
   }
 
   function val(id) { return (document.getElementById(id)?.value || '').trim(); }
   function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function sunErrorMessage(code) { return code === 'SUN_EXPIRED' ? t('errSunExpired') : t('errSunInvalid'); }
+  function focusFirstError() {
+    var firstError = document.querySelector('.field.has-error, .photo-upload-zone.error, .terms-check.has-error, .error');
+    if (!firstError) return;
+    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (typeof firstError.focus === 'function' && firstError.matches('input, select, textarea, button')) firstError.focus();
+  }
 
   function validateCurrentStep() {
     clearAllErrors();
@@ -1451,7 +1477,7 @@ body {
 
       if (val('emailConfirmation') !== email) { setError('emailConfirmation', t('errEmailMatch')); valid = false; }
       if (!sunConfirmed || !val('sunNumber')) {
-        setError('sunNumber', 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.'); valid = false;
+        setError('sunNumber', t('errSunInvalid')); valid = false;
       }
     }
 
@@ -1464,14 +1490,12 @@ body {
       var qty = parseInt(document.getElementById('baggageQty').value) || 1;
       for (var i = 0; i < qty; i++) {
         if (!photoDataMap[i]) {
-          alert(t('errPhotoExt', { n: i + 1 }));
+          setError('photoZone_' + i, t('errPhotoExt', { n: i + 1 }));
           valid = false;
-          break;
         }
         if (!photoDataMap2[i]) {
-          alert(t('errPhotoAlt', { n: i + 1 }));
+          setError('photoZone_b_' + i, t('errPhotoAlt', { n: i + 1 }));
           valid = false;
-          break;
         }
       }
     }
@@ -1495,7 +1519,7 @@ body {
     document.getElementById('sunNumber-success').classList.remove('visible');
     sunConfirmed = false;
     document.getElementById('insured').value = 'false';
-    if (!sun) { setError('sunNumber', 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.'); return; }
+    if (!sun) { setError('sunNumber', t('errSunInvalid')); return; }
     button.disabled = true;
     try {
       var response = await fetch(API_BASE + '/native/physical-tag/validate-sun', {
@@ -1504,7 +1528,7 @@ body {
       });
       var result = await response.json();
       if (!response.ok || !result.valid) {
-        setError('sunNumber', result.error || 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.');
+        setError('sunNumber', result.code ? sunErrorMessage(result.code) : (result.error || t('errSunInvalid')));
         return;
       }
       document.getElementById('insured').value = result.insured ? 'true' : 'false';
@@ -1512,7 +1536,7 @@ body {
       input.classList.remove('error');
       document.getElementById('sunNumber-success').classList.add('visible');
     } catch (error) {
-      setError('sunNumber', 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.');
+      setError('sunNumber', t('errSunInvalid'));
     } finally { button.disabled = false; }
   };
 
@@ -1786,6 +1810,7 @@ body {
               '<button type="button" class="remove-btn" onclick="removePhoto(' + i + ', false)">✕</button>' +
             '</div>' +
             '<div class="hint">' + t('hintPhotoExt') + '</div>' +
+            '<div class="error-msg" id="photoZone_' + i + '-error"></div>' +
           '</div>' +
           '<div class="field">' +
             '<label>' + t('labelPhotoAlt') + ' <span class="required">*</span></label>' +
@@ -1799,6 +1824,7 @@ body {
               '<button type="button" class="remove-btn" onclick="removePhoto(' + i + ', true)">✕</button>' +
             '</div>' +
             '<div class="hint">' + t('hintPhotoAlt') + '</div>' +
+            '<div class="error-msg" id="photoZone_b_' + i + '-error"></div>' +
           '</div>' +
         '</div>';
       container.insertAdjacentHTML('beforeend', html);
@@ -1851,6 +1877,7 @@ body {
 
     var suffix = isSecond ? '_b' : '';
     var map = isSecond ? photoDataMap2 : photoDataMap;
+    clearError('photoZone' + suffix + '_' + index);
 
     // Keep the original File. Object URLs are used only for the preview, so
     // the upload never becomes a Base64 string or gets converted to another

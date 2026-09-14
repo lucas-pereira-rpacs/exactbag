@@ -86,7 +86,8 @@ const createRegistration = async (req, res) => {
       if (!sunValidation.valid) {
         return res.status(400).json({
           success: false,
-          error: 'SUN Inválido ou Vencido (mais de 1 ano). Verifique se preencheu corretamente.',
+          error: sunValidation.error,
+          code: sunValidation.code,
           details: [{ field: 'sunNumber', message: sunValidation.error }]
         });
       }
