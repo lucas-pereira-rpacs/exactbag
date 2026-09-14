@@ -65,12 +65,15 @@ const validateRegistrationInput = (body) => {
     errors.push({ field: 'passengerPhone', message: 'Telefone inválido (10-15 dígitos)' });
   }
 
-  // CPF - obrigatório no serviço digital
-  if (body.passengerCpf !== undefined) {
+  // CPF is optional for physical TAG registrations, but required for digital ones.
+  const isPhysicalTag = toBoolean(body.isPhysicalTag || body.physicalTag);
+  if (body.passengerCpf && String(body.passengerCpf).trim()) {
     const cpfResult = validateCpf(body.passengerCpf);
     if (!cpfResult.valid) {
       errors.push({ field: 'passengerCpf', message: cpfResult.error });
     }
+  } else if (!isPhysicalTag) {
+    errors.push({ field: 'passengerCpf', message: 'CPF é obrigatório' });
   }
 
   if (!body.origin || String(body.origin).trim().length < 2) {
