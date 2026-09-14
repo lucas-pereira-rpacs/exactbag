@@ -154,41 +154,39 @@ Equipe ExactBag`;
     const tripType = saleData.roundTrip ? 'Ida e volta' : 'Ida';
     const outboundDate = formatDate(saleData.outboundDate);
     const deliveryText = saleData.reservationType === 'physical-tag'
-      ? 'O comprovante será enviado assim que faltarem *48 horas para a sua viagem*. Basta apresentá-lo na loja da Protec Bag no aeroporto.'
-      : 'O link de ativação do serviço será enviado assim que faltarem *48 horas para a sua viagem*. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.';
-    const message = `Olá, ${customerData.name}! 👋
+      ? 'O comprovante será enviado assim que faltarem 48 horas para a sua viagem. Basta apresentá-lo na loja da Protec Bag no aeroporto.'
+      : 'O link de ativação do serviço será enviado assim que faltarem 48 horas para a sua viagem. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.';
+    const message = `Olá, ${customerData.name}!
 
-Sua compra e reserva do *ExactBag* foram confirmadas com sucesso! ✅
+Sua compra da ExactBag foi confirmada com sucesso! ✅
 
-📦 *Detalhes da reserva*
+Detalhes do pedido
 ✈️ Viagem: ${tripType}${outboundDate ? `
-📅 Data da viagem: *${outboundDate}*` : ''}
+Data da viagem: ${outboundDate}` : ''}
 
-*Quando vou receber o produto?*
+Quando vou receber o produto?
 ${deliveryText}
 
-⚠️ *Você receberá 48 horas antes da viagem o acesso ao seu produto/serviço.*
+⚠️ Por enquanto, não é necessário fazer nenhum registro.
 Apenas aguarde nossa próxima mensagem e mantenha seus dados de contato atualizados.
 
-📞 *Dúvidas? Estamos disponíveis 24 horas:*
+ Dúvidas? Estamos disponíveis 24 horas:
 +55 12 99758-3157
 ✉️ contato@exactbag.com.br
 
 Boa viagem! ✈️
-*Equipe ExactBag*`;
+Equipe ExactBag`;
 
     const templateName = process.env.WHATSAPP_RESERVATION_TEMPLATE || '';
     if (this.provider === 'meta' && templateName) {
-      // The approved `exactbag_pedido` template has only one body variable.
-      // Keep its payload aligned with the template definition in Meta.
-      const parameters = templateName === 'exactbag_pedido'
-        ? [{ type: 'text', text: customerData.name }]
-        : [
-          { type: 'text', text: customerData.name },
-          { type: 'text', text: tripType },
-          { type: 'text', text: outboundDate },
-          { type: 'text', text: deliveryText.replace(/\*/g, '') }
-        ];
+      // The approved reservation template has four body variables:
+      // name, trip, travel date, and delivery details.
+      const parameters = [
+        { type: 'text', text: customerData.name },
+        { type: 'text', text: tripType },
+        { type: 'text', text: outboundDate },
+        { type: 'text', text: deliveryText }
+      ];
 
       return this.sendTemplate(customerData.phone, templateName, 'pt_BR', [
         {
