@@ -6,15 +6,18 @@
  * to /webhooks/sales and review retention/access controls before production use.
  */
 module.exports = (req, _res, next) => {
-  const requestId = req.headers['x-railway-request-id'] || req.id || null;
+  const requestId = req.headers["x-railway-request-id"] || req.id || null;
 
-  console.log('[WebhookRequest]', JSON.stringify({
-    timestamp: new Date().toISOString(),
-    requestId,
-    method: req.method,
-    path: req.originalUrl,
-    body: req.body || {}
-  }));
+  console.log(
+    "[WebhookRequest]",
+    JSON.stringify({
+      timestamp: new Date().toISOString(),
+      requestId,
+      method: req.method,
+      path: req.originalUrl,
+      body: req.body || {},
+    }),
+  );
 
   next();
 };

@@ -1,36 +1,51 @@
 // Controller do módulo de Registro Nativo
-const registrationService = require('../services/nativeRegistrationService');
-const repository = require('../repositories/nativeRegistrationRepository');
-const { validateRegistrationInput } = require('../utils/nativeRegistrationValidator');
-const agenda = require('../jobs/agendaClient');
-const { validateSun, isTestSun } = require('../services/physicalTagSunService');
-const { validateToken } = require('../services/dashboardAuthService');
-const { client: minioClient, config: minioConfig } = require('../services/minioClient');
+const registrationService = require("../services/nativeRegistrationService");
+const repository = require("../repositories/nativeRegistrationRepository");
+const {
+  validateRegistrationInput,
+} = require("../utils/nativeRegistrationValidator");
+const agenda = require("../jobs/agendaClient");
+const { validateSun, isTestSun } = require("../services/physicalTagSunService");
+const { validateToken } = require("../services/dashboardAuthService");
+const {
+  client: minioClient,
+  config: minioConfig,
+} = require("../services/minioClient");
 
 const withImageUrls = async (registration) => ({
   ...registration,
-  baggageItems: await Promise.all((registration.baggageItems || []).map(async (item) => ({
-    ...item,
-    imageData: item.imageData?.startsWith('data:')
-      ? item.imageData
-      : (item.imageData ? `/native/registro/${registration.id}/image/${item.id}/imageData` : null),
-    imageData2: item.imageData2?.startsWith('data:')
-      ? item.imageData2
-      : (item.imageData2 ? `/native/registro/${registration.id}/image/${item.id}/imageData2` : null),
-  })))
+  baggageItems: await Promise.all(
+    (registration.baggageItems || []).map(async (item) => ({
+      ...item,
+      imageData: item.imageData?.startsWith("data:")
+        ? item.imageData
+        : item.imageData
+          ? `/native/registro/${registration.id}/image/${item.id}/imageData`
+          : null,
+      imageData2: item.imageData2?.startsWith("data:")
+        ? item.imageData2
+        : item.imageData2
+          ? `/native/registro/${registration.id}/image/${item.id}/imageData2`
+          : null,
+    })),
+  ),
 });
 
 const withImageProxyUrls = (registration) => ({
   ...registration,
   baggageItems: (registration.baggageItems || []).map((item) => ({
     ...item,
-    imageData: item.imageData?.startsWith('data:')
+    imageData: item.imageData?.startsWith("data:")
       ? item.imageData
-      : (item.imageData ? `/native/registro/${registration.id}/image/${item.id}/imageData` : null),
-    imageData2: item.imageData2?.startsWith('data:')
+      : item.imageData
+        ? `/native/registro/${registration.id}/image/${item.id}/imageData`
+        : null,
+    imageData2: item.imageData2?.startsWith("data:")
       ? item.imageData2
-      : (item.imageData2 ? `/native/registro/${registration.id}/image/${item.id}/imageData2` : null),
-  }))
+      : item.imageData2
+        ? `/native/registro/${registration.id}/image/${item.id}/imageData2`
+        : null,
+  })),
 });
 
 /**
@@ -47,38 +62,45 @@ const createRegistration = async (req, res) => {
       try {
         registrationBody = JSON.parse(registrationBody.registrationData);
       } catch (_error) {
-        return res.status(400).json({ success: false, error: 'Dados invÃ¡lidos' });
+        return res
+          .status(400)
+          .json({ success: false, error: "Dados invÃ¡lidos" });
       }
     }
 
     const imageFiles = req.files || {};
     const imageDataFiles = imageFiles.imageData || [];
     const imageData2Files = imageFiles.imageData2 || [];
-    registrationBody.baggageItems = (registrationBody.baggageItems || []).map((item, index) => ({
-      ...item,
-      imageData: imageDataFiles[index]?.key || null,
-      imageData2: imageData2Files[index]?.key || null
-    }));
+    registrationBody.baggageItems = (registrationBody.baggageItems || []).map(
+      (item, index) => ({
+        ...item,
+        imageData: imageDataFiles[index]?.key || null,
+        imageData2: imageData2Files[index]?.key || null,
+      }),
+    );
 
     const validation = validateRegistrationInput(registrationBody);
 
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
-        error: 'Dados inválidos',
-        details: validation.errors
+        error: "Dados inválidos",
+        details: validation.errors,
       });
     }
 
     if (validation.sanitized.isPhysicalTag) {
       if (isTestSun(validation.sanitized.sunNumber)) {
-        const session = validateToken(req.headers.authorization?.startsWith('Bearer ')
-          ? req.headers.authorization.slice(7)
-          : req.query.token);
-        if (!session || !['admin', 'gestor'].includes(session.role)) {
+        const session = validateToken(
+          req.headers.authorization?.startsWith("Bearer ")
+            ? req.headers.authorization.slice(7)
+            : req.query.token,
+        );
+        if (!session || !["admin", "gestor"].includes(session.role)) {
           return res.status(403).json({
             success: false,
-            error: 'Apenas administradores ou gestores podem usar SUNs de teste.'
+            error:
+              "Apenas administradores ou gestores podem usar SUNs de teste.",
           });
         }
       }
@@ -88,30 +110,35 @@ const createRegistration = async (req, res) => {
           success: false,
           error: sunValidation.error,
           code: sunValidation.code,
-          details: [{ field: 'sunNumber', message: sunValidation.error }]
+          details: [{ field: "sunNumber", message: sunValidation.error }],
         });
       }
       validation.sanitized.hasInsurance = sunValidation.insured;
       validation.sanitized.baggageItems[0] = {
         ...(validation.sanitized.baggageItems[0] || {}),
         identifierTag: sunValidation.value,
-        sunNumber: sunValidation.value
+        sunNumber: sunValidation.value,
       };
     }
 
     const saleId = validation.sanitized.saleId;
     if (!saleId && !validation.sanitized.isPhysicalTag) {
-      throw new Error('[NativeRegistration] saleId is required');
+      throw new Error("[NativeRegistration] saleId is required");
     }
 
     const meta = {
       ipAddress: req.ip || req.connection?.remoteAddress,
-      userAgent: req.get('User-Agent')
+      userAgent: req.get("User-Agent"),
     };
 
-    const result = await registrationService.createRegistration(validation.sanitized, meta);
+    const result = await registrationService.createRegistration(
+      validation.sanitized,
+      meta,
+    );
 
-    const saleHasInsurance = saleId ? await repository.findSaleHasInsurance(saleId) : null;
+    const saleHasInsurance = saleId
+      ? await repository.findSaleHasInsurance(saleId)
+      : null;
 
     if (saleHasInsurance === true) {
       await agenda.now("now-integration", {
@@ -131,20 +158,21 @@ const createRegistration = async (req, res) => {
         cpvNumber: result.cpvNumber,
         cpvGenerated: result.cpvGenerated,
         status: result.registration.status,
-        message: 'Registro realizado com sucesso! O CPV será enviado por e-mail em instantes.'
-      }
+        message:
+          "Registro realizado com sucesso! O CPV será enviado por e-mail em instantes.",
+      },
     });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao criar registro:', error);
-    if (error.code === 'SALE_EXPIRED') {
+    console.error("[NativeRegistration] Erro ao criar registro:", error);
+    if (error.code === "SALE_EXPIRED") {
       return res.status(410).json({
         success: false,
-        error: 'O link desta venda expirou. Solicite um novo link.'
+        error: "O link desta venda expirou. Solicite um novo link.",
       });
     }
     return res.status(500).json({
       success: false,
-      error: 'Erro interno ao processar registro'
+      error: "Erro interno ao processar registro",
     });
   }
 };
@@ -157,8 +185,8 @@ const listRegistrations = async (req, res) => {
     const {
       page = 1,
       limit = 20,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
+      sortBy = "createdAt",
+      sortOrder = "desc",
       partnerId,
       status,
       passengerEmail,
@@ -167,35 +195,49 @@ const listRegistrations = async (req, res) => {
       dateFrom,
       dateTo,
       hasInsurance,
-      isPhysicalTag
+      isPhysicalTag,
     } = req.query;
 
     // Normaliza o filtro de seguro: 'true'/'1' => true, 'false'/'0' => false, ausente => sem filtro
     let hasInsuranceFilter;
-    if (hasInsurance === 'true' || hasInsurance === '1') hasInsuranceFilter = true;
-    else if (hasInsurance === 'false' || hasInsurance === '0') hasInsuranceFilter = false;
+    if (hasInsurance === "true" || hasInsurance === "1")
+      hasInsuranceFilter = true;
+    else if (hasInsurance === "false" || hasInsurance === "0")
+      hasInsuranceFilter = false;
 
     let isPhysicalTagFilter;
-    if (isPhysicalTag === 'true' || isPhysicalTag === '1') isPhysicalTagFilter = true;
-    else if (isPhysicalTag === 'false' || isPhysicalTag === '0') isPhysicalTagFilter = false;
+    if (isPhysicalTag === "true" || isPhysicalTag === "1")
+      isPhysicalTagFilter = true;
+    else if (isPhysicalTag === "false" || isPhysicalTag === "0")
+      isPhysicalTagFilter = false;
 
     const result = await registrationService.listRegistrations({
       page: Math.min(Math.max(1, parseInt(page) || 1), 10000),
       limit: Math.max(1, Math.min(parseInt(limit) || 20, 100)),
       sortBy,
       sortOrder,
-      filters: { partnerId, status, passengerEmail, passengerName, cpvNumber, dateFrom, dateTo, hasInsurance: hasInsuranceFilter, isPhysicalTag: isPhysicalTagFilter }
+      filters: {
+        partnerId,
+        status,
+        passengerEmail,
+        passengerName,
+        cpvNumber,
+        dateFrom,
+        dateTo,
+        hasInsurance: hasInsuranceFilter,
+        isPhysicalTag: isPhysicalTagFilter,
+      },
     });
 
     return res.status(200).json({
       success: true,
-      ...result
+      ...result,
     });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao listar registros:', error);
+    console.error("[NativeRegistration] Erro ao listar registros:", error);
     return res.status(500).json({
       success: false,
-      error: 'Erro interno ao listar registros'
+      error: "Erro interno ao listar registros",
     });
   }
 };
@@ -205,24 +247,26 @@ const listRegistrations = async (req, res) => {
  */
 const getRegistration = async (req, res) => {
   try {
-    const registration = await registrationService.getRegistration(req.params.id);
+    const registration = await registrationService.getRegistration(
+      req.params.id,
+    );
 
     if (!registration) {
       return res.status(404).json({
         success: false,
-        error: 'Registro não encontrado'
+        error: "Registro não encontrado",
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: await withImageUrls(registration)
+      data: await withImageUrls(registration),
     });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao buscar registro:', error);
+    console.error("[NativeRegistration] Erro ao buscar registro:", error);
     return res.status(500).json({
       success: false,
-      error: 'Erro interno ao buscar registro'
+      error: "Erro interno ao buscar registro",
     });
   }
 };
@@ -233,35 +277,58 @@ const getRegistration = async (req, res) => {
 const streamRegistrationImage = async (req, res) => {
   try {
     const { id, itemId, field } = req.params;
-    if (!['imageData', 'imageData2'].includes(field)) {
-      return res.status(400).json({ success: false, error: 'Campo de imagem invÃ¡lido' });
+    if (!["imageData", "imageData2"].includes(field)) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Campo de imagem invÃ¡lido" });
     }
     if (!minioClient) {
-      return res.status(503).json({ success: false, error: 'Object storage indisponÃ­vel' });
+      return res
+        .status(503)
+        .json({ success: false, error: "Object storage indisponÃ­vel" });
     }
 
     const registration = await registrationService.getRegistration(id);
-    const objectName = registration?.baggageItems?.find((item) => item.id === itemId)?.[field];
-    if (!objectName || objectName.startsWith('data:')) {
-      return res.status(404).json({ success: false, error: 'Imagem nÃ£o encontrada' });
+    const objectName = registration?.baggageItems?.find(
+      (item) => item.id === itemId,
+    )?.[field];
+    if (!objectName || objectName.startsWith("data:")) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Imagem nÃ£o encontrada" });
     }
 
-    const metadata = await minioClient.statObject(minioConfig.bucket, objectName);
-    const contentType = metadata.metaData?.['content-type'] || metadata.metaData?.['Content-Type'] || 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
-    if (metadata.size !== undefined) res.setHeader('Content-Length', metadata.size);
-    res.setHeader('Cache-Control', 'private, max-age=300');
+    const metadata = await minioClient.statObject(
+      minioConfig.bucket,
+      objectName,
+    );
+    const contentType =
+      metadata.metaData?.["content-type"] ||
+      metadata.metaData?.["Content-Type"] ||
+      "application/octet-stream";
+    res.setHeader("Content-Type", contentType);
+    if (metadata.size !== undefined)
+      res.setHeader("Content-Length", metadata.size);
+    res.setHeader("Cache-Control", "private, max-age=300");
 
-    const imageStream = await minioClient.getObject(minioConfig.bucket, objectName);
-    imageStream.on('error', (error) => {
-      console.error('[NativeRegistration] Erro ao transmitir imagem:', error.message);
+    const imageStream = await minioClient.getObject(
+      minioConfig.bucket,
+      objectName,
+    );
+    imageStream.on("error", (error) => {
+      console.error(
+        "[NativeRegistration] Erro ao transmitir imagem:",
+        error.message,
+      );
       if (!res.headersSent) res.status(500).end();
       else res.destroy(error);
     });
     imageStream.pipe(res);
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao buscar imagem:', error);
-    return res.status(404).json({ success: false, error: 'Imagem nÃ£o encontrada' });
+    console.error("[NativeRegistration] Erro ao buscar imagem:", error);
+    return res
+      .status(404)
+      .json({ success: false, error: "Imagem nÃ£o encontrada" });
   }
 };
 
@@ -270,20 +337,24 @@ const streamRegistrationImage = async (req, res) => {
  */
 const getCpvPreview = async (req, res) => {
   try {
-    const registration = await registrationService.getRegistration(req.params.id);
+    const registration = await registrationService.getRegistration(
+      req.params.id,
+    );
 
     if (!registration) {
-      return res.status(404).json({ success: false, error: 'Registro não encontrado' });
+      return res
+        .status(404)
+        .json({ success: false, error: "Registro não encontrado" });
     }
 
-    const { generateCpvHtml } = require('../services/cpvPdfService');
+    const { generateCpvHtml } = require("../services/cpvPdfService");
     const html = await generateCpvHtml(withImageProxyUrls(registration));
 
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.send(html);
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao gerar preview CPV:', error);
-    return res.status(500).json({ success: false, error: 'Erro interno' });
+    console.error("[NativeRegistration] Erro ao gerar preview CPV:", error);
+    return res.status(500).json({ success: false, error: "Erro interno" });
   }
 };
 
@@ -292,30 +363,35 @@ const getCpvPreview = async (req, res) => {
  */
 const downloadCpvPdf = async (req, res) => {
   try {
-    const registration = await registrationService.getRegistration(req.params.id);
+    const registration = await registrationService.getRegistration(
+      req.params.id,
+    );
 
     if (!registration) {
-      return res.status(404).json({ success: false, error: 'Registro não encontrado' });
+      return res
+        .status(404)
+        .json({ success: false, error: "Registro não encontrado" });
     }
 
-    const { generateCpvPdf } = require('../services/cpvPdfService');
-    const { cpvNumber, pdfBuffer, isHtmlFallback } = await generateCpvPdf(registration);
+    const { generateCpvPdf } = require("../services/cpvPdfService");
+    const { cpvNumber, pdfBuffer, isHtmlFallback } =
+      await generateCpvPdf(registration);
 
     if (isHtmlFallback) {
       // Puppeteer indisponível — retorna HTML com header indicando fallback
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('X-PDF-Fallback', 'true');
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("X-PDF-Fallback", "true");
       return res.send(pdfBuffer);
     }
 
-    const filename = `${cpvNumber}_${registration.passengerName.replace(/\s+/g, '_')}.pdf`;
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Length', pdfBuffer.length);
+    const filename = `${cpvNumber}_${registration.passengerName.replace(/\s+/g, "_")}.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", pdfBuffer.length);
     return res.send(pdfBuffer);
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao gerar PDF do CPV:', error);
-    return res.status(500).json({ success: false, error: 'Erro ao gerar PDF' });
+    console.error("[NativeRegistration] Erro ao gerar PDF do CPV:", error);
+    return res.status(500).json({ success: false, error: "Erro ao gerar PDF" });
   }
 };
 
@@ -325,12 +401,18 @@ const downloadCpvPdf = async (req, res) => {
 const resendEmail = async (req, res) => {
   try {
     const result = await registrationService.resendCpvEmail(req.params.id);
-    const actor = req.dashboardUser ? req.dashboardUser.email : (req.partner ? req.partner.name : 'unknown');
-    console.log(`[Audit] RESEND_EMAIL registration=${req.params.id} by=${actor} reqId=${req.id || '-'}`);
+    const actor = req.dashboardUser
+      ? req.dashboardUser.email
+      : req.partner
+        ? req.partner.name
+        : "unknown";
+    console.log(
+      `[Audit] RESEND_EMAIL registration=${req.params.id} by=${actor} reqId=${req.id || "-"}`,
+    );
     return res.status(200).json({ success: true, ...result });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao re-enviar e-mail:', error);
-    const status = error.message.includes('não encontrado') ? 404 : 500;
+    console.error("[NativeRegistration] Erro ao re-enviar e-mail:", error);
+    const status = error.message.includes("não encontrado") ? 404 : 500;
     return res.status(status).json({ success: false, error: error.message });
   }
 };
@@ -341,12 +423,18 @@ const resendEmail = async (req, res) => {
 const resendWhatsApp = async (req, res) => {
   try {
     const result = await registrationService.resendCpvWhatsApp(req.params.id);
-    const actor = req.dashboardUser ? req.dashboardUser.email : (req.partner ? req.partner.name : 'unknown');
-    console.log(`[Audit] RESEND_WHATSAPP registration=${req.params.id} by=${actor} reqId=${req.id || '-'}`);
+    const actor = req.dashboardUser
+      ? req.dashboardUser.email
+      : req.partner
+        ? req.partner.name
+        : "unknown";
+    console.log(
+      `[Audit] RESEND_WHATSAPP registration=${req.params.id} by=${actor} reqId=${req.id || "-"}`,
+    );
     return res.status(200).json({ success: true, ...result });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao re-enviar WhatsApp:', error);
-    const status = error.message.includes('não encontrado') ? 404 : 500;
+    console.error("[NativeRegistration] Erro ao re-enviar WhatsApp:", error);
+    const status = error.message.includes("não encontrado") ? 404 : 500;
     return res.status(status).json({ success: false, error: error.message });
   }
 };
@@ -357,11 +445,15 @@ const resendWhatsApp = async (req, res) => {
 const getStats = async (req, res) => {
   try {
     const { partnerId, dateFrom, dateTo } = req.query;
-    const stats = await registrationService.getStats({ partnerId, dateFrom, dateTo });
+    const stats = await registrationService.getStats({
+      partnerId,
+      dateFrom,
+      dateTo,
+    });
     return res.status(200).json({ success: true, data: stats });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao buscar stats:', error);
-    return res.status(500).json({ success: false, error: 'Erro interno' });
+    console.error("[NativeRegistration] Erro ao buscar stats:", error);
+    return res.status(500).json({ success: false, error: "Erro interno" });
   }
 };
 
@@ -370,16 +462,20 @@ const getStats = async (req, res) => {
  */
 const getRegistrationByCpv = async (req, res) => {
   try {
-    const registration = await registrationService.getRegistrationByCpv(req.params.cpvNumber);
+    const registration = await registrationService.getRegistrationByCpv(
+      req.params.cpvNumber,
+    );
 
     if (!registration) {
-      return res.status(404).json({ success: false, error: 'CPV não encontrado' });
+      return res
+        .status(404)
+        .json({ success: false, error: "CPV não encontrado" });
     }
 
     return res.status(200).json({ success: true, data: registration });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao buscar por CPV:', error);
-    return res.status(500).json({ success: false, error: 'Erro interno' });
+    console.error("[NativeRegistration] Erro ao buscar por CPV:", error);
+    return res.status(500).json({ success: false, error: "Erro interno" });
   }
 };
 
@@ -389,12 +485,20 @@ const getRegistrationByCpv = async (req, res) => {
  */
 const getPublicCpv = async (req, res) => {
   try {
-    const registration = await registrationService.getRegistrationByCpv(req.params.cpvNumber);
+    const registration = await registrationService.getRegistrationByCpv(
+      req.params.cpvNumber,
+    );
 
-    const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const esc = (s) =>
+      String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
 
     if (!registration) {
-      return res.status(404).send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      return res.status(404)
+        .send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CPV não encontrado — ExactBag</title>
 <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .card{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:40px 28px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
@@ -403,9 +507,27 @@ const getPublicCpv = async (req, res) => {
     }
 
     const r = registration;
-    const fmtDate = (d) => { if (!d) return '—'; const dt = new Date(d); return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }); };
-    const statusMap = { submitted: { label: 'Registrado', color: '#f59e0b', bg: '#fef3c7' }, cpv_generated: { label: 'CPV Gerado', color: '#3b82f6', bg: '#dbeafe' }, sent: { label: 'Enviado', color: '#6d28d9', bg: '#ede9fe' }, completed: { label: 'Concluído', color: '#10b981', bg: '#d1fae5' }, cancelled: { label: 'Cancelado', color: '#dc2626', bg: '#fee2e2' } };
-    const st = statusMap[r.status] || { label: r.status, color: '#6b7280', bg: '#f3f4f6' };
+    const fmtDate = (d) => {
+      if (!d) return "—";
+      const dt = new Date(d);
+      return dt.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+    };
+    const statusMap = {
+      submitted: { label: "Registrado", color: "#f59e0b", bg: "#fef3c7" },
+      cpv_generated: { label: "CPV Gerado", color: "#3b82f6", bg: "#dbeafe" },
+      sent: { label: "Enviado", color: "#6d28d9", bg: "#ede9fe" },
+      completed: { label: "Concluído", color: "#10b981", bg: "#d1fae5" },
+      cancelled: { label: "Cancelado", color: "#dc2626", bg: "#fee2e2" },
+    };
+    const st = statusMap[r.status] || {
+      label: r.status,
+      color: "#6b7280",
+      bg: "#f3f4f6",
+    };
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -470,7 +592,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
         <span class="info-label">Ida</span>
         <span class="info-value">${fmtDate(r.outboundDate)}</span>
       </div>
-      ${r.returnDate ? `<div class="info-row"><span class="info-label">Volta</span><span class="info-value">${fmtDate(r.returnDate)}</span></div>` : ''}
+      ${r.returnDate ? `<div class="info-row"><span class="info-label">Volta</span><span class="info-value">${fmtDate(r.returnDate)}</span></div>` : ""}
       <div class="info-row">
         <span class="info-label">Bagagens</span>
         <span class="info-value">${r.baggageQty}</span>
@@ -492,11 +614,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 </body>
 </html>`;
 
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.status(200).send(html);
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao buscar CPV público:', error);
-    return res.status(500).send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    console.error("[NativeRegistration] Erro ao buscar CPV público:", error);
+    return res.status(500)
+      .send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Erro — ExactBag</title>
 <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#f0f2f5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .card{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:40px 28px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
@@ -513,15 +636,25 @@ const deleteRegistration = async (req, res) => {
     const { id } = req.params;
     const existing = await registrationService.getRegistration(id);
     if (!existing) {
-      return res.status(404).json({ success: false, error: 'Registro não encontrado' });
+      return res
+        .status(404)
+        .json({ success: false, error: "Registro não encontrado" });
     }
     await repository.deleteById(id);
-    const actor = req.dashboardUser ? req.dashboardUser.email : (req.partner ? req.partner.name : 'unknown');
-    console.log(`[Audit] DELETE registration=${id} cpv=${existing.cpvNumber || '-'} by=${actor} reqId=${req.id || '-'}`);
-    return res.status(200).json({ success: true, message: 'Registro excluído' });
+    const actor = req.dashboardUser
+      ? req.dashboardUser.email
+      : req.partner
+        ? req.partner.name
+        : "unknown";
+    console.log(
+      `[Audit] DELETE registration=${id} cpv=${existing.cpvNumber || "-"} by=${actor} reqId=${req.id || "-"}`,
+    );
+    return res
+      .status(200)
+      .json({ success: true, message: "Registro excluído" });
   } catch (error) {
-    console.error('[NativeRegistration] Erro ao excluir:', error);
-    return res.status(500).json({ success: false, error: 'Erro interno' });
+    console.error("[NativeRegistration] Erro ao excluir:", error);
+    return res.status(500).json({ success: false, error: "Erro interno" });
   }
 };
 
@@ -537,5 +670,5 @@ module.exports = {
   getStats,
   getRegistrationByCpv,
   getPublicCpv,
-  deleteRegistration
+  deleteRegistration,
 };

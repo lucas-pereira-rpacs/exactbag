@@ -14,17 +14,17 @@
  * WhatsApp tokens, or other service credentials as partner API keys.
  */
 
-const path = require('path');
-const dotenv = require('dotenv');
+const path = require("path");
+const dotenv = require("dotenv");
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 const PARTNER_KEY_ENV_NAMES = [
-  'PARTNER_API_KEY',
-  'PARTNER_API_KEYS',
-  'WEBHOOK_API_KEY',
-  'WEBHOOK_API_KEYS'
+  "PARTNER_API_KEY",
+  "PARTNER_API_KEYS",
+  "WEBHOOK_API_KEY",
+  "WEBHOOK_API_KEYS",
 ];
 
 const args = process.argv.slice(2);
@@ -37,8 +37,10 @@ const getArg = (name) => {
   return index === -1 ? null : args[index + 1] || null;
 };
 
-const endpoint = getArg('--url') || process.env.WEBHOOK_TEST_URL ||
-  `${process.env.APP_BASE_URL || 'http://localhost:3000'}/webhooks/sales`;
+const endpoint =
+  getArg("--url") ||
+  process.env.WEBHOOK_TEST_URL ||
+  `${process.env.APP_BASE_URL || "http://localhost:3000"}/webhooks/sales`;
 
 let endpointUrl;
 try {
@@ -47,95 +49,123 @@ try {
   fail(`Invalid webhook URL: ${endpoint}`);
 }
 
-if (endpointUrl.protocol !== 'http:' && endpointUrl.protocol !== 'https:') {
+if (endpointUrl.protocol !== "http:" && endpointUrl.protocol !== "https:") {
   fail(`Unsupported webhook URL protocol: ${endpointUrl.protocol}`);
 }
 
-const isLocalEndpoint = endpointUrl.protocol === 'http:' && LOCAL_HOSTS.has(endpointUrl.hostname);
-if (!isLocalEndpoint && process.env.ALLOW_EXTERNAL_WEBHOOK_TEST !== 'true') {
-  fail(`Refusing to send to non-local endpoint: ${endpointUrl.origin}\nSet ALLOW_EXTERNAL_WEBHOOK_TEST=true only after reviewing the URL and credentials.`);
+const isLocalEndpoint =
+  endpointUrl.protocol === "http:" && LOCAL_HOSTS.has(endpointUrl.hostname);
+if (!isLocalEndpoint && process.env.ALLOW_EXTERNAL_WEBHOOK_TEST !== "true") {
+  fail(
+    `Refusing to send to non-local endpoint: ${endpointUrl.origin}\nSet ALLOW_EXTERNAL_WEBHOOK_TEST=true only after reviewing the URL and credentials.`,
+  );
 }
 
 if (!isLocalEndpoint) {
-  console.warn(`WARNING: this request will be sent to a non-local endpoint: ${endpointUrl.origin}`);
+  console.warn(
+    `WARNING: this request will be sent to a non-local endpoint: ${endpointUrl.origin}`,
+  );
 }
 
 const keysFromEnv = PARTNER_KEY_ENV_NAMES.flatMap((name) => {
   const value = process.env[name];
-  return value ? value.split(',').map((key) => key.trim()).filter(Boolean) : [];
+  return value
+    ? value
+        .split(",")
+        .map((key) => key.trim())
+        .filter(Boolean)
+    : [];
 });
 
 const cliKeys = [];
 for (let index = 0; index < args.length; index += 1) {
-  if (args[index] === '--key' && args[index + 1]) {
+  if (args[index] === "--key" && args[index + 1]) {
     cliKeys.push(args[index + 1]);
     index += 1;
   }
 }
 
-const seededLocalKeys = (cliKeys.length > 0 || keysFromEnv.length > 0 || process.env.USE_SEEDED_LOCAL_KEYS === 'false') ? [] : [
-  'exactbag_test_key_123456789',
-  'exactbag_test_key_987654321',
-  'exactbag_just_travel_key_2026'
-];
+const seededLocalKeys =
+  cliKeys.length > 0 ||
+  keysFromEnv.length > 0 ||
+  process.env.USE_SEEDED_LOCAL_KEYS === "false"
+    ? []
+    : [
+        "exactbag_test_key_123456789",
+        "exactbag_test_key_987654321",
+        "exactbag_just_travel_key_2026",
+      ];
 
 const apiKeys = [...new Set([...cliKeys, ...keysFromEnv, ...seededLocalKeys])];
 const partnerIdByKey = new Map([
-  ['exactbag_test_key_123456789', 'AGENCIA_123'],
-  ['exactbag_test_key_987654321', 'AGENCIA_456'],
-  ['exactbag_just_travel_key_2026', 'JUST_TRAVEL']
+  ["exactbag_test_key_123456789", "AGENCIA_123"],
+  ["exactbag_test_key_987654321", "AGENCIA_456"],
+  ["exactbag_just_travel_key_2026", "JUST_TRAVEL"],
 ]);
 
-const defaultPartnerId = process.env.WEBHOOK_TEST_PARTNER_ID || process.env.PARTNER_ID;
-const prefix = process.env.WEBHOOK_TEST_SALE_PREFIX || 'MANUAL-LOCAL-WEBHOOK-TEST';
+const defaultPartnerId =
+  process.env.WEBHOOK_TEST_PARTNER_ID || process.env.PARTNER_ID;
+const prefix =
+  process.env.WEBHOOK_TEST_SALE_PREFIX || "MANUAL-LOCAL-WEBHOOK-TEST";
 
 if (apiKeys.length === 0) {
-  fail('No partner API keys found. Set PARTNER_API_KEY(S) or pass --key.');
+  fail("No partner API keys found. Set PARTNER_API_KEY(S) or pass --key.");
 }
 
-const mask = (value) => value.length <= 8 ? '********' : `${value.slice(0, 4)}…${value.slice(-4)}`;
+const mask = (value) =>
+  value.length <= 8 ? "********" : `${value.slice(0, 4)}…${value.slice(-4)}`;
 const bodyFor = (apiKey, index) => {
   const partnerId = partnerIdByKey.get(apiKey) || defaultPartnerId;
   if (!partnerId) {
-    throw new Error(`No partner ID for ${mask(apiKey)}. Set WEBHOOK_TEST_PARTNER_ID or use a seeded local key.`);
+    throw new Error(
+      `No partner ID for ${mask(apiKey)}. Set WEBHOOK_TEST_PARTNER_ID or use a seeded local key.`,
+    );
   }
 
   return {
     partnerId,
     saleId: `${prefix}-${Date.now()}-${index + 1}`,
-    customerName: 'Webhook Local Test',
-    customerEmail: 'delivered@resend.dev',
-    customerPhone: '+5511999999999',
+    customerName: "Webhook Local Test",
+    customerEmail: "delivered@resend.dev",
+    customerPhone: "+5511999999999",
     roundTrip: true,
-    outboundDate: '2030-01-15',
-    returnDate: '2030-01-22',
+    outboundDate: "2030-01-15",
+    returnDate: "2030-01-22",
     baggageQty: 1,
     hasInsurance: false,
-    notes: 'Generated by scripts/test_webhooks_sales.js'
+    notes: "Generated by scripts/test_webhooks_sales.js",
   };
 };
 
 async function main() {
   console.log(`Testing ${endpointUrl.href}`);
-  console.log(`Using ${apiKeys.length} partner API key(s): ${apiKeys.map(mask).join(', ')}`);
+  console.log(
+    `Using ${apiKeys.length} partner API key(s): ${apiKeys.map(mask).join(", ")}`,
+  );
 
   for (const [index, apiKey] of apiKeys.entries()) {
     const body = bodyFor(apiKey, index);
     const response = await fetch(endpointUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'X-Request-ID': body.saleId
+        "Content-Type": "application/json",
+        "X-Request-ID": body.saleId,
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
 
     const text = await response.text();
     let result;
-    try { result = JSON.parse(text); } catch { result = text; }
+    try {
+      result = JSON.parse(text);
+    } catch {
+      result = text;
+    }
 
-    console.log(`[${response.status}] ${mask(apiKey)} partner=${body.partnerId} sale=${body.saleId}`);
+    console.log(
+      `[${response.status}] ${mask(apiKey)} partner=${body.partnerId} sale=${body.saleId}`,
+    );
     console.log(JSON.stringify(result, null, 2));
 
     if (!response.ok) process.exitCode = 1;

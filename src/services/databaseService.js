@@ -1,25 +1,29 @@
 // Database service
 // Em produção persiste em PostgreSQL via Prisma; em testes usa memória.
 
-const { prisma } = require('../config');
-const partnerRepository = require('../repositories/partnerRepository');
-const { generateUniqueSlug } = require('./publicFormLinkService');
+const { prisma } = require("../config");
+const partnerRepository = require("../repositories/partnerRepository");
+const { generateUniqueSlug } = require("./publicFormLinkService");
 
-const useInMemoryRepository = process.env.NODE_ENV === 'test' || !process.env.DATABASE_URL;
+const useInMemoryRepository =
+  process.env.NODE_ENV === "test" || !process.env.DATABASE_URL;
 const memorySales = new Map();
 
-const normalizeName = (value) => String(value || '')
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .toLowerCase()
-  .trim()
-  .replace(/\s+/g, ' ');
+const normalizeName = (value) =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
 
 const saveCustomer = async (customerData) => {
   console.log(`[Banco de Dados] Salvando cliente ${customerData.name}...`);
 
   // Validar se parceiro existe
-  const partner = await partnerRepository.findByPartnerId(customerData.partnerId);
+  const partner = await partnerRepository.findByPartnerId(
+    customerData.partnerId,
+  );
   if (!partner) {
     throw new Error(`Parceiro não encontrado: ${customerData.partnerId}`);
   }
@@ -35,13 +39,19 @@ const saveCustomer = async (customerData) => {
     roundTrip: customerData.roundTrip || false,
     baggageQty: Number(customerData.baggageQty) || 1,
     hasInsurance: customerData.hasInsurance || false,
-    expirationDate: customerData.expirationDate ? new Date(customerData.expirationDate) : null,
-    outboundDate: customerData.outboundDate ? new Date(customerData.outboundDate) : null,
-    returnDate: customerData.returnDate ? new Date(customerData.returnDate) : null,
+    expirationDate: customerData.expirationDate
+      ? new Date(customerData.expirationDate)
+      : null,
+    outboundDate: customerData.outboundDate
+      ? new Date(customerData.outboundDate)
+      : null,
+    returnDate: customerData.returnDate
+      ? new Date(customerData.returnDate)
+      : null,
     isManualSale: customerData.isManualSale === true,
-    status: 'processing',
+    status: "processing",
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   };
 
   if (useInMemoryRepository) {
@@ -60,12 +70,18 @@ const saveCustomer = async (customerData) => {
       roundTrip: customerData.roundTrip || false,
       baggageQty: Number(customerData.baggageQty) || 1,
       hasInsurance: customerData.hasInsurance || false,
-      expirationDate: customerData.expirationDate ? new Date(customerData.expirationDate) : null,
-      outboundDate: customerData.outboundDate ? new Date(customerData.outboundDate) : null,
-      returnDate: customerData.returnDate ? new Date(customerData.returnDate) : null,
+      expirationDate: customerData.expirationDate
+        ? new Date(customerData.expirationDate)
+        : null,
+      outboundDate: customerData.outboundDate
+        ? new Date(customerData.outboundDate)
+        : null,
+      returnDate: customerData.returnDate
+        ? new Date(customerData.returnDate)
+        : null,
       isManualSale: customerData.isManualSale === true,
-      status: 'processing'
-    }
+      status: "processing",
+    },
   });
 };
 
@@ -79,7 +95,7 @@ const updateSale = async (saleId, data) => {
     const updated = {
       ...sale,
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     memorySales.set(saleId, updated);
@@ -90,8 +106,8 @@ const updateSale = async (saleId, data) => {
     where: { id: saleId },
     data: {
       ...data,
-      updatedAt: new Date()
-    }
+      updatedAt: new Date(),
+    },
   });
 };
 
@@ -105,14 +121,16 @@ const findSaleById = async (saleId) => {
     include: {
       partner: true,
       submissions: true,
-
-    }
+    },
   });
 };
 
 const findSaleByExternalSaleId = async (saleId) => {
   if (useInMemoryRepository) {
-    return Array.from(memorySales.values()).find((sale) => sale.saleId === saleId) || null;
+    return (
+      Array.from(memorySales.values()).find((sale) => sale.saleId === saleId) ||
+      null
+    );
   }
 
   return prisma.sale.findFirst({
@@ -120,24 +138,25 @@ const findSaleByExternalSaleId = async (saleId) => {
     include: {
       partner: true,
       submissions: true,
-
     },
     orderBy: {
-      createdAt: 'desc'
-    }
+      createdAt: "desc",
+    },
   });
 };
 
 const findSaleByPartnerAndExternalSaleId = async (partnerId, saleId) => {
   if (useInMemoryRepository) {
-    return Array.from(memorySales.values()).find(
-      sale => sale.partnerId === partnerId && sale.saleId === saleId
-    ) || null;
+    return (
+      Array.from(memorySales.values()).find(
+        (sale) => sale.partnerId === partnerId && sale.saleId === saleId,
+      ) || null
+    );
   }
 
   return prisma.sale.findFirst({
     where: { partnerId, saleId },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: "desc" },
   });
 };
 
@@ -145,8 +164,11 @@ const _findInMemory = (normalizedSearch, tokens) => {
   const matches = Array.from(memorySales.values())
     .filter((sale) => {
       const candidate = normalizeName(sale.customerName);
-      return candidate.includes(normalizedSearch)
-        || (tokens.length > 0 && tokens.every((token) => candidate.includes(token)));
+      return (
+        candidate.includes(normalizedSearch) ||
+        (tokens.length > 0 &&
+          tokens.every((token) => candidate.includes(token)))
+      );
     })
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   return matches[0] || null;
@@ -155,7 +177,9 @@ const _findInMemory = (normalizedSearch, tokens) => {
 const findLatestSaleByCustomerName = async (customerName) => {
   const normalizedSearch = normalizeName(customerName);
   if (!normalizedSearch) return null;
-  const tokens = normalizedSearch.split(' ').filter((token) => token.length >= 2);
+  const tokens = normalizedSearch
+    .split(" ")
+    .filter((token) => token.length >= 2);
 
   if (useInMemoryRepository) {
     return _findInMemory(normalizedSearch, tokens);
@@ -165,44 +189,44 @@ const findLatestSaleByCustomerName = async (customerName) => {
     where: {
       customerName: {
         contains: normalizedSearch,
-        mode: 'insensitive'
-      }
+        mode: "insensitive",
+      },
     },
     include: {
       partner: true,
       submissions: true,
-
     },
     orderBy: {
-      createdAt: 'desc'
-    }
+      createdAt: "desc",
+    },
   });
 
   if (directMatch) return directMatch;
 
   // Fallback accent-insensitive search (e.g. "joao" should match "joão").
-  const firstToken = normalizedSearch.split(' ')[0];
+  const firstToken = normalizedSearch.split(" ")[0];
   if (!firstToken) return null;
 
   const candidates = await prisma.sale.findMany({
     where: {
       customerName: {
         contains: firstToken,
-        mode: 'insensitive'
-      }
+        mode: "insensitive",
+      },
     },
     include: {
       partner: true,
       submissions: true,
-
     },
     orderBy: {
-      createdAt: 'desc'
+      createdAt: "desc",
     },
-    take: 100
+    take: 100,
   });
 
-  const strictCandidate = candidates.find((sale) => normalizeName(sale.customerName).includes(normalizedSearch));
+  const strictCandidate = candidates.find((sale) =>
+    normalizeName(sale.customerName).includes(normalizedSearch),
+  );
   if (strictCandidate) return strictCandidate;
 
   // Last-resort fallback: inspect recent records and compare with normalized tokens
@@ -210,32 +234,36 @@ const findLatestSaleByCustomerName = async (customerName) => {
   const recentSales = await prisma.sale.findMany({
     where: {
       formLink: {
-        not: null
-      }
+        not: null,
+      },
     },
     include: {
       partner: true,
       submissions: true,
-
     },
     orderBy: {
-      createdAt: 'desc'
+      createdAt: "desc",
     },
-    take: 500
+    take: 500,
   });
 
-  return recentSales.find((sale) => {
-    const candidate = normalizeName(sale.customerName);
-    return candidate.includes(normalizedSearch)
-      || (tokens.length > 0 && tokens.every((token) => candidate.includes(token)));
-  }) || null;
+  return (
+    recentSales.find((sale) => {
+      const candidate = normalizeName(sale.customerName);
+      return (
+        candidate.includes(normalizedSearch) ||
+        (tokens.length > 0 &&
+          tokens.every((token) => candidate.includes(token)))
+      );
+    }) || null
+  );
 };
 
 const findSaleBySlug = async (slug) => {
   if (!slug) return null;
   return prisma.sale.findUnique({
     where: { slug },
-    include: { partner: true, submissions: true }
+    include: { partner: true, submissions: true },
   });
 };
 
@@ -246,5 +274,5 @@ module.exports = {
   findSaleByExternalSaleId,
   findSaleByPartnerAndExternalSaleId,
   findLatestSaleByCustomerName,
-  findSaleBySlug
+  findSaleBySlug,
 };

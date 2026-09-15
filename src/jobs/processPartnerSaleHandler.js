@@ -1,4 +1,4 @@
-const { processPartnerSale } = require('../services/saleProcessingService');
+const { processPartnerSale } = require("../services/saleProcessingService");
 
 /** @param {import('agenda').Job} job */
 async function processPartnerSaleHandler(job) {

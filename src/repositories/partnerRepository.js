@@ -1,9 +1,10 @@
 // Repositório de Parceiros
 // Em produção usa PostgreSQL via Prisma; em testes usa fallback em memória.
 
-const { prisma } = require('../config');
+const { prisma } = require("../config");
 
-const useInMemoryRepository = process.env.NODE_ENV === 'test' || !process.env.DATABASE_URL || !prisma;
+const useInMemoryRepository =
+  process.env.NODE_ENV === "test" || !process.env.DATABASE_URL || !prisma;
 
 // Flag que muda para true se o banco de dados não estiver acessível
 let dbUnreachable = false;
@@ -15,62 +16,62 @@ function isMemoryMode() {
 // Banco em memória para testes/dev
 const partnersDatabase = [
   {
-    id: 'PARTNER-001',
-    name: 'Agência Travel Corp',
-    partnerId: 'AGENCIA_123',
-    apiKey: 'exactbag_test_key_123456789',
-    email: 'tech@agenciatravel.com',
+    id: "PARTNER-001",
+    name: "Agência Travel Corp",
+    partnerId: "AGENCIA_123",
+    apiKey: "exactbag_test_key_123456789",
+    email: "tech@agenciatravel.com",
     isActive: true,
     isSandbox: false,
-    createdAt: new Date('2026-01-01'),
+    createdAt: new Date("2026-01-01"),
     rateLimit: {
       requestsPerMinute: 60,
-      requestsPerDay: 10000
+      requestsPerDay: 10000,
     },
     metadata: {
       lastRequestAt: null,
       totalRequests: 0,
-      failedRequests: 0
-    }
+      failedRequests: 0,
+    },
   },
   {
-    id: 'PARTNER-002',
-    name: 'Viagens Premium',
-    partnerId: 'AGENCIA_456',
-    apiKey: 'exactbag_test_key_987654321',
-    email: 'api@viagenspremium.com',
+    id: "PARTNER-002",
+    name: "Viagens Premium",
+    partnerId: "AGENCIA_456",
+    apiKey: "exactbag_test_key_987654321",
+    email: "api@viagenspremium.com",
     isActive: true,
     isSandbox: false,
-    createdAt: new Date('2026-02-01'),
+    createdAt: new Date("2026-02-01"),
     rateLimit: {
       requestsPerMinute: 60,
-      requestsPerDay: 10000
+      requestsPerDay: 10000,
     },
     metadata: {
       lastRequestAt: null,
       totalRequests: 0,
-      failedRequests: 0
-    }
+      failedRequests: 0,
+    },
   },
   {
-    id: 'PARTNER-003',
-    name: 'Just Travel',
-    partnerId: 'JUST_TRAVEL',
-    apiKey: 'exactbag_just_travel_key_2026',
-    email: 'parceria@justtravel.com.br',
+    id: "PARTNER-003",
+    name: "Just Travel",
+    partnerId: "JUST_TRAVEL",
+    apiKey: "exactbag_just_travel_key_2026",
+    email: "parceria@justtravel.com.br",
     isActive: true,
     isSandbox: false,
-    createdAt: new Date('2026-07-01'),
+    createdAt: new Date("2026-07-01"),
     rateLimit: {
       requestsPerMinute: 60,
-      requestsPerDay: 10000
+      requestsPerDay: 10000,
     },
     metadata: {
       lastRequestAt: null,
       totalRequests: 0,
-      failedRequests: 0
-    }
-  }
+      failedRequests: 0,
+    },
+  },
 ];
 
 let defaultsSynced = false;
@@ -84,7 +85,7 @@ const mapPartnerRow = (row) => {
     apiKey: row.apiKey,
     email: row.email,
     isActive: row.isActive,
-    isSandbox: row.isSandbox || false
+    isSandbox: row.isSandbox || false,
   };
 };
 
@@ -94,14 +95,15 @@ const syncDefaultPartners = async () => {
   }
 
   // Nunca inserir parceiros de teste em produção
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === "production") {
     defaultsSynced = true;
     return;
   }
 
   try {
-    await Promise.all(partnersDatabase.map(async (partner) => {
-      await prisma.$executeRaw`
+    await Promise.all(
+      partnersDatabase.map(async (partner) => {
+        await prisma.$executeRaw`
         INSERT INTO "Partner" ("id", "partnerId", "name", "apiKey", "email", "isActive", "isSandbox", "createdAt", "updatedAt")
         VALUES (${partner.id}, ${partner.partnerId}, ${partner.name}, ${partner.apiKey}, ${partner.email}, ${partner.isActive}, ${partner.isSandbox || false}, NOW(), NOW())
         ON CONFLICT ("partnerId")
@@ -113,10 +115,14 @@ const syncDefaultPartners = async () => {
           "isSandbox" = EXCLUDED."isSandbox",
           "updatedAt" = NOW()
       `;
-    }));
+      }),
+    );
     defaultsSynced = true;
   } catch (err) {
-    console.warn('[PartnerRepo] Banco de dados inacessível, usando modo memória:', err.message);
+    console.warn(
+      "[PartnerRepo] Banco de dados inacessível, usando modo memória:",
+      err.message,
+    );
     dbUnreachable = true;
   }
 };
@@ -126,7 +132,7 @@ const findByApiKey = async (apiKey) => {
   await syncDefaultPartners();
 
   if (isMemoryMode()) {
-    return partnersDatabase.find(p => p.apiKey === apiKey) || null;
+    return partnersDatabase.find((p) => p.apiKey === apiKey) || null;
   }
 
   const rows = await prisma.$queryRaw`
@@ -144,7 +150,7 @@ const findByPartnerId = async (partnerId) => {
   await syncDefaultPartners();
 
   if (isMemoryMode()) {
-    return partnersDatabase.find(p => p.partnerId === partnerId) || null;
+    return partnersDatabase.find((p) => p.partnerId === partnerId) || null;
   }
 
   const rows = await prisma.$queryRaw`
@@ -217,7 +223,7 @@ const findAllActive = async () => {
   await syncDefaultPartners();
 
   if (isMemoryMode()) {
-    return partnersDatabase.filter(p => p.isActive).map(mapPartnerRow);
+    return partnersDatabase.filter((p) => p.isActive).map(mapPartnerRow);
   }
 
   const rows = await prisma.$queryRaw`
@@ -249,5 +255,5 @@ module.exports = {
   recordFailedRequest,
   checkRateLimit,
   // Expor BD para testes
-  partnersDatabase
+  partnersDatabase,
 };

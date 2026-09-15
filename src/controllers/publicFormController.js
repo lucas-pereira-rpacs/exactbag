@@ -1,6 +1,11 @@
-const dbService = require('../services/databaseService');
-const { verifyFormAccessToken, parsePrettySlug } = require('../services/publicFormLinkService');
-const { buildNativeRegistrationLink } = require('../services/nativeRegistrationLinkService');
+const dbService = require("../services/databaseService");
+const {
+  verifyFormAccessToken,
+  parsePrettySlug,
+} = require("../services/publicFormLinkService");
+const {
+  buildNativeRegistrationLink,
+} = require("../services/nativeRegistrationLinkService");
 
 const redirectToPrefilledForm = async (req, res) => {
   try {
@@ -10,8 +15,8 @@ const redirectToPrefilledForm = async (req, res) => {
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
-        error: 'Link invalido ou expirado',
-        code: validation.error
+        error: "Link invalido ou expirado",
+        code: validation.error,
       });
     }
 
@@ -19,23 +24,24 @@ const redirectToPrefilledForm = async (req, res) => {
     if (!sale) {
       return res.status(404).json({
         success: false,
-        error: 'Formulario nao encontrado para esta venda'
+        error: "Formulario nao encontrado para esta venda",
       });
     }
 
-    if (sale.status === 'cancelada') {
+    if (sale.status === "cancelada") {
       return res.status(410).json({
         success: false,
-        error: 'Esta venda foi cancelada. O link de registro não está mais disponível.'
+        error:
+          "Esta venda foi cancelada. O link de registro não está mais disponível.",
       });
     }
 
     return res.redirect(302, buildNativeRegistrationLink(sale.saleId));
   } catch (error) {
-    console.error('[PublicForm] Erro ao redirecionar link curto:', error);
+    console.error("[PublicForm] Erro ao redirecionar link curto:", error);
     return res.status(500).json({
       success: false,
-      error: 'Erro interno ao abrir formulario'
+      error: "Erro interno ao abrir formulario",
     });
   }
 };
@@ -47,7 +53,7 @@ const redirectToPrettyPrefilledForm = async (req, res) => {
     if (!slug) {
       return res.status(400).json({
         success: false,
-        error: 'Slug invalido'
+        error: "Slug invalido",
       });
     }
 
@@ -60,7 +66,7 @@ const redirectToPrettyPrefilledForm = async (req, res) => {
       if (searchTerm) {
         sale = await dbService.findLatestSaleByCustomerName(searchTerm);
         if (!sale) {
-          const firstName = String(searchTerm).split(' ')[0];
+          const firstName = String(searchTerm).split(" ")[0];
           if (firstName && firstName.length >= 3) {
             sale = await dbService.findLatestSaleByCustomerName(firstName);
           }
@@ -70,28 +76,29 @@ const redirectToPrettyPrefilledForm = async (req, res) => {
     if (!sale) {
       return res.status(404).json({
         success: false,
-        error: 'Formulario nao encontrado para este cliente'
+        error: "Formulario nao encontrado para este cliente",
       });
     }
 
-    if (sale.status === 'cancelada') {
+    if (sale.status === "cancelada") {
       return res.status(410).json({
         success: false,
-        error: 'Esta venda foi cancelada. O link de registro não está mais disponível.'
+        error:
+          "Esta venda foi cancelada. O link de registro não está mais disponível.",
       });
     }
 
     return res.redirect(302, buildNativeRegistrationLink(sale.saleId));
   } catch (error) {
-    console.error('[PublicForm] Erro ao redirecionar link amigavel:', error);
+    console.error("[PublicForm] Erro ao redirecionar link amigavel:", error);
     return res.status(500).json({
       success: false,
-      error: 'Erro interno ao abrir formulario'
+      error: "Erro interno ao abrir formulario",
     });
   }
 };
 
 module.exports = {
   redirectToPrefilledForm,
-  redirectToPrettyPrefilledForm
+  redirectToPrettyPrefilledForm,
 };

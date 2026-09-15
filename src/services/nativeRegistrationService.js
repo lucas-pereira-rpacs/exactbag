@@ -1,9 +1,9 @@
 // Serviço principal de Registro Nativo — orquestra o fluxo completo
 // Registro → CPV → Email → WhatsApp
 
-const repository = require('../repositories/nativeRegistrationRepository');
-const cpvPdfService = require('./cpvPdfService');
-const notificationService = require('./nativeNotificationService');
+const repository = require("../repositories/nativeRegistrationRepository");
+const cpvPdfService = require("./cpvPdfService");
+const notificationService = require("./nativeNotificationService");
 
 /**
  * Cria registro completo e dispara o fluxo de CPV + notificações
@@ -38,16 +38,19 @@ const createRegistration = async (sanitizedData, meta = {}) => {
     try {
       const sale = await repository.findSaleContext(sanitizedData.saleId);
       if (sale?.expirationDate && new Date(sale.expirationDate) <= new Date()) {
-        const error = new Error('O link desta venda expirou.');
-        error.code = 'SALE_EXPIRED';
+        const error = new Error("O link desta venda expirou.");
+        error.code = "SALE_EXPIRED";
         throw error;
       }
       if (sale?.hasInsurance !== null && sale?.hasInsurance !== undefined) {
         hasInsurance = !!sale.hasInsurance;
       }
     } catch (err) {
-      if (err.code === 'SALE_EXPIRED') throw err;
-      console.warn('[NativeRegistration] Falha ao herdar seguro da venda:', err.message);
+      if (err.code === "SALE_EXPIRED") throw err;
+      console.warn(
+        "[NativeRegistration] Falha ao herdar seguro da venda:",
+        err.message,
+      );
     }
   }
 
@@ -56,9 +59,9 @@ const createRegistration = async (sanitizedData, meta = {}) => {
     ...sanitizedData,
     hasInsurance,
     cpvNumber,
-    status: 'submitted',
+    status: "submitted",
     ipAddress: meta.ipAddress || null,
-    userAgent: meta.userAgent || null
+    userAgent: meta.userAgent || null,
   });
 
   // 3. Gera PDF do CPV
@@ -66,11 +69,11 @@ const createRegistration = async (sanitizedData, meta = {}) => {
   try {
     pdfResult = await cpvPdfService.generateCpvPdf(registration);
     await repository.update(registration.id, {
-      status: 'cpv_generated',
-      cpvGeneratedAt: new Date()
+      status: "cpv_generated",
+      cpvGeneratedAt: new Date(),
     });
   } catch (err) {
-    console.error('[NativeRegistration] Erro ao gerar CPV PDF:', err.message);
+    console.error("[NativeRegistration] Erro ao gerar CPV PDF:", err.message);
     // Continua — o registro já está salvo
     return { registration, cpvGenerated: false };
   }
@@ -81,14 +84,17 @@ const createRegistration = async (sanitizedData, meta = {}) => {
       await notificationService.sendCpvByEmail(
         registration,
         pdfResult.pdfBuffer,
-        pdfResult.isHtmlFallback
+        pdfResult.isHtmlFallback,
       );
       await repository.update(registration.id, {
-        status: 'sent',
-        emailSentAt: new Date()
+        status: "sent",
+        emailSentAt: new Date(),
       });
     } catch (err) {
-      console.error('[NativeRegistration] Erro ao enviar e-mail CPV:', err.message);
+      console.error(
+        "[NativeRegistration] Erro ao enviar e-mail CPV:",
+        err.message,
+      );
     }
 
     // 5. WhatsApp (opcional, não bloqueia)
@@ -96,17 +102,17 @@ const createRegistration = async (sanitizedData, meta = {}) => {
       await notificationService.sendCpvByWhatsApp(registration);
       await repository.update(registration.id, {
         whatsappSentAt: new Date(),
-        status: 'completed'
+        status: "completed",
       });
     } catch (err) {
-      console.error('[NativeRegistration] Erro ao enviar WhatsApp CPV:', err);
+      console.error("[NativeRegistration] Erro ao enviar WhatsApp CPV:", err);
     }
   });
 
   return {
     registration,
     cpvNumber,
-    cpvGenerated: true
+    cpvGenerated: true,
   };
 };
 
@@ -136,14 +142,14 @@ const listRegistrations = async (params) => {
  */
 const resendCpvEmail = async (id) => {
   const registration = await repository.findById(id);
-  if (!registration) throw new Error('Registro não encontrado');
-  if (!registration.cpvNumber) throw new Error('CPV ainda não foi gerado');
+  if (!registration) throw new Error("Registro não encontrado");
+  if (!registration.cpvNumber) throw new Error("CPV ainda não foi gerado");
 
   const pdfResult = await cpvPdfService.generateCpvPdf(registration);
   await notificationService.sendCpvByEmail(
     registration,
     pdfResult.pdfBuffer,
-    pdfResult.isHtmlFallback
+    pdfResult.isHtmlFallback,
   );
 
   await repository.update(id, { emailSentAt: new Date() });
@@ -155,8 +161,8 @@ const resendCpvEmail = async (id) => {
  */
 const resendCpvWhatsApp = async (id) => {
   const registration = await repository.findById(id);
-  if (!registration) throw new Error('Registro não encontrado');
-  if (!registration.cpvNumber) throw new Error('CPV ainda não foi gerado');
+  if (!registration) throw new Error("Registro não encontrado");
+  if (!registration.cpvNumber) throw new Error("CPV ainda não foi gerado");
 
   await notificationService.sendCpvByWhatsApp(registration);
   await repository.update(id, { whatsappSentAt: new Date() });
@@ -177,5 +183,5 @@ module.exports = {
   listRegistrations,
   resendCpvEmail,
   resendCpvWhatsApp,
-  getStats
+  getStats,
 };

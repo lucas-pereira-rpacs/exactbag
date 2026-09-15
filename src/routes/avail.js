@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const insuranceAvailabilityService = require('../services/insuranceAvailabilityService');
+const insuranceAvailabilityService = require("../services/insuranceAvailabilityService");
 
 /**
  * GET /avail/insurance
@@ -18,7 +18,7 @@ const insuranceAvailabilityService = require('../services/insuranceAvailabilityS
  *
  * Resposta: { insuranceAvail: [ ... ] }
  */
-router.get('/insurance', (req, res) => {
+router.get("/insurance", (req, res) => {
   try {
     const { start, end, nationality, code } = req.query;
 
@@ -31,15 +31,21 @@ router.get('/insurance', (req, res) => {
       end,
       occupancy,
       nationality,
-      code
+      code,
     });
 
     return res.status(200).json(result);
   } catch (error) {
-    console.error('[avail/insurance] Erro ao montar disponibilidade:', error.message);
+    console.error(
+      "[avail/insurance] Erro ao montar disponibilidade:",
+      error.message,
+    );
     return res.status(500).json({
-      error: 'Falha ao obter disponibilidade',
-      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message
+      error: "Falha ao obter disponibilidade",
+      message:
+        process.env.NODE_ENV === "production"
+          ? "Internal server error"
+          : error.message,
     });
   }
 });

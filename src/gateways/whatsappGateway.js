@@ -1,16 +1,16 @@
 // Gateway para WhatsApp - Abstrai Z-API/Evolution/Meta Business API
 // O parceiro nunca sabe qual provedor de WhatsApp usamos
 
-const axios = require('axios');
+const axios = require("axios");
 
 // Configurações
 const WHATSAPP_CONFIG = {
-  provider: process.env.WHATSAPP_PROVIDER || 'meta',
-  apiKey: process.env.WHATSAPP_API_KEY || '',
-  baseUrl: process.env.WHATSAPP_BASE_URL || '',
-  metaAccessToken: process.env.WHATSAPP_META_ACCESS_TOKEN || '',
-  metaPhoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID || '',
-  metaApiVersion: process.env.WHATSAPP_META_API_VERSION || 'v22.0'
+  provider: process.env.WHATSAPP_PROVIDER || "meta",
+  apiKey: process.env.WHATSAPP_API_KEY || "",
+  baseUrl: process.env.WHATSAPP_BASE_URL || "",
+  metaAccessToken: process.env.WHATSAPP_META_ACCESS_TOKEN || "",
+  metaPhoneNumberId: process.env.WHATSAPP_META_PHONE_NUMBER_ID || "",
+  metaApiVersion: process.env.WHATSAPP_META_API_VERSION || "v22.0",
 };
 
 class WhatsAppGateway {
@@ -27,44 +27,52 @@ class WhatsAppGateway {
         transitional: {
           silentJSONParsing: true,
           forcedJSONParsing: true,
-          clarifyTimeoutError: true
-        }
+          clarifyTimeoutError: true,
+        },
       };
 
-      if (this.provider === 'zapi') {
+      if (this.provider === "zapi") {
         return axios.create({
           ...axiosConfig,
           baseURL: WHATSAPP_CONFIG.baseUrl,
           headers: {
-            'Authorization': `Bearer ${WHATSAPP_CONFIG.apiKey}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${WHATSAPP_CONFIG.apiKey}`,
+            "Content-Type": "application/json",
+          },
         });
-      } else if (this.provider === 'evolution') {
+      } else if (this.provider === "evolution") {
         return axios.create({
           ...axiosConfig,
           baseURL: WHATSAPP_CONFIG.baseUrl,
           headers: {
-            'apikey': WHATSAPP_CONFIG.apiKey,
-            'Content-Type': 'application/json'
-          }
+            apikey: WHATSAPP_CONFIG.apiKey,
+            "Content-Type": "application/json",
+          },
         });
-      } else if (this.provider === 'meta') {
-        if (!WHATSAPP_CONFIG.metaAccessToken || !WHATSAPP_CONFIG.metaPhoneNumberId) {
-          console.warn('[WhatsAppGateway] Meta credentials missing, using mock mode');
+      } else if (this.provider === "meta") {
+        if (
+          !WHATSAPP_CONFIG.metaAccessToken ||
+          !WHATSAPP_CONFIG.metaPhoneNumberId
+        ) {
+          console.warn(
+            "[WhatsAppGateway] Meta credentials missing, using mock mode",
+          );
           return null;
         }
         return axios.create({
           ...axiosConfig,
           baseURL: `https://graph.facebook.com/${WHATSAPP_CONFIG.metaApiVersion}`,
           headers: {
-            'Authorization': `Bearer ${WHATSAPP_CONFIG.metaAccessToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${WHATSAPP_CONFIG.metaAccessToken}`,
+            "Content-Type": "application/json",
+          },
         });
       }
     } catch (err) {
-      console.warn('[WhatsAppGateway] Failed to initialize client:', err.message);
+      console.warn(
+        "[WhatsAppGateway] Failed to initialize client:",
+        err.message,
+      );
       return null;
     }
   }
@@ -77,7 +85,10 @@ class WhatsAppGateway {
    */
   async sendWelcomeMessage(customerData, formLink) {
     try {
-      console.log('[WhatsAppGateway] Enviando WhatsApp para:', customerData.phone);
+      console.log(
+        "[WhatsAppGateway] Enviando WhatsApp para:",
+        customerData.phone,
+      );
 
       const message = `Olá ${customerData.name}! 🎒
 
@@ -93,16 +104,21 @@ Equipe ExactBag`;
 
       await this._sendMessage(customerData.phone, message);
 
-      console.log('[WhatsAppGateway] Mensagem enviada com sucesso para:', customerData.phone);
+      console.log(
+        "[WhatsAppGateway] Mensagem enviada com sucesso para:",
+        customerData.phone,
+      );
       return true;
-
     } catch (error) {
-      console.error('[WhatsAppGateway] Erro ao enviar WhatsApp:', error);
+      console.error("[WhatsAppGateway] Erro ao enviar WhatsApp:", error);
       // Para Meta API, pode ser necessário verificar se o número está opt-in
       if (error.response?.data?.error?.code === 100) {
-        console.warn('[WhatsAppGateway] Número não opt-in ou inválido:', customerData.phone);
+        console.warn(
+          "[WhatsAppGateway] Número não opt-in ou inválido:",
+          customerData.phone,
+        );
       }
-      throw new Error('Erro ao enviar mensagem de boas-vindas');
+      throw new Error("Erro ao enviar mensagem de boas-vindas");
     }
   }
 
@@ -114,10 +130,13 @@ Equipe ExactBag`;
    */
   async sendConfirmationMessage(customerData, submissionData) {
     try {
-      console.log('[WhatsAppGateway] Enviando confirmação para:', customerData.phone);
+      console.log(
+        "[WhatsAppGateway] Enviando confirmação para:",
+        customerData.phone,
+      );
 
       const trip = submissionData?.customerData?.tripDetails || {};
-      const tripType = trip.roundTrip ? 'Ida e Volta' : 'Ida';
+      const tripType = trip.roundTrip ? "Ida e Volta" : "Ida";
       const outDate = trip.outboundDate || null;
       const retDate = trip.returnDate || null;
 
@@ -125,8 +144,8 @@ Equipe ExactBag`;
 
 Confirmamos o registro da sua bagagem:
 • Viagem: ${tripType}
-${outDate ? `• Data de Ida: ${outDate}` : ''}
-${retDate ? `• Data de Volta: ${retDate}` : ''}
+${outDate ? `• Data de Ida: ${outDate}` : ""}
+${retDate ? `• Data de Volta: ${retDate}` : ""}
 
 📦 Em breve você receberá o link para download do seu produto digital.
 
@@ -135,34 +154,38 @@ Equipe ExactBag`;
 
       await this._sendMessage(customerData.phone, message);
 
-      console.log('[WhatsAppGateway] Confirmação enviada');
+      console.log("[WhatsAppGateway] Confirmação enviada");
       return true;
-
     } catch (error) {
-      console.error('[WhatsAppGateway] Erro ao enviar confirmação:', error);
-      throw new Error('Erro ao enviar mensagem de confirmação');
+      console.error("[WhatsAppGateway] Erro ao enviar confirmação:", error);
+      throw new Error("Erro ao enviar mensagem de confirmação");
     }
   }
 
   async sendReservationConfirmationMessage(customerData, saleData = {}) {
     const formatDate = (value) => {
-      if (!value) return '';
+      if (!value) return "";
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return String(value);
-      return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+      return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
     };
-    const tripType = saleData.roundTrip ? 'Ida e volta' : 'Ida';
+    const tripType = saleData.roundTrip ? "Ida e volta" : "Ida";
     const outboundDate = formatDate(saleData.outboundDate);
-    const deliveryText = saleData.reservationType === 'physical-tag'
-      ? 'O comprovante será enviado assim que faltarem 48 horas para a sua viagem. Basta apresentá-lo na loja da Protec Bag no aeroporto.'
-      : 'O link de ativação do serviço será enviado assim que faltarem 48 horas para a sua viagem. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.';
+    const deliveryText =
+      saleData.reservationType === "physical-tag"
+        ? "O comprovante será enviado assim que faltarem 48 horas para a sua viagem. Basta apresentá-lo na loja da Protec Bag no aeroporto."
+        : "O link de ativação do serviço será enviado assim que faltarem 48 horas para a sua viagem. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.";
     const message = `Olá, ${customerData.name}!
 
 Sua compra da ExactBag foi confirmada com sucesso! ✅
 
 Detalhes do pedido
-✈️ Viagem: ${tripType}${outboundDate ? `
-Data da viagem: ${outboundDate}` : ''}
+✈️ Viagem: ${tripType}${
+      outboundDate
+        ? `
+Data da viagem: ${outboundDate}`
+        : ""
+    }
 
 Quando vou receber o produto?
 ${deliveryText}
@@ -177,22 +200,22 @@ Apenas aguarde nossa próxima mensagem e mantenha seus dados de contato atualiza
 Boa viagem! ✈️
 Equipe ExactBag`;
 
-    const templateName = process.env.WHATSAPP_RESERVATION_TEMPLATE || '';
-    if (this.provider === 'meta' && templateName) {
+    const templateName = process.env.WHATSAPP_RESERVATION_TEMPLATE || "";
+    if (this.provider === "meta" && templateName) {
       // The approved reservation template has four body variables:
       // name, trip, travel date, and delivery details.
       const parameters = [
-        { type: 'text', text: customerData.name },
-        { type: 'text', text: tripType },
-        { type: 'text', text: outboundDate },
-        { type: 'text', text: deliveryText }
+        { type: "text", text: customerData.name },
+        { type: "text", text: tripType },
+        { type: "text", text: outboundDate },
+        { type: "text", text: deliveryText },
       ];
 
-      return this.sendTemplate(customerData.phone, templateName, 'pt_BR', [
+      return this.sendTemplate(customerData.phone, templateName, "pt_BR", [
         {
-          type: 'body',
-          parameters
-        }
+          type: "body",
+          parameters,
+        },
       ]);
     }
     return this._sendMessage(customerData.phone, message);
@@ -206,7 +229,10 @@ Equipe ExactBag`;
    */
   async sendProductMessage(customerData, downloadLink) {
     try {
-      console.log('[WhatsAppGateway] Enviando produto para:', customerData.phone);
+      console.log(
+        "[WhatsAppGateway] Enviando produto para:",
+        customerData.phone,
+      );
 
       const message = `Olá ${customerData.name}! 📥
 
@@ -221,12 +247,11 @@ Equipe ExactBag`;
 
       await this._sendMessage(customerData.phone, message);
 
-      console.log('[WhatsAppGateway] Produto enviado');
+      console.log("[WhatsAppGateway] Produto enviado");
       return true;
-
     } catch (error) {
-      console.error('[WhatsAppGateway] Erro ao enviar produto:', error);
-      throw new Error('Erro ao enviar produto digital');
+      console.error("[WhatsAppGateway] Erro ao enviar produto:", error);
+      throw new Error("Erro ao enviar produto digital");
     }
   }
 
@@ -238,7 +263,10 @@ Equipe ExactBag`;
    */
   async sendReminderMessage(customerData, formLink) {
     try {
-      console.log('[WhatsAppGateway] Enviando lembrete para:', customerData.phone);
+      console.log(
+        "[WhatsAppGateway] Enviando lembrete para:",
+        customerData.phone,
+      );
 
       const message = `Olá ${customerData.name}! ⏰
 
@@ -252,12 +280,11 @@ Equipe ExactBag`;
 
       await this._sendMessage(customerData.phone, message);
 
-      console.log('[WhatsAppGateway] Lembrete enviado');
+      console.log("[WhatsAppGateway] Lembrete enviado");
       return true;
-
     } catch (error) {
-      console.error('[WhatsAppGateway] Erro ao enviar lembrete:', error);
-      throw new Error('Erro ao enviar lembrete');
+      console.error("[WhatsAppGateway] Erro ao enviar lembrete:", error);
+      throw new Error("Erro ao enviar lembrete");
     }
   }
 
@@ -265,73 +292,83 @@ Equipe ExactBag`;
   async _sendMessage(to, message) {
     const cleanPhone = this._cleanPhoneNumber(to);
 
-    if (this.provider === 'zapi') {
+    if (this.provider === "zapi") {
       const payload = {
         phone: cleanPhone,
         message: message,
-        isGroup: false
+        isGroup: false,
       };
 
-      if (process.env.NODE_ENV === 'test') {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      if (process.env.NODE_ENV === "test") {
+        await new Promise((resolve) => setTimeout(resolve, 200));
         return true;
       }
 
-      await this.client.post('/send-text', payload);
+      await this.client.post("/send-text", payload);
       return true;
-
-    } else if (this.provider === 'evolution') {
+    } else if (this.provider === "evolution") {
       const payload = {
         number: cleanPhone,
         options: {
           delay: 1200,
-          presence: 'composing'
+          presence: "composing",
         },
         textMessage: {
-          text: message
-        }
+          text: message,
+        },
       };
 
-      if (process.env.NODE_ENV === 'test') {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      if (process.env.NODE_ENV === "test") {
+        await new Promise((resolve) => setTimeout(resolve, 200));
         return true;
       }
 
-      await this.client.post('/message/sendText', payload);
+      await this.client.post("/message/sendText", payload);
       return true;
-
-    } else if (this.provider === 'meta') {
+    } else if (this.provider === "meta") {
       // Meta Cloud API: texto livre só funciona dentro da janela de 24h
       // (quando o usuário já respondeu). Para iniciar conversa, use _sendTemplate.
-      const recipient = cleanPhone.replace(/\D/g, '');
+      const recipient = cleanPhone.replace(/\D/g, "");
       const payload = {
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
         to: recipient,
-        type: 'text',
+        type: "text",
         text: {
           preview_url: true,
-          body: message
-        }
+          body: message,
+        },
       };
 
-      if (process.env.NODE_ENV === 'test') {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      if (process.env.NODE_ENV === "test") {
+        await new Promise((resolve) => setTimeout(resolve, 200));
         return true;
       }
 
       if (!this.client) {
-        console.warn('[WhatsAppGateway] Client not initialized (mock mode), skipping send');
+        console.warn(
+          "[WhatsAppGateway] Client not initialized (mock mode), skipping send",
+        );
         return false;
       }
 
-      const response = await this.client.post(`/${WHATSAPP_CONFIG.metaPhoneNumberId}/messages`, payload);
-      console.log('[WhatsAppGateway] Meta API response: messageId=', response.data?.messages?.[0]?.id || 'unknown');
-      if (response.data && response.data.messages && response.data.messages[0].id) {
+      const response = await this.client.post(
+        `/${WHATSAPP_CONFIG.metaPhoneNumberId}/messages`,
+        payload,
+      );
+      console.log(
+        "[WhatsAppGateway] Meta API response: messageId=",
+        response.data?.messages?.[0]?.id || "unknown",
+      );
+      if (
+        response.data &&
+        response.data.messages &&
+        response.data.messages[0].id
+      ) {
         return true;
       }
 
-      throw new Error('Meta WhatsApp Business API message send failure');
+      throw new Error("Meta WhatsApp Business API message send failure");
     }
 
     throw new Error(`Unsupported WhatsApp provider: ${this.provider}`);
@@ -345,58 +382,76 @@ Equipe ExactBag`;
    * @param {Array} components - Componentes do template (header, body, etc)
    * @returns {Object} - Resposta da API
    */
-  async sendTemplate(to, templateName, languageCode = 'pt_BR', components = []) {
+  async sendTemplate(
+    to,
+    templateName,
+    languageCode = "pt_BR",
+    components = [],
+  ) {
     const cleanPhone = this._cleanPhoneNumber(to);
 
-    if (this.provider !== 'meta') {
+    if (this.provider !== "meta") {
       // Para outros providers, cai no texto normal
       return this._sendMessage(to, `[Template: ${templateName}]`);
     }
 
-    const recipient = cleanPhone.replace(/\D/g, '');
+    const recipient = cleanPhone.replace(/\D/g, "");
     const payload = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
       to: recipient,
-      type: 'template',
+      type: "template",
       template: {
         name: templateName,
         language: { code: languageCode },
-      }
+      },
     };
 
     if (components.length > 0) {
       payload.template.components = components;
     }
 
-    if (process.env.NODE_ENV === 'test') {
-      return { messages: [{ id: 'test_template_id' }] };
+    if (process.env.NODE_ENV === "test") {
+      return { messages: [{ id: "test_template_id" }] };
     }
 
     if (!this.client) {
-      console.warn('[WhatsAppGateway] Client not initialized (mock mode), skipping template send');
+      console.warn(
+        "[WhatsAppGateway] Client not initialized (mock mode), skipping template send",
+      );
       return null;
     }
 
-    console.log('[WhatsAppGateway] Enviando template:', templateName, 'para:', recipient);
-    const response = await this.client.post(`/${WHATSAPP_CONFIG.metaPhoneNumberId}/messages`, payload);
-    console.log('[WhatsAppGateway] Template response: messageId=', response.data?.messages?.[0]?.id || 'unknown');
+    console.log(
+      "[WhatsAppGateway] Enviando template:",
+      templateName,
+      "para:",
+      recipient,
+    );
+    const response = await this.client.post(
+      `/${WHATSAPP_CONFIG.metaPhoneNumberId}/messages`,
+      payload,
+    );
+    console.log(
+      "[WhatsAppGateway] Template response: messageId=",
+      response.data?.messages?.[0]?.id || "unknown",
+    );
     return response.data;
   }
 
   // Limpa e formata número de telefone
   _cleanPhoneNumber(phone) {
     // Remove todos os caracteres não numéricos
-    let clean = phone.replace(/\D/g, '');
+    let clean = phone.replace(/\D/g, "");
 
     // Adiciona +55 se não tiver código do país (Brasil)
-    if (!clean.startsWith('55') && clean.length === 11) {
-      clean = '55' + clean;
+    if (!clean.startsWith("55") && clean.length === 11) {
+      clean = "55" + clean;
     }
 
     // Adiciona + se não tiver
-    if (!clean.startsWith('+')) {
-      clean = '+' + clean;
+    if (!clean.startsWith("+")) {
+      clean = "+" + clean;
     }
 
     return clean;
@@ -409,21 +464,23 @@ Equipe ExactBag`;
    */
   async getMessageStatus(messageId) {
     try {
-      console.log('[WhatsAppGateway] Verificando status da mensagem:', messageId);
+      console.log(
+        "[WhatsAppGateway] Verificando status da mensagem:",
+        messageId,
+      );
 
       // Para MVP: simular status
-      const status = Math.random() > 0.1 ? 'delivered' : 'failed'; // 90% sucesso
+      const status = Math.random() > 0.1 ? "delivered" : "failed"; // 90% sucesso
 
       return {
         messageId,
         status,
-        deliveredAt: status === 'delivered' ? new Date() : null,
-        error: status === 'failed' ? 'Número inválido ou bloqueado' : null
+        deliveredAt: status === "delivered" ? new Date() : null,
+        error: status === "failed" ? "Número inválido ou bloqueado" : null,
       };
-
     } catch (error) {
-      console.error('[WhatsAppGateway] Erro ao verificar status:', error);
-      throw new Error('Erro ao verificar status da mensagem');
+      console.error("[WhatsAppGateway] Erro ao verificar status:", error);
+      throw new Error("Erro ao verificar status da mensagem");
     }
   }
 }

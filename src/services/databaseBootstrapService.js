@@ -1,5 +1,7 @@
-const { prisma } = require('../config');
-const { buildNativeRegistrationLink } = require('./nativeRegistrationLinkService');
+const { prisma } = require("../config");
+const {
+  buildNativeRegistrationLink,
+} = require("./nativeRegistrationLinkService");
 
 const createDownloadTokenTableSql = `
   CREATE TABLE IF NOT EXISTS "DownloadToken" (
@@ -27,7 +29,7 @@ const createIndexesSql = [
   'CREATE INDEX IF NOT EXISTS "DownloadToken_saleId_idx" ON "DownloadToken"("saleId")',
   'CREATE INDEX IF NOT EXISTS "DownloadToken_customerEmail_idx" ON "DownloadToken"("customerEmail")',
   'CREATE INDEX IF NOT EXISTS "DownloadToken_createdAt_idx" ON "DownloadToken"("createdAt")',
-  'CREATE INDEX IF NOT EXISTS "DownloadToken_expiresAt_idx" ON "DownloadToken"("expiresAt")'
+  'CREATE INDEX IF NOT EXISTS "DownloadToken_expiresAt_idx" ON "DownloadToken"("expiresAt")',
 ];
 
 const backfillSchemaSql = [
@@ -123,7 +125,7 @@ const nativeRegistrationIndexes = [
   'CREATE INDEX IF NOT EXISTS "NativeRegistration_cpvNumber_idx" ON "NativeRegistration"("cpvNumber")',
   'CREATE INDEX IF NOT EXISTS "NativeRegistration_saleId_idx" ON "NativeRegistration"("saleId")',
   'CREATE INDEX IF NOT EXISTS "NativeRegistration_returnDate_idx" ON "NativeRegistration"("returnDate")',
-  'CREATE INDEX IF NOT EXISTS "NativeBaggageItem_registrationId_idx" ON "NativeBaggageItem"("registrationId")'
+  'CREATE INDEX IF NOT EXISTS "NativeBaggageItem_registrationId_idx" ON "NativeBaggageItem"("registrationId")',
 ];
 
 // ============================================================================
@@ -145,11 +147,11 @@ const createDashboardUserSql = `
 
 const dashboardUserIndexes = [
   'CREATE UNIQUE INDEX IF NOT EXISTS "DashboardUser_email_key" ON "DashboardUser"("email")',
-  'CREATE INDEX IF NOT EXISTS "DashboardUser_role_idx" ON "DashboardUser"("role")'
+  'CREATE INDEX IF NOT EXISTS "DashboardUser_role_idx" ON "DashboardUser"("role")',
 ];
 
 const initializeDatabase = async () => {
-  if (!prisma || process.env.NODE_ENV === 'test') {
+  if (!prisma || process.env.NODE_ENV === "test") {
     return;
   }
 
@@ -170,10 +172,18 @@ const initializeDatabase = async () => {
   await prisma.$executeRawUnsafe(createNativeBaggageItemSql);
 
   // Backfill NativeRegistration columns added after initial creation
-  await prisma.$executeRawUnsafe('ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "returnReminderSentAt" TIMESTAMP(3)');
-  await prisma.$executeRawUnsafe('ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "hasInsurance" BOOLEAN NOT NULL DEFAULT false');
-  await prisma.$executeRawUnsafe('ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "isPhysicalTag" BOOLEAN NOT NULL DEFAULT false');
-  await prisma.$executeRawUnsafe('ALTER TABLE "NativeBaggageItem" ADD COLUMN IF NOT EXISTS "sunNumber" TEXT');
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "returnReminderSentAt" TIMESTAMP(3)',
+  );
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "hasInsurance" BOOLEAN NOT NULL DEFAULT false',
+  );
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE "NativeRegistration" ADD COLUMN IF NOT EXISTS "isPhysicalTag" BOOLEAN NOT NULL DEFAULT false',
+  );
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE "NativeBaggageItem" ADD COLUMN IF NOT EXISTS "sunNumber" TEXT',
+  );
 
   for (const statement of nativeRegistrationIndexes) {
     // eslint-disable-next-line no-await-in-loop
@@ -208,22 +218,22 @@ const initializeDatabase = async () => {
     )
   `);
   await prisma.$executeRawUnsafe(
-    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "outboundDate" TIMESTAMP(3)'
+    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "outboundDate" TIMESTAMP(3)',
   );
   await prisma.$executeRawUnsafe(
-    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "customerPhone" TEXT'
+    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "customerPhone" TEXT',
   );
   await prisma.$executeRawUnsafe(
-    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "receiptSentAt" TIMESTAMP(3)'
+    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "receiptSentAt" TIMESTAMP(3)',
   );
   await prisma.$executeRawUnsafe(
-    'CREATE UNIQUE INDEX IF NOT EXISTS "PhysicalTagOrder_orderNumber_key" ON "PhysicalTagOrder"("orderNumber")'
+    'CREATE UNIQUE INDEX IF NOT EXISTS "PhysicalTagOrder_orderNumber_key" ON "PhysicalTagOrder"("orderNumber")',
   );
   await prisma.$executeRawUnsafe(
-    'CREATE INDEX IF NOT EXISTS "PhysicalTagOrder_createdAt_idx" ON "PhysicalTagOrder"("createdAt")'
+    'CREATE INDEX IF NOT EXISTS "PhysicalTagOrder_createdAt_idx" ON "PhysicalTagOrder"("createdAt")',
   );
   await prisma.$executeRawUnsafe(
-    'CREATE INDEX IF NOT EXISTS "PhysicalTagOrder_outboundDate_receiptSentAt_idx" ON "PhysicalTagOrder"("outboundDate", "receiptSentAt")'
+    'CREATE INDEX IF NOT EXISTS "PhysicalTagOrder_outboundDate_receiptSentAt_idx" ON "PhysicalTagOrder"("outboundDate", "receiptSentAt")',
   );
 
   // Seed default admin if table is empty
@@ -235,7 +245,7 @@ const initializeDatabase = async () => {
 async function migrateLegacyRegistrationLinks() {
   const legacySales = await prisma.sale.findMany({
     where: {
-      formLink: { startsWith: 'https://form.jotform.com/' },
+      formLink: { startsWith: "https://form.jotform.com/" },
       saleId: { not: null },
     },
     select: { id: true, saleId: true },
@@ -244,12 +254,16 @@ async function migrateLegacyRegistrationLinks() {
   if (!legacySales.length) return;
 
   await prisma.$transaction(
-    legacySales.map((sale) => prisma.sale.update({
-      where: { id: sale.id },
-      data: { formLink: buildNativeRegistrationLink(sale.saleId) },
-    })),
+    legacySales.map((sale) =>
+      prisma.sale.update({
+        where: { id: sale.id },
+        data: { formLink: buildNativeRegistrationLink(sale.saleId) },
+      }),
+    ),
   );
-  console.log(`[Bootstrap] ${legacySales.length} legacy registration link(s) migrated to the native form`);
+  console.log(
+    `[Bootstrap] ${legacySales.length} legacy registration link(s) migrated to the native form`,
+  );
 }
 
 /**
@@ -257,44 +271,46 @@ async function migrateLegacyRegistrationLinks() {
  */
 async function seedDefaultDashboardUsers() {
   try {
-    const bcrypt = require('bcrypt');
+    const bcrypt = require("bcrypt");
     const count = await prisma.dashboardUser.count();
     if (count > 0) return; // Já tem usuários
 
-    const adminPassword = process.env.DASHBOARD_ADMIN_PASSWORD || 'admin123';
-    const atendPassword = process.env.DASHBOARD_ATEND_PASSWORD || 'atend123';
+    const adminPassword = process.env.DASHBOARD_ADMIN_PASSWORD || "admin123";
+    const atendPassword = process.env.DASHBOARD_ATEND_PASSWORD || "atend123";
     const [adminHash, atendHash] = await Promise.all([
       bcrypt.hash(adminPassword, 12),
-      bcrypt.hash(atendPassword, 12)
+      bcrypt.hash(atendPassword, 12),
     ]);
 
     await prisma.dashboardUser.createMany({
       data: [
         {
-          name: process.env.DASHBOARD_ADMIN_NAME || 'Admin ExactBag',
-          email: process.env.DASHBOARD_ADMIN_EMAIL || 'admin@exactbag.com',
+          name: process.env.DASHBOARD_ADMIN_NAME || "Admin ExactBag",
+          email: process.env.DASHBOARD_ADMIN_EMAIL || "admin@exactbag.com",
           passwordHash: adminHash,
-          role: 'gestor',
-          isActive: true
+          role: "gestor",
+          isActive: true,
         },
         {
-          name: process.env.DASHBOARD_ATEND_NAME || 'Atendente ExactBag',
-          email: process.env.DASHBOARD_ATEND_EMAIL || 'atendente@exactbag.com',
+          name: process.env.DASHBOARD_ATEND_NAME || "Atendente ExactBag",
+          email: process.env.DASHBOARD_ATEND_EMAIL || "atendente@exactbag.com",
           passwordHash: atendHash,
-          role: 'atendente',
-          isActive: true
-        }
+          role: "atendente",
+          isActive: true,
+        },
       ],
-      skipDuplicates: true
+      skipDuplicates: true,
     });
-    console.log('[Bootstrap] 2 usuários padrão criados na tabela DashboardUser');
+    console.log(
+      "[Bootstrap] 2 usuários padrão criados na tabela DashboardUser",
+    );
   } catch (err) {
-    console.warn('[Bootstrap] Erro ao seed DashboardUser:', err.message);
+    console.warn("[Bootstrap] Erro ao seed DashboardUser:", err.message);
   }
 }
 
 module.exports = {
-  initializeDatabase
+  initializeDatabase,
 };
 
 /**
@@ -303,38 +319,39 @@ module.exports = {
  */
 async function seedDefaultPartners() {
   try {
-    const rows = await prisma.$queryRaw`SELECT COUNT(*)::int AS count FROM "Partner"`;
+    const rows =
+      await prisma.$queryRaw`SELECT COUNT(*)::int AS count FROM "Partner"`;
     const count = Number(rows[0]?.count ?? 0);
     if (count > 0) return; // Já tem parceiros — não sobrescreve
 
     const partners = [
       {
-        id: 'PARTNER-001',
-        partnerId: 'AGENCIA_123',
-        name: 'Agência Travel Corp (Teste)',
-        apiKey: 'exactbag_test_key_123456789',
-        email: 'tech@agenciatravel.com',
+        id: "PARTNER-001",
+        partnerId: "AGENCIA_123",
+        name: "Agência Travel Corp (Teste)",
+        apiKey: "exactbag_test_key_123456789",
+        email: "tech@agenciatravel.com",
         isActive: true,
-        isSandbox: true
+        isSandbox: true,
       },
       {
-        id: 'PARTNER-002',
-        partnerId: 'AGENCIA_456',
-        name: 'Viagens Premium (Teste)',
-        apiKey: 'exactbag_test_key_987654321',
-        email: 'api@viagenspremium.com',
+        id: "PARTNER-002",
+        partnerId: "AGENCIA_456",
+        name: "Viagens Premium (Teste)",
+        apiKey: "exactbag_test_key_987654321",
+        email: "api@viagenspremium.com",
         isActive: true,
-        isSandbox: true
+        isSandbox: true,
       },
       {
-        id: 'PARTNER-003',
-        partnerId: 'JUST_TRAVEL',
-        name: 'Just Travel',
-        apiKey: 'exactbag_just_travel_key_2026',
-        email: 'parceria@justtravel.com.br',
+        id: "PARTNER-003",
+        partnerId: "JUST_TRAVEL",
+        name: "Just Travel",
+        apiKey: "exactbag_just_travel_key_2026",
+        email: "parceria@justtravel.com.br",
         isActive: true,
-        isSandbox: false
-      }
+        isSandbox: false,
+      },
     ];
 
     for (const p of partners) {
@@ -345,8 +362,8 @@ async function seedDefaultPartners() {
         ON CONFLICT ("partnerId") DO NOTHING
       `;
     }
-    console.log('[Bootstrap] Parceiros padrão semeados na tabela Partner');
+    console.log("[Bootstrap] Parceiros padrão semeados na tabela Partner");
   } catch (err) {
-    console.warn('[Bootstrap] Erro ao seed Partners:', err.message);
+    console.warn("[Bootstrap] Erro ao seed Partners:", err.message);
   }
 }

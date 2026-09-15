@@ -3,18 +3,21 @@
  * Gerencia acesso a dados, exclusão, portabilidade e consentimento
  */
 
-const prisma = require('../config').prisma;
-const fs = require('fs').promises;
-const path = require('path');
+const prisma = require("../config").prisma;
+const fs = require("fs").promises;
+const path = require("path");
 
 // Garante que o diretório de logs existe
-const CONSENT_LOG_DIR = path.join(__dirname, '../../logs/consent');
+const CONSENT_LOG_DIR = path.join(__dirname, "../../logs/consent");
 
 const ensureLogDir = async () => {
   try {
     await fs.mkdir(CONSENT_LOG_DIR, { recursive: true });
   } catch (error) {
-    console.warn('Falha ao criar diretório de logs de consentimento:', error.message);
+    console.warn(
+      "Falha ao criar diretório de logs de consentimento:",
+      error.message,
+    );
   }
 };
 
@@ -26,23 +29,23 @@ const buildSubmissionWhereClause = (email) => ({
     {
       sale: {
         is: {
-          customerEmail: email
-        }
-      }
+          customerEmail: email,
+        },
+      },
     },
     {
       payload: {
         contains: email,
-        mode: 'insensitive'
-      }
-    }
-  ]
+        mode: "insensitive",
+      },
+    },
+  ],
 });
 
 const applyCorrectionsToPayload = (payload, corrections) => {
   let parsed = payload;
 
-  if (typeof payload === 'string') {
+  if (typeof payload === "string") {
     try {
       parsed = JSON.parse(payload);
     } catch (_error) {
@@ -50,7 +53,7 @@ const applyCorrectionsToPayload = (payload, corrections) => {
     }
   }
 
-  if (!parsed || typeof parsed !== 'object') {
+  if (!parsed || typeof parsed !== "object") {
     return payload;
   }
 
@@ -74,15 +77,15 @@ const privacyService = {
    * @param {object} consentData - Tipos de consentimento e valores
    * @param {string} source - De onde o consentimento veio (formulário, api, etc)
    */
-  async logConsent(email, consentData, source = 'system') {
+  async logConsent(email, consentData, source = "system") {
     try {
       const consentLog = {
         timestamp: new Date().toISOString(),
         email,
         source,
         consents: consentData,
-        ipAddress: 'internal-log',
-        userAgent: 'consent-logger'
+        ipAddress: "internal-log",
+        userAgent: "consent-logger",
       };
 
       const fileName = `consent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.json`;
@@ -90,10 +93,12 @@ const privacyService = {
 
       await fs.writeFile(filePath, JSON.stringify(consentLog, null, 2));
 
-      console.log(`[LGPD] Consentimento registrado para ${email} em ${filePath}`);
+      console.log(
+        `[LGPD] Consentimento registrado para ${email} em ${filePath}`,
+      );
       return true;
     } catch (error) {
-      console.error('[LGPD] Erro ao registrar consentimento:', error);
+      console.error("[LGPD] Erro ao registrar consentimento:", error);
       return false;
     }
   },
@@ -105,30 +110,33 @@ const privacyService = {
    */
   async getDataAccess(email) {
     try {
-      const [sales, directPartners, submissions, downloadTokens] = await Promise.all([
-        prisma.sale.findMany({
-          where: { customerEmail: email },
-          include: {
-            partner: true,
-            submissions: true
-          }
-        }),
-        prisma.partner.findMany({
-          where: { email }
-        }),
-        prisma.submission.findMany({
-          where: buildSubmissionWhereClause(email),
-          include: {
-            sale: true
-          }
-        }),
-        prisma.downloadToken.findMany({
-          where: { customerEmail: email }
-        })
-      ]);
+      const [sales, directPartners, submissions, downloadTokens] =
+        await Promise.all([
+          prisma.sale.findMany({
+            where: { customerEmail: email },
+            include: {
+              partner: true,
+              submissions: true,
+            },
+          }),
+          prisma.partner.findMany({
+            where: { email },
+          }),
+          prisma.submission.findMany({
+            where: buildSubmissionWhereClause(email),
+            include: {
+              sale: true,
+            },
+          }),
+          prisma.downloadToken.findMany({
+            where: { customerEmail: email },
+          }),
+        ]);
 
       const partnerMap = new Map();
-      directPartners.forEach((partner) => partnerMap.set(partner.partnerId, partner));
+      directPartners.forEach((partner) =>
+        partnerMap.set(partner.partnerId, partner),
+      );
       sales.forEach((sale) => {
         if (sale.partner) {
           partnerMap.set(sale.partner.partnerId, sale.partner);
@@ -147,8 +155,8 @@ const privacyService = {
           totalPartners: partners.length,
           totalSales: sales.length,
           totalSubmissions: submissions.length,
-          totalDownloadTokens: downloadTokens.length
-        }
+          totalDownloadTokens: downloadTokens.length,
+        },
       };
 
       return dataAccess;
@@ -163,16 +171,16 @@ const privacyService = {
    * @param {string} format - Formato: 'json', 'csv', 'xml'
    * @returns {string} Dados formatados
    */
-  async exportData(email, format = 'json') {
+  async exportData(email, format = "json") {
     try {
       const data = await this.getDataAccess(email);
 
       switch (format.toLowerCase()) {
-        case 'csv':
+        case "csv":
           return this._convertToCSV(data);
-        case 'xml':
+        case "xml":
           return this._convertToXML(data);
-        case 'json':
+        case "json":
         default:
           return JSON.stringify(data, null, 2);
       }
@@ -188,7 +196,7 @@ const privacyService = {
    * @param {string} reason - Motivo da deleção
    * @returns {object} Relatório de deleção
    */
-  async deleteData(email, reason = '') {
+  async deleteData(email, reason = "") {
     const deletionLog = {
       requestDate: new Date().toISOString(),
       email,
@@ -197,20 +205,21 @@ const privacyService = {
         deletedPartners: 0,
         deletedSubmissions: 0,
         retainedSales: 0,
-        retainedReason: 'Obrigação fiscal (Lei Brasileira requer retenção de 5 anos)'
-      }
+        retainedReason:
+          "Obrigação fiscal (Lei Brasileira requer retenção de 5 anos)",
+      },
     };
 
     const session = await prisma.$transaction(async (tx) => {
       const partners = await tx.partner.findMany({ where: { email } });
 
       const deletedSubmissions = await tx.submission.deleteMany({
-        where: buildSubmissionWhereClause(email)
+        where: buildSubmissionWhereClause(email),
       });
       deletionLog.deletionReport.deletedSubmissions = deletedSubmissions.count;
 
       await tx.downloadToken.deleteMany({
-        where: { customerEmail: email }
+        where: { customerEmail: email },
       });
 
       for (const partner of partners) {
@@ -218,9 +227,9 @@ const privacyService = {
           where: {
             partnerId: partner.partnerId,
             createdAt: {
-              gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-            }
-          }
+              gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+            },
+          },
         });
 
         if (recentSales === 0) {
@@ -230,7 +239,7 @@ const privacyService = {
       }
 
       const totalSales = await tx.sale.count({
-        where: { customerEmail: email }
+        where: { customerEmail: email },
       });
       deletionLog.deletionReport.retainedSales = totalSales;
 
@@ -263,8 +272,8 @@ const privacyService = {
             where: { id: partner.id },
             data: {
               name: corrections.name || partner.name,
-              email: corrections.email || partner.email
-            }
+              email: corrections.email || partner.email,
+            },
           });
           updatedData.partners = updated;
         }
@@ -276,13 +285,13 @@ const privacyService = {
           data: {
             customerName: corrections.name,
             customerEmail: corrections.email,
-            customerPhone: corrections.phone
-          }
+            customerPhone: corrections.phone,
+          },
         });
         updatedData.sales = salesUpdate.count;
 
         const submissions = await prisma.submission.findMany({
-          where: buildSubmissionWhereClause(email)
+          where: buildSubmissionWhereClause(email),
         });
 
         let updatedSubmissions = 0;
@@ -290,8 +299,11 @@ const privacyService = {
           await prisma.submission.update({
             where: { id: submission.id },
             data: {
-              payload: applyCorrectionsToPayload(submission.payload, corrections)
-            }
+              payload: applyCorrectionsToPayload(
+                submission.payload,
+                corrections,
+              ),
+            },
           });
           updatedSubmissions += 1;
         }
@@ -302,8 +314,8 @@ const privacyService = {
           where: { customerEmail: email },
           data: {
             customerName: corrections.name,
-            customerEmail: corrections.email
-          }
+            customerEmail: corrections.email,
+          },
         });
 
         updatedData.downloadTokens = downloadTokens.count;
@@ -313,7 +325,7 @@ const privacyService = {
         timestamp: new Date().toISOString(),
         email,
         correctionsApplied: corrections,
-        updatedData
+        updatedData,
       };
     } catch (error) {
       throw new Error(`Erro ao corrigir dados: ${error.message}`);
@@ -325,7 +337,7 @@ const privacyService = {
    * @param {string} email - Email do usuário
    * @param {string} optOutType - 'marketing', 'analytics', 'all'
    */
-  async optOut(email, optOutType = 'marketing') {
+  async optOut(email, optOutType = "marketing") {
     try {
       const partners = await prisma.partner.findMany({ where: { email } });
 
@@ -333,25 +345,25 @@ const privacyService = {
         timestamp: new Date().toISOString(),
         email,
         optOutType,
-        affectedPartners: partners.length
+        affectedPartners: partners.length,
       };
 
       // Se descadastrar de marketing ou tudo
-      if (['marketing', 'all'].includes(optOutType)) {
+      if (["marketing", "all"].includes(optOutType)) {
         for (const partner of partners) {
           await prisma.partner.update({
             where: { id: partner.id },
-            data: { optOutMarketing: true }
+            data: { optOutMarketing: true },
           });
         }
       }
 
       // Se descadastrar de analytics ou tudo
-      if (['analytics', 'all'].includes(optOutType)) {
+      if (["analytics", "all"].includes(optOutType)) {
         for (const partner of partners) {
           await prisma.partner.update({
             where: { id: partner.id },
-            data: { optOutAnalytics: true }
+            data: { optOutAnalytics: true },
           });
         }
       }
@@ -373,9 +385,9 @@ const privacyService = {
       const consentHistory = [];
 
       for (const file of files) {
-        if (file.startsWith('consent_')) {
+        if (file.startsWith("consent_")) {
           const filePath = path.join(CONSENT_LOG_DIR, file);
-          const content = await fs.readFile(filePath, 'utf8');
+          const content = await fs.readFile(filePath, "utf8");
           const data = JSON.parse(content);
 
           if (data.email === email) {
@@ -384,11 +396,11 @@ const privacyService = {
         }
       }
 
-      return consentHistory.sort((a, b) => 
-        new Date(b.timestamp) - new Date(a.timestamp)
+      return consentHistory.sort(
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp),
       );
     } catch (error) {
-      console.error('Erro ao recuperar histórico de consentimento:', error);
+      console.error("Erro ao recuperar histórico de consentimento:", error);
       return [];
     }
   },
@@ -400,39 +412,43 @@ const privacyService = {
    */
   _convertToCSV(data) {
     const lines = [
-      'Exportação de Dados ExactBag',
+      "Exportação de Dados ExactBag",
       `Gerado em: ${data.requestDate}`,
       `Solicitante: ${data.requesterEmail}`,
-      '',
-      'RESUMO',
+      "",
+      "RESUMO",
       `Total de Parceiros: ${data.summary.totalPartners}`,
       `Total de Vendas: ${data.summary.totalSales}`,
       `Total de Envios: ${data.summary.totalSubmissions}`,
       `Total de Tokens de Download: ${data.summary.totalDownloadTokens}`,
-      ''
+      "",
     ];
 
     // Adicionar parceiros
     if (data.partners.length > 0) {
-      lines.push('PARCEIROS');
-      lines.push('ID,Nome,Email,Ativo,Criado em');
-      data.partners.forEach(p => {
-        lines.push(`${p.id},"${p.name}","${p.email}",${p.isActive},${p.createdAt}`);
+      lines.push("PARCEIROS");
+      lines.push("ID,Nome,Email,Ativo,Criado em");
+      data.partners.forEach((p) => {
+        lines.push(
+          `${p.id},"${p.name}","${p.email}",${p.isActive},${p.createdAt}`,
+        );
       });
-      lines.push('');
+      lines.push("");
     }
 
     // Adicionar vendas
     if (data.sales.length > 0) {
-      lines.push('VENDAS');
-      lines.push('ID,ID Parceiro,Email Cliente,Status,Criado em');
-      data.sales.forEach(s => {
-        lines.push(`${s.id},${s.partnerId},"${s.customerEmail}",${s.status},${s.createdAt}`);
+      lines.push("VENDAS");
+      lines.push("ID,ID Parceiro,Email Cliente,Status,Criado em");
+      data.sales.forEach((s) => {
+        lines.push(
+          `${s.id},${s.partnerId},"${s.customerEmail}",${s.status},${s.createdAt}`,
+        );
       });
-      lines.push('');
+      lines.push("");
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   },
 
   /**
@@ -440,19 +456,19 @@ const privacyService = {
    */
   _convertToXML(data) {
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xml += '<dataExport>\n';
+    xml += "<dataExport>\n";
     xml += `  <requestDate>${data.requestDate}</requestDate>\n`;
     xml += `  <requesterEmail>${data.requesterEmail}</requesterEmail>\n`;
-    xml += '  <summary>\n';
+    xml += "  <summary>\n";
     xml += `    <totalPartners>${data.summary.totalPartners}</totalPartners>\n`;
     xml += `    <totalSales>${data.summary.totalSales}</totalSales>\n`;
     xml += `    <totalSubmissions>${data.summary.totalSubmissions}</totalSubmissions>\n`;
     xml += `    <totalDownloadTokens>${data.summary.totalDownloadTokens}</totalDownloadTokens>\n`;
-    xml += '  </summary>\n';
+    xml += "  </summary>\n";
 
     if (data.partners.length > 0) {
-      xml += '  <partners>\n';
-      data.partners.forEach(p => {
+      xml += "  <partners>\n";
+      data.partners.forEach((p) => {
         xml += `    <partner>\n`;
         xml += `      <id>${p.id}</id>\n`;
         xml += `      <name>${p.name}</name>\n`;
@@ -460,10 +476,10 @@ const privacyService = {
         xml += `      <isActive>${p.isActive}</isActive>\n`;
         xml += `    </partner>\n`;
       });
-      xml += '  </partners>\n';
+      xml += "  </partners>\n";
     }
 
-    xml += '</dataExport>';
+    xml += "</dataExport>";
     return xml;
   },
 
@@ -475,17 +491,24 @@ const privacyService = {
       const fileName = `deletion_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.json`;
       const filePath = path.join(CONSENT_LOG_DIR, fileName);
 
-      await fs.writeFile(filePath, JSON.stringify({
-        timestamp: new Date().toISOString(),
-        type: 'deletion_request',
-        email,
-        reason,
-        report
-      }, null, 2));
+      await fs.writeFile(
+        filePath,
+        JSON.stringify(
+          {
+            timestamp: new Date().toISOString(),
+            type: "deletion_request",
+            email,
+            reason,
+            report,
+          },
+          null,
+          2,
+        ),
+      );
     } catch (error) {
-      console.error('[LGPD] Erro ao registrar solicitação de deleção:', error);
+      console.error("[LGPD] Erro ao registrar solicitação de deleção:", error);
     }
-  }
+  },
 };
 
 module.exports = privacyService;

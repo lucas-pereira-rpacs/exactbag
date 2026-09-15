@@ -1,14 +1,15 @@
 // Gateway para Produto Digital - Gerencia downloads seguros
 // Abstrai sistema de entrega de produto digital
 
-const crypto = require('crypto');
-const { prisma } = require('../config');
+const crypto = require("crypto");
+const { prisma } = require("../config");
 
 // Configurações (mover para .env na produção)
 const PRODUCT_CONFIG = {
-  downloadBaseUrl: process.env.PRODUCT_DOWNLOAD_BASE_URL || 'https://downloads.exactbag.com',
+  downloadBaseUrl:
+    process.env.PRODUCT_DOWNLOAD_BASE_URL || "https://downloads.exactbag.com",
   tokenExpirationHours: process.env.PRODUCT_TOKEN_EXPIRATION || 24, // horas
-  secretKey: process.env.PRODUCT_SECRET_KEY || 'your_secret_key_for_tokens'
+  secretKey: process.env.PRODUCT_SECRET_KEY || "your_secret_key_for_tokens",
 };
 
 class ProductGateway {
@@ -17,7 +18,7 @@ class ProductGateway {
   }
 
   _shouldUsePersistentStorage() {
-    return Boolean(prisma) && process.env.NODE_ENV !== 'test';
+    return Boolean(prisma) && process.env.NODE_ENV !== "test";
   }
 
   /**
@@ -28,14 +29,22 @@ class ProductGateway {
    */
   async generateDownloadLink(customerData, submissionData) {
     try {
-      console.log('[ProductGateway] Gerando link de download para:', customerData.name);
+      console.log(
+        "[ProductGateway] Gerando link de download para:",
+        customerData.name,
+      );
 
       // Gera token único e seguro
       const token = this._generateSecureToken();
-      const expiresAt = new Date(Date.now() + (PRODUCT_CONFIG.tokenExpirationHours * 60 * 60 * 1000));
+      const expiresAt = new Date(
+        Date.now() + PRODUCT_CONFIG.tokenExpirationHours * 60 * 60 * 1000,
+      );
 
       // Armazena informações do download (em produção: Redis/database)
-      const productData = this._generateProductData(customerData, submissionData);
+      const productData = this._generateProductData(
+        customerData,
+        submissionData,
+      );
       const downloadInfo = {
         token,
         saleId: customerData.id || null,
@@ -47,7 +56,7 @@ class ProductGateway {
         expiresAt,
         downloaded: false,
         downloadCount: 0,
-        maxDownloads: 3 // Limite de downloads por token
+        maxDownloads: 3, // Limite de downloads por token
       };
 
       if (this._shouldUsePersistentStorage()) {
@@ -60,8 +69,8 @@ class ProductGateway {
             customerEmail: downloadInfo.customerEmail,
             productData: JSON.stringify(productData),
             expiresAt,
-            maxDownloads: downloadInfo.maxDownloads
-          }
+            maxDownloads: downloadInfo.maxDownloads,
+          },
         });
       } else {
         this.downloadLinks.set(token, downloadInfo);
@@ -70,18 +79,17 @@ class ProductGateway {
       // Gera URL de download
       const downloadUrl = `${PRODUCT_CONFIG.downloadBaseUrl}/download/${token}`;
 
-      console.log('[ProductGateway] Link gerado:', downloadUrl);
+      console.log("[ProductGateway] Link gerado:", downloadUrl);
 
       return {
         downloadUrl,
         token,
         expiresAt,
-        maxDownloads: downloadInfo.maxDownloads
+        maxDownloads: downloadInfo.maxDownloads,
       };
-
     } catch (error) {
-      console.error('[ProductGateway] Erro ao gerar link:', error);
-      throw new Error('Erro ao preparar download do produto');
+      console.error("[ProductGateway] Erro ao gerar link:", error);
+      throw new Error("Erro ao preparar download do produto");
     }
   }
 
@@ -92,30 +100,32 @@ class ProductGateway {
    */
   async processDownload(token) {
     try {
-      console.log('[ProductGateway] Processando download para token:', token);
+      console.log("[ProductGateway] Processando download para token:", token);
 
       const downloadInfo = this._shouldUsePersistentStorage()
         ? await prisma.downloadToken.findUnique({ where: { token } })
         : this.downloadLinks.get(token);
 
       if (!downloadInfo) {
-        throw new Error('Token de download inválido');
+        throw new Error("Token de download inválido");
       }
 
       // Verifica expiração
       if (new Date() > downloadInfo.expiresAt) {
-        throw new Error('Token de download expirado');
+        throw new Error("Token de download expirado");
       }
 
       // Verifica limite de downloads
       if (downloadInfo.downloadCount >= downloadInfo.maxDownloads) {
-        throw new Error('Limite de downloads excedido');
+        throw new Error("Limite de downloads excedido");
       }
 
       // Incrementa contador
       const nextDownloadCount = downloadInfo.downloadCount + 1;
       const now = new Date();
-      const firstDownloadAt = downloadInfo.downloaded ? downloadInfo.firstDownloadAt : now;
+      const firstDownloadAt = downloadInfo.downloaded
+        ? downloadInfo.firstDownloadAt
+        : now;
 
       // Marca como baixado na primeira vez
       if (this._shouldUsePersistentStorage()) {
@@ -125,8 +135,8 @@ class ProductGateway {
             downloadCount: nextDownloadCount,
             downloaded: true,
             firstDownloadAt,
-            lastDownloadAt: now
-          }
+            lastDownloadAt: now,
+          },
         });
       } else {
         downloadInfo.downloadCount = nextDownloadCount;
@@ -137,22 +147,25 @@ class ProductGateway {
         }
       }
 
-      const parsedProductData = typeof downloadInfo.productData === 'string'
-        ? JSON.parse(downloadInfo.productData)
-        : downloadInfo.productData;
+      const parsedProductData =
+        typeof downloadInfo.productData === "string"
+          ? JSON.parse(downloadInfo.productData)
+          : downloadInfo.productData;
 
-      console.log('[ProductGateway] Download autorizado, count:', nextDownloadCount);
+      console.log(
+        "[ProductGateway] Download autorizado, count:",
+        nextDownloadCount,
+      );
 
       return {
         success: true,
         productData: parsedProductData,
         downloadCount: nextDownloadCount,
         maxDownloads: downloadInfo.maxDownloads,
-        expiresAt: downloadInfo.expiresAt
+        expiresAt: downloadInfo.expiresAt,
       };
-
     } catch (error) {
-      console.error('[ProductGateway] Erro no download:', error);
+      console.error("[ProductGateway] Erro no download:", error);
       throw error;
     }
   }
@@ -169,7 +182,7 @@ class ProductGateway {
         : this.downloadLinks.get(token);
 
       if (!downloadInfo) {
-        return { valid: false, reason: 'Token não encontrado' };
+        return { valid: false, reason: "Token não encontrado" };
       }
 
       const now = new Date();
@@ -184,12 +197,11 @@ class ProductGateway {
         maxDownloads: downloadInfo.maxDownloads,
         expiresAt: downloadInfo.expiresAt,
         downloaded: downloadInfo.downloaded,
-        customerName: downloadInfo.customerName
+        customerName: downloadInfo.customerName,
       };
-
     } catch (error) {
-      console.error('[ProductGateway] Erro ao verificar status:', error);
-      return { valid: false, reason: 'Erro interno' };
+      console.error("[ProductGateway] Erro ao verificar status:", error);
+      return { valid: false, reason: "Erro interno" };
     }
   }
 
@@ -198,7 +210,7 @@ class ProductGateway {
    */
   async cleanupExpiredTokens() {
     try {
-      console.log('[ProductGateway] Limpando tokens expirados...');
+      console.log("[ProductGateway] Limpando tokens expirados...");
 
       const now = new Date();
       let cleaned = 0;
@@ -207,12 +219,14 @@ class ProductGateway {
         const result = await prisma.downloadToken.deleteMany({
           where: {
             expiresAt: {
-              lt: now
-            }
-          }
+              lt: now,
+            },
+          },
         });
 
-        console.log(`[ProductGateway] ${result.count} tokens expirados removidos`);
+        console.log(
+          `[ProductGateway] ${result.count} tokens expirados removidos`,
+        );
         return result.count;
       }
 
@@ -225,16 +239,15 @@ class ProductGateway {
 
       console.log(`[ProductGateway] ${cleaned} tokens expirados removidos`);
       return cleaned;
-
     } catch (error) {
-      console.error('[ProductGateway] Erro na limpeza:', error);
+      console.error("[ProductGateway] Erro na limpeza:", error);
       throw error;
     }
   }
 
   // Gera token seguro único
   _generateSecureToken() {
-    return crypto.randomBytes(32).toString('hex');
+    return crypto.randomBytes(32).toString("hex");
   }
 
   // Gera dados do produto personalizado baseado nos dados do cliente
@@ -245,24 +258,26 @@ class ProductGateway {
     const productData = {
       customerId: customerData.id,
       customerName: customerData.name,
-      productType: 'ExactBag Registration Guide',
+      productType: "ExactBag Registration Guide",
       generatedAt: new Date(),
       tripDetails: submissionData.customerData.tripDetails,
-      bagSpecifications: this._generateBagSpecs(submissionData.customerData.tripDetails),
-      downloadUrl: 'https://example.com/download/product.pdf', // URL real do arquivo
-      fileSize: '2.5MB',
-      format: 'PDF',
+      bagSpecifications: this._generateBagSpecs(
+        submissionData.customerData.tripDetails,
+      ),
+      downloadUrl: "https://example.com/download/product.pdf", // URL real do arquivo
+      fileSize: "2.5MB",
+      format: "PDF",
       instructions: [
-        'Imprima este guia antes da viagem',
-        'Leve-o junto com seus documentos',
-        'Apresente-o na check-in da companhia aérea',
-        'Mantenha-o seguro durante toda a viagem'
+        "Imprima este guia antes da viagem",
+        "Leve-o junto com seus documentos",
+        "Apresente-o na check-in da companhia aérea",
+        "Mantenha-o seguro durante toda a viagem",
       ],
       support: {
-        email: 'support@exactbag.com',
-        phone: '+55 11 99999-9999',
-        website: 'https://exactbag.com/support'
-      }
+        email: "support@exactbag.com",
+        phone: "+55 11 99999-9999",
+        website: "https://exactbag.com/support",
+      },
     };
 
     return productData;
@@ -274,29 +289,32 @@ class ProductGateway {
 
     // Sempre inclui bagagem de mão
     specs.push({
-      type: 'Bagagem de Mão',
-      weight: '10kg',
-      dimensions: '55cm x 40cm x 20cm',
+      type: "Bagagem de Mão",
+      weight: "10kg",
+      dimensions: "55cm x 40cm x 20cm",
       allowed: true,
       tips: [
-        'Liquidos em embalagens de até 100ml',
-        'Computador e itens pessoais',
-        'Documentos importantes'
-      ]
+        "Liquidos em embalagens de até 100ml",
+        "Computador e itens pessoais",
+        "Documentos importantes",
+      ],
     });
 
     // Bagagem despachada se for viagem de volta ou especificado
-    if (tripDetails.roundTrip || tripDetails.bags?.some(b => b.type === 'checked')) {
+    if (
+      tripDetails.roundTrip ||
+      tripDetails.bags?.some((b) => b.type === "checked")
+    ) {
       specs.push({
-        type: 'Bagagem Despachada',
-        weight: '23kg',
-        dimensions: '158cm (soma das 3 dimensões)',
+        type: "Bagagem Despachada",
+        weight: "23kg",
+        dimensions: "158cm (soma das 3 dimensões)",
         allowed: true,
         tips: [
-          'Roupas e itens pesados',
-          'Produtos de higiene',
-          'Itens frágeis bem embalados'
-        ]
+          "Roupas e itens pesados",
+          "Produtos de higiene",
+          "Itens frágeis bem embalados",
+        ],
       });
     }
 
@@ -309,7 +327,7 @@ class ProductGateway {
       token,
       customerName: info.customerName,
       expiresAt: info.expiresAt,
-      downloadCount: info.downloadCount
+      downloadCount: info.downloadCount,
     }));
   }
 }

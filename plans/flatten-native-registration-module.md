@@ -16,23 +16,23 @@ This is a structural refactor. It must not include business-rule changes.
 
 ## Target layout
 
-| Current path | Target path |
-| --- | --- |
-| `modules/nativeRegistration/controllers/nativeRegistrationController.js` | `controllers/nativeRegistrationController.js` |
-| `modules/nativeRegistration/routes/nativeRegistrationRoutes.js` | `routes/nativeRegistrationRoutes.js` |
-| `modules/nativeRegistration/routes/nowIntegrationRoutes.js` | `routes/nowIntegrationRoutes.js` |
+| Current path                                                              | Target path                                    |
+| ------------------------------------------------------------------------- | ---------------------------------------------- |
+| `modules/nativeRegistration/controllers/nativeRegistrationController.js`  | `controllers/nativeRegistrationController.js`  |
+| `modules/nativeRegistration/routes/nativeRegistrationRoutes.js`           | `routes/nativeRegistrationRoutes.js`           |
+| `modules/nativeRegistration/routes/nowIntegrationRoutes.js`               | `routes/nowIntegrationRoutes.js`               |
 | `modules/nativeRegistration/repositories/nativeRegistrationRepository.js` | `repositories/nativeRegistrationRepository.js` |
-| `modules/nativeRegistration/services/nativeRegistrationService.js` | `services/nativeRegistrationService.js` |
-| `modules/nativeRegistration/services/nativeNotificationService.js` | `services/nativeNotificationService.js` |
-| `modules/nativeRegistration/services/dashboardAuthService.js` | `services/dashboardAuthService.js` |
-| `modules/nativeRegistration/services/cpvPdfService.js` | `services/cpvPdfService.js` |
-| `modules/nativeRegistration/validators/nativeRegistrationValidator.js` | `utils/nativeRegistrationValidator.js` |
-| `modules/nativeRegistration/templates/email_cpv.html` | `views/email_cpv.html` |
-| `modules/nativeRegistration/public/dashboard.html` | `views/dashboard/dashboard.html` |
-| `modules/nativeRegistration/public/index.html` | `views/dashboard/index.html` |
-| `modules/nativeRegistration/public/logo-exactbag.png` | `views/dashboard/logo-exactbag.png` |
-| `modules/nativeRegistration/public/icon-eb.png` | `views/dashboard/icon-eb.png` |
-| `modules/nativeRegistration/public/assets/*` | `views/dashboard/assets/*` |
+| `modules/nativeRegistration/services/nativeRegistrationService.js`        | `services/nativeRegistrationService.js`        |
+| `modules/nativeRegistration/services/nativeNotificationService.js`        | `services/nativeNotificationService.js`        |
+| `modules/nativeRegistration/services/dashboardAuthService.js`             | `services/dashboardAuthService.js`             |
+| `modules/nativeRegistration/services/cpvPdfService.js`                    | `services/cpvPdfService.js`                    |
+| `modules/nativeRegistration/validators/nativeRegistrationValidator.js`    | `utils/nativeRegistrationValidator.js`         |
+| `modules/nativeRegistration/templates/email_cpv.html`                     | `views/email_cpv.html`                         |
+| `modules/nativeRegistration/public/dashboard.html`                        | `views/dashboard/dashboard.html`               |
+| `modules/nativeRegistration/public/index.html`                            | `views/dashboard/index.html`                   |
+| `modules/nativeRegistration/public/logo-exactbag.png`                     | `views/dashboard/logo-exactbag.png`            |
+| `modules/nativeRegistration/public/icon-eb.png`                           | `views/dashboard/icon-eb.png`                  |
+| `modules/nativeRegistration/public/assets/*`                              | `views/dashboard/assets/*`                     |
 
 After these moves, `src/modules` must be empty and removed.
 

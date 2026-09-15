@@ -1,7 +1,7 @@
 /**
  * Sales Reports Service - Generate CSV reports for ExactBag managers
  * Generates sales data in CSV format for email distribution
- * 
+ *
  * MINIMAL IMPLEMENTATION:
  * - No external CSV libraries (use string building)
  * - Reuse existing email gateway (SES)
@@ -9,9 +9,9 @@
  * - Support weekly and monthly reports
  */
 
-const config = require('../config');
+const config = require("../config");
 const prisma = config.prisma;
-const emailGateway = require('../gateways/emailGateway');
+const emailGateway = require("../gateways/emailGateway");
 
 const salesReportsService = {
   /**
@@ -31,7 +31,12 @@ const salesReportsService = {
         const results = [];
         let skip = 0;
         while (true) {
-          const chunk = await model.findMany({ ...args, skip, take: PAGE_SIZE, orderBy: { createdAt: 'asc' } });
+          const chunk = await model.findMany({
+            ...args,
+            skip,
+            take: PAGE_SIZE,
+            orderBy: { createdAt: "asc" },
+          });
           if (!chunk.length) break;
           results.push(...chunk);
           if (chunk.length < PAGE_SIZE) break;
@@ -45,14 +50,14 @@ const salesReportsService = {
           where: dateFilter,
           include: {
             partner: {
-              select: { id: true, partnerId: true, name: true, email: true }
-            }
-          }
+              select: { id: true, partnerId: true, name: true, email: true },
+            },
+          },
         }),
         fetchAllPaginated(prisma.submission, {
           where: dateFilter,
-          select: { saleId: true, status: true }
-        })
+          select: { saleId: true, status: true },
+        }),
       ]);
 
       const detailedSubmissions = includePartnerData ? submissions : [];
@@ -65,9 +70,11 @@ const salesReportsService = {
 
       // Header with report info
       csvLines.push(`Relatório de Vendas ExactBag`);
-      csvLines.push(`Período: ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}`);
-      csvLines.push(`Gerado em: ${new Date().toLocaleString('pt-BR')}`);
-      csvLines.push('');
+      csvLines.push(
+        `Período: ${startDate.toLocaleDateString("pt-BR")} a ${endDate.toLocaleDateString("pt-BR")}`,
+      );
+      csvLines.push(`Gerado em: ${new Date().toLocaleString("pt-BR")}`);
+      csvLines.push("");
 
       // Summary section
       csvLines.push(`RESUMO EXECUTIVO`);
@@ -76,12 +83,14 @@ const salesReportsService = {
       csvLines.push(`Taxa de Conversão,${metrics.conversionRate}%`);
       csvLines.push(`Total de Parceiros,${metrics.totalPartners}`);
       csvLines.push(`Cancelamentos,${metrics.totalCancelled}`);
-      csvLines.push('');
+      csvLines.push("");
 
       // Detail section if requested
       if (includePartnerData && sales.length > 0) {
         csvLines.push(`DETALHAMENTO DE VENDAS`);
-        csvLines.push(`Data,Parceiro,ID Parceiro,Nome do Cliente,Email do Cliente,Status,Submissão,Estorno`);
+        csvLines.push(
+          `Data,Parceiro,ID Parceiro,Nome do Cliente,Email do Cliente,Status,Submissão,Estorno`,
+        );
 
         const submissionMapBySaleId = new Map();
         for (const sub of detailedSubmissions) {
@@ -90,43 +99,47 @@ const salesReportsService = {
 
         for (const sale of sales) {
           const submission = submissionMapBySaleId.get(sale.id);
-          const refundLabel = sale.status === 'cancelada'
-            ? `${sale.refundType || '-'}`
-            : '-';
+          const refundLabel =
+            sale.status === "cancelada" ? `${sale.refundType || "-"}` : "-";
           csvLines.push(
-            `"${sale.createdAt.toLocaleDateString('pt-BR')}",` +
-            `"${sale.partner.name}",` +
-            `"${sale.partner.partnerId}",` +
-            `"${sale.customerName}",` +
-            `"${sale.customerEmail}",` +
-            `"${sale.status}",` +
-            `"${submission?.status || 'PENDENTE'}",` +
-            `"${refundLabel}"`
+            `"${sale.createdAt.toLocaleDateString("pt-BR")}",` +
+              `"${sale.partner.name}",` +
+              `"${sale.partner.partnerId}",` +
+              `"${sale.customerName}",` +
+              `"${sale.customerEmail}",` +
+              `"${sale.status}",` +
+              `"${submission?.status || "PENDENTE"}",` +
+              `"${refundLabel}"`,
           );
         }
 
-        csvLines.push('');
+        csvLines.push("");
 
         // Partner summary
         csvLines.push(`RESUMO POR PARCEIRO`);
-        csvLines.push(`Parceiro,ID Parceiro,Total Vendas,Completadas,Taxa Conversão %`);
+        csvLines.push(
+          `Parceiro,ID Parceiro,Total Vendas,Completadas,Taxa Conversão %`,
+        );
 
-        const partnerMetrics = this._calculatePartnerMetrics(sales, detailedSubmissions);
+        const partnerMetrics = this._calculatePartnerMetrics(
+          sales,
+          detailedSubmissions,
+        );
         for (const partner of Object.values(partnerMetrics)) {
           csvLines.push(
             `"${partner.name}",` +
-            `"${partner.partnerId}",` +
-            `${partner.totalSales},` +
-            `${partner.cancelled},` +
-            `${partner.completed},` +
-            `${partner.conversionRate}%`
+              `"${partner.partnerId}",` +
+              `${partner.totalSales},` +
+              `${partner.cancelled},` +
+              `${partner.completed},` +
+              `${partner.conversionRate}%`,
           );
         }
       }
 
-      return csvLines.join('\n');
+      return csvLines.join("\n");
     } catch (error) {
-      console.error('[SalesReports] Error generating report:', error);
+      console.error("[SalesReports] Error generating report:", error);
       throw error;
     }
   },
@@ -138,26 +151,31 @@ const salesReportsService = {
    * @param {string} reportType - 'weekly' or 'monthly'
    * @param {Date} endDate - End date of report period
    */
-  async emailReport(csv, recipients, reportType = 'weekly', endDate = new Date()) {
+  async emailReport(
+    csv,
+    recipients,
+    reportType = "weekly",
+    endDate = new Date(),
+  ) {
     try {
       if (!recipients || recipients.length === 0) {
-        console.warn('[SalesReports] No recipients configured');
+        console.warn("[SalesReports] No recipients configured");
         return false;
       }
 
       // Prepare filename
-      const dateStr = endDate.toISOString().split('T')[0];
+      const dateStr = endDate.toISOString().split("T")[0];
       const fileName = `exactbag-sales-report-${reportType}-${dateStr}.csv`;
 
       // Prepare email content
-      const tipoLabel = reportType === 'weekly' ? 'Semanal' : 'Mensal';
+      const tipoLabel = reportType === "weekly" ? "Semanal" : "Mensal";
       const emailSubject = `📊 Relatório ${tipoLabel} de Vendas — ExactBag — ${dateStr}`;
-      
+
       const emailHtml = `
         <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <h2 style="color:#125ae2;">📊 Relatório ${tipoLabel} de Vendas — ExactBag</h2>
         <p><strong>Tipo:</strong> ${tipoLabel}</p>
-        <p><strong>Período até:</strong> ${endDate.toLocaleDateString('pt-BR')}</p>
+        <p><strong>Período até:</strong> ${endDate.toLocaleDateString("pt-BR")}</p>
         <p>Segue abaixo o relatório detalhado de vendas em formato CSV.</p>
         <p><strong>Próximos passos:</strong></p>
         <ul>
@@ -179,16 +197,18 @@ const salesReportsService = {
           attachments: [
             {
               filename: fileName,
-              content: Buffer.from(csv, 'utf-8')
-            }
-          ]
+              content: Buffer.from(csv, "utf-8"),
+            },
+          ],
         });
       }
 
-      console.log(`[SalesReports] Report emailed to ${recipients.length} recipients`);
+      console.log(
+        `[SalesReports] Report emailed to ${recipients.length} recipients`,
+      );
       return true;
     } catch (error) {
-      console.error('[SalesReports] Error emailing report:', error);
+      console.error("[SalesReports] Error emailing report:", error);
       throw error;
     }
   },
@@ -201,15 +221,20 @@ const salesReportsService = {
     try {
       // Configuração via env vars — habilitado por padrão para gestores ExactBag
       return {
-        enabled: process.env.REPORTS_ENABLED !== 'false', // habilitado por padrão
-        recipients: (process.env.REPORT_RECIPIENTS || 'diego.costa.tech@gmail.com,joao@exactbag.com.br,maufilippo@gmail.com').split(',').filter(e => e.trim()),
-        weeklyDay: process.env.REPORT_WEEKLY_DAY || 'monday', // segunda-feira
-        weeklyTime: process.env.REPORT_WEEKLY_TIME || '09:00', // horário Brasília
-        monthlyDay: process.env.REPORT_MONTHLY_DAY || '1', // dia 1 do mês
-        monthlyTime: process.env.REPORT_MONTHLY_TIME || '09:00'
+        enabled: process.env.REPORTS_ENABLED !== "false", // habilitado por padrão
+        recipients: (
+          process.env.REPORT_RECIPIENTS ||
+          "diego.costa.tech@gmail.com,joao@exactbag.com.br,maufilippo@gmail.com"
+        )
+          .split(",")
+          .filter((e) => e.trim()),
+        weeklyDay: process.env.REPORT_WEEKLY_DAY || "monday", // segunda-feira
+        weeklyTime: process.env.REPORT_WEEKLY_TIME || "09:00", // horário Brasília
+        monthlyDay: process.env.REPORT_MONTHLY_DAY || "1", // dia 1 do mês
+        monthlyTime: process.env.REPORT_MONTHLY_TIME || "09:00",
       };
     } catch (error) {
-      console.error('[SalesReports] Error getting config:', error);
+      console.error("[SalesReports] Error getting config:", error);
       return null;
     }
   },
@@ -221,11 +246,11 @@ const salesReportsService = {
   async updateReportConfig(config) {
     try {
       // For MVP, just log (can add database later)
-      console.log('[SalesReports] Config update requested:', config);
+      console.log("[SalesReports] Config update requested:", config);
       // TODO: Store in database when schema is ready
       return config;
     } catch (error) {
-      console.error('[SalesReports] Error updating config:', error);
+      console.error("[SalesReports] Error updating config:", error);
       throw error;
     }
   },
@@ -234,12 +259,12 @@ const salesReportsService = {
    * Generate and send report immediately (manual trigger)
    * @param {string} reportType - 'weekly' or 'monthly'
    */
-  async generateAndSendReport(reportType = 'weekly') {
+  async generateAndSendReport(reportType = "weekly") {
     try {
       const config = await this.getReportConfig();
 
       if (!config.enabled) {
-        console.log('[SalesReports] Reports disabled');
+        console.log("[SalesReports] Reports disabled");
         return false;
       }
 
@@ -247,9 +272,9 @@ const salesReportsService = {
       const endDate = new Date();
       let startDate = new Date();
 
-      if (reportType === 'weekly') {
+      if (reportType === "weekly") {
         startDate.setDate(startDate.getDate() - 7);
-      } else if (reportType === 'monthly') {
+      } else if (reportType === "monthly") {
         startDate.setMonth(startDate.getMonth() - 1);
       }
 
@@ -257,12 +282,22 @@ const salesReportsService = {
       const csv = await this.generateSalesReport(startDate, endDate, true);
 
       // Send to recipients
-      const sent = await this.emailReport(csv, config.recipients, reportType, endDate);
+      const sent = await this.emailReport(
+        csv,
+        config.recipients,
+        reportType,
+        endDate,
+      );
 
-      console.log(`[SalesReports] ${reportType} report generated and sent: ${sent}`);
+      console.log(
+        `[SalesReports] ${reportType} report generated and sent: ${sent}`,
+      );
       return sent;
     } catch (error) {
-      console.error('[SalesReports] Error generating and sending report:', error);
+      console.error(
+        "[SalesReports] Error generating and sending report:",
+        error,
+      );
       throw error;
     }
   },
@@ -279,7 +314,7 @@ const salesReportsService = {
       const csv = await this.generateSalesReport(startDate, endDate, true);
       return csv;
     } catch (error) {
-      console.error('[SalesReports] Error generating preview:', error);
+      console.error("[SalesReports] Error generating preview:", error);
       throw error;
     }
   },
@@ -287,25 +322,35 @@ const salesReportsService = {
   // ===== PRIVATE HELPERS =====
 
   _calculateMetrics(sales, submissions) {
-    const cancelled = sales.filter(s => s.status === 'cancelada');
-    const refundIntegral = cancelled.filter(s => s.refundType === 'integral').length;
-    const refundParcial = cancelled.filter(s => s.refundType === 'parcial').length;
-    const totalRefunds = cancelled.reduce((sum, s) => sum + (s.refundAmount || 0), 0);
+    const cancelled = sales.filter((s) => s.status === "cancelada");
+    const refundIntegral = cancelled.filter(
+      (s) => s.refundType === "integral",
+    ).length;
+    const refundParcial = cancelled.filter(
+      (s) => s.refundType === "parcial",
+    ).length;
+    const totalRefunds = cancelled.reduce(
+      (sum, s) => sum + (s.refundAmount || 0),
+      0,
+    );
 
     return {
       totalSales: sales.length,
       completedRegistrations: submissions.length,
-      conversionRate: sales.length > 0 ? Math.round((submissions.length / sales.length) * 100) : 0,
-      totalPartners: new Set(sales.map(s => s.partnerId)).size,
+      conversionRate:
+        sales.length > 0
+          ? Math.round((submissions.length / sales.length) * 100)
+          : 0,
+      totalPartners: new Set(sales.map((s) => s.partnerId)).size,
       totalCancelled: cancelled.length,
       refundIntegral,
-      refundParcial
+      refundParcial,
     };
   },
 
   _calculatePartnerMetrics(sales, submissions) {
     const metrics = {};
-    const salesWithSubmission = new Set(submissions.map(s => s.saleId));
+    const salesWithSubmission = new Set(submissions.map((s) => s.saleId));
 
     for (const sale of sales) {
       const pid = sale.partnerId;
@@ -317,13 +362,13 @@ const salesReportsService = {
           totalSales: 0,
           completed: 0,
           cancelled: 0,
-          conversionRate: 0
+          conversionRate: 0,
         };
       }
 
       metrics[pid].totalSales += 1;
 
-      if (sale.status === 'cancelada') {
+      if (sale.status === "cancelada") {
         metrics[pid].cancelled += 1;
       }
 
@@ -332,11 +377,13 @@ const salesReportsService = {
         metrics[pid].completed += 1;
       }
 
-      metrics[pid].conversionRate = Math.round((metrics[pid].completed / metrics[pid].totalSales) * 100);
+      metrics[pid].conversionRate = Math.round(
+        (metrics[pid].completed / metrics[pid].totalSales) * 100,
+      );
     }
 
     return metrics;
-  }
+  },
 };
 
 module.exports = salesReportsService;

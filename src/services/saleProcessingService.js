@@ -1,8 +1,10 @@
 const dbService = require("../services/databaseService");
 const notificationService = require("./notificationService");
 const partnerRepository = require("../repositories/partnerRepository");
-const { buildNativeRegistrationLink } = require('./nativeRegistrationLinkService');
-const { PHYSICAL_TAG_PRODUCT_CODES } = require('../config/insuranceProducts');
+const {
+  buildNativeRegistrationLink,
+} = require("./nativeRegistrationLinkService");
+const { PHYSICAL_TAG_PRODUCT_CODES } = require("../config/insuranceProducts");
 
 const REGISTRATION_WINDOW_MS = 48 * 60 * 60 * 1000;
 
@@ -29,13 +31,20 @@ const processPartnerSale = async (salePayload) => {
     productCode,
     isManualSale: manualSaleFlag,
   } = salePayload;
-  const isPhysicalTag = PHYSICAL_TAG_PRODUCT_CODES.includes(String(productCode || ''));
+  const isPhysicalTag = PHYSICAL_TAG_PRODUCT_CODES.includes(
+    String(productCode || ""),
+  );
 
   // Agenda may retry after a process restart. Resume the persisted sale instead
   // of creating a second record for the same partner business identifier.
-  let customerRecord = await dbService.findSaleByPartnerAndExternalSaleId(partnerId, saleId);
-  if (customerRecord?.status === 'processed') {
-    console.log(`[SaleProcessing] Venda já processada; ignorando job duplicado partner=${partnerId} saleId=${saleId}`);
+  let customerRecord = await dbService.findSaleByPartnerAndExternalSaleId(
+    partnerId,
+    saleId,
+  );
+  if (customerRecord?.status === "processed") {
+    console.log(
+      `[SaleProcessing] Venda já processada; ignorando job duplicado partner=${partnerId} saleId=${saleId}`,
+    );
     return { customerRecord, formLink: customerRecord.formLink };
   }
   if (!customerRecord) {
@@ -54,13 +63,17 @@ const processPartnerSale = async (salePayload) => {
       isManualSale: manualSaleFlag === true,
     });
   } else {
-    console.log(`[SaleProcessing] Retomando venda incompleta partner=${partnerId} saleId=${saleId}`);
+    console.log(
+      `[SaleProcessing] Retomando venda incompleta partner=${partnerId} saleId=${saleId}`,
+    );
   }
 
   // Every sale now enters the native baggage-registration flow directly.
   const formLink = buildNativeRegistrationLink(saleId);
 
-  const isManualSale = manualSaleFlag === true || String(saleId).toUpperCase().startsWith("MANUAL-");
+  const isManualSale =
+    manualSaleFlag === true ||
+    String(saleId).toUpperCase().startsWith("MANUAL-");
 
   // Persiste o link antes de chamar gateways de comunicação. Assim, uma falha
   // de e-mail/WhatsApp não deixa a venda manual com formLink nulo.
@@ -84,35 +97,51 @@ const processPartnerSale = async (salePayload) => {
       passengerPhone: customerPhone,
     };
     const notificationSale = {
-      saleId, partnerId, roundTrip, baggageQty, hasInsurance, outboundDate, returnDate,
+      saleId,
+      partnerId,
+      roundTrip,
+      baggageQty,
+      hasInsurance,
+      outboundDate,
+      returnDate,
       productCode,
-      reservationType: isPhysicalTag ? 'physical-tag' : 'digital-assistance'
+      reservationType: isPhysicalTag ? "physical-tag" : "digital-assistance",
     };
 
-    const deferRegistration = !isPhysicalTag && !isWithinRegistrationWindow(outboundDate);
+    const deferRegistration =
+      !isPhysicalTag && !isWithinRegistrationWindow(outboundDate);
 
     if (deferRegistration) {
       // For trips more than 48 hours away, send only the confirmation now.
       // The registration/link notification is sent by the 48-hour scheduler.
-      await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
+      await notificationService.sendPurchaseConfirmationNotification(
+        passengerData,
+        notificationSale,
+      );
     } else if (isPhysicalTag) {
       // Physical-tag products use the confirmation email with airport/store
       // instructions and do not enter the digital registration flow.
-      await notificationService.sendPurchaseConfirmationNotification(passengerData, notificationSale);
+      await notificationService.sendPurchaseConfirmationNotification(
+        passengerData,
+        notificationSale,
+      );
     } else {
       // For trips within the 48-hour window, send the registration now and
       // skip the confirmation so the passenger receives only the actionable
       // message.
-      const registrationNotification = await notificationService.sendPurchaseNotification(
-        passengerData,
-        notificationSale,
-        formLink,
-      );
+      const registrationNotification =
+        await notificationService.sendPurchaseNotification(
+          passengerData,
+          notificationSale,
+          formLink,
+        );
 
       // Prevent the 48-hour scheduler from sending a duplicate for sales
       // created inside the registration window.
       if (registrationNotification.success) {
-        await dbService.updateSale(customerRecord.id, { vesperaSentAt: new Date() });
+        await dbService.updateSale(customerRecord.id, {
+          vesperaSentAt: new Date(),
+        });
       }
     }
   }

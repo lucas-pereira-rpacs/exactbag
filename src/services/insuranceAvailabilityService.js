@@ -10,8 +10,8 @@
  * nome, descrição, imagem, valor neto, valor de venda, coberturas e políticas.
  */
 
-const crypto = require('crypto');
-const { EXACTBAG_PROVIDER, PRODUCTS } = require('../config/insuranceProducts');
+const crypto = require("crypto");
+const { EXACTBAG_PROVIDER, PRODUCTS } = require("../config/insuranceProducts");
 
 /**
  * Normaliza uma data para o formato ISO com offset de São Paulo (-03:00).
@@ -19,12 +19,15 @@ const { EXACTBAG_PROVIDER, PRODUCTS } = require('../config/insuranceProducts');
  */
 function toIsoSaoPaulo(dateInput) {
   if (!dateInput) return null;
-  const d = typeof dateInput === 'string' ? new Date(`${dateInput}T00:00:00-03:00`) : dateInput;
+  const d =
+    typeof dateInput === "string"
+      ? new Date(`${dateInput}T00:00:00-03:00`)
+      : dateInput;
   if (Number.isNaN(d.getTime())) return null;
   // Mantém data à meia-noite no fuso -03:00
   const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}T00:00:00-03:00`;
 }
 
@@ -33,7 +36,7 @@ function toIsoSaoPaulo(dateInput) {
  * `keyDetail` para o parceiro referenciar o item na reserva.
  */
 function buildKeyDetail(code, paxCount) {
-  return Buffer.from(`${code}#${paxCount}`).toString('base64');
+  return Buffer.from(`${code}#${paxCount}`).toString("base64");
 }
 
 /**
@@ -41,7 +44,12 @@ function buildKeyDetail(code, paxCount) {
  * retornado pela Infotravel.
  */
 function buildSessionKey() {
-  return crypto.randomBytes(10).toString('base64').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 19);
+  return crypto
+    .randomBytes(10)
+    .toString("base64")
+    .replace(/[^A-Z0-9]/gi, "")
+    .toUpperCase()
+    .slice(0, 19);
 }
 
 /**
@@ -55,15 +63,17 @@ function buildNames(occupancy) {
       const age = parseInt(raw, 10);
       names.push({
         age: Number.isFinite(age) ? age : 30,
-        type: Number.isFinite(age) && age < 18 ? 'CHD' : 'ADT',
-        gender: 'UNDEFINED',
-        isMain: false
+        type: Number.isFinite(age) && age < 18 ? "CHD" : "ADT",
+        gender: "UNDEFINED",
+        isMain: false,
       });
     }
   } else {
-    const count = Number.isFinite(parseInt(occupancy, 10)) ? parseInt(occupancy, 10) : 1;
+    const count = Number.isFinite(parseInt(occupancy, 10))
+      ? parseInt(occupancy, 10)
+      : 1;
     for (let i = 0; i < Math.max(1, count); i += 1) {
-      names.push({ age: 30, type: 'ADT', gender: 'UNDEFINED', isMain: false });
+      names.push({ age: 30, type: "ADT", gender: "UNDEFINED", isMain: false });
     }
   }
   return names;
@@ -78,7 +88,7 @@ function buildAvailItem(product, params, names, sessionKey) {
   const endDate = toIsoSaoPaulo(params.end);
 
   const insurance = {
-    provider: 'ExactBag',
+    provider: "ExactBag",
     key: sessionKey,
     code: product.code,
     name: product.name,
@@ -91,24 +101,28 @@ function buildAvailItem(product, params, names, sessionKey) {
     providerDetail: { ...EXACTBAG_PROVIDER },
     coverages: product.coverages || [],
     usagePolicy: product.usagePolicy || [],
-    keyDetail: buildKeyDetail(product.code, paxCount)
+    keyDetail: buildKeyDetail(product.code, paxCount),
   };
 
   const fares = [
     {
-      type: 'FARE',
-      price: { currency: product.currency, amount: product.salePrice, exchange: 1.0 },
+      type: "FARE",
+      price: {
+        currency: product.currency,
+        amount: product.salePrice,
+        exchange: 1.0,
+      },
       priceSale: { currency: product.currency, amount: product.salePrice },
       priceNet: { currency: product.currency, amount: product.netPrice },
-      discount: false
-    }
+      discount: false,
+    },
   ];
 
   return {
     insurance,
     fares,
     names,
-    cancellationPolicies: product.cancellationPolicy
+    cancellationPolicies: product.cancellationPolicy,
   };
 }
 
@@ -133,7 +147,7 @@ function getInsuranceAvailability(params = {}) {
   }
 
   const insuranceAvail = products.map((product) =>
-    buildAvailItem(product, params, names, sessionKey)
+    buildAvailItem(product, params, names, sessionKey),
   );
 
   return { insuranceAvail };
@@ -142,5 +156,5 @@ function getInsuranceAvailability(params = {}) {
 module.exports = {
   getInsuranceAvailability,
   // exportado para testes
-  _internal: { buildNames, toIsoSaoPaulo, buildKeyDetail }
+  _internal: { buildNames, toIsoSaoPaulo, buildKeyDetail },
 };

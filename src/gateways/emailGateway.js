@@ -1,19 +1,19 @@
 // Gateway para Email - Resend
 // O parceiro nunca sabe qual provedor de email usamos
 
-const { Resend } = require('resend');
-const fs = require('fs');
-const path = require('path');
-const { supportPhone, supportPhoneRaw } = require('../config');
+const { Resend } = require("resend");
+const fs = require("fs");
+const path = require("path");
+const { supportPhone, supportPhoneRaw } = require("../config");
 
 // Escape HTML special characters to prevent template injection
 function escHtml(str) {
-  if (!str) return '';
+  if (!str) return "";
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 // Substitui placeholders de telefone de suporte nos templates HTML
@@ -26,9 +26,9 @@ function replacePhonePlaceholders(html) {
 
 // Configurações
 const EMAIL_CONFIG = {
-  apiKey: process.env.EMAIL_API_KEY || '',
-  fromEmail: process.env.EMAIL_FROM || 'noreply@exactbag.com.br',
-  fromName: process.env.EMAIL_FROM_NAME || 'ExactBag'
+  apiKey: process.env.EMAIL_API_KEY || "",
+  fromEmail: process.env.EMAIL_FROM || "noreply@exactbag.com.br",
+  fromName: process.env.EMAIL_FROM_NAME || "ExactBag",
 };
 
 // Carrega templates HTML do disco (fallback para texto simples)
@@ -38,15 +38,39 @@ let TEMPLATE_CONFIRMATION_TAG_FISICA_HTML = null;
 let TEMPLATE_VESPERA_HTML = null;
 let TEMPLATE_VOLTA_HTML = null;
 try {
-  const rootDir = path.resolve(__dirname, '..', '..');
-  TEMPLATE_COMPRA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_compra.html'), 'utf-8'));
-  TEMPLATE_CONFIRMATION_COMPRA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_confirmacao_compra.html'), 'utf-8'));
-  TEMPLATE_CONFIRMATION_TAG_FISICA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_confirmacao_tag_fisica.html'), 'utf-8'));
-  TEMPLATE_VESPERA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_vespera_voo.html'), 'utf-8'));
-  TEMPLATE_VOLTA_HTML = replacePhonePlaceholders(fs.readFileSync(path.join(rootDir, 'email_template_volta.html'), 'utf-8'));
-  console.log('[EmailGateway] Templates HTML de compra, véspera e volta carregados com sucesso');
+  const rootDir = path.resolve(__dirname, "..", "..");
+  TEMPLATE_COMPRA_HTML = replacePhonePlaceholders(
+    fs.readFileSync(path.join(rootDir, "email_template_compra.html"), "utf-8"),
+  );
+  TEMPLATE_CONFIRMATION_COMPRA_HTML = replacePhonePlaceholders(
+    fs.readFileSync(
+      path.join(rootDir, "email_template_confirmacao_compra.html"),
+      "utf-8",
+    ),
+  );
+  TEMPLATE_CONFIRMATION_TAG_FISICA_HTML = replacePhonePlaceholders(
+    fs.readFileSync(
+      path.join(rootDir, "email_template_confirmacao_tag_fisica.html"),
+      "utf-8",
+    ),
+  );
+  TEMPLATE_VESPERA_HTML = replacePhonePlaceholders(
+    fs.readFileSync(
+      path.join(rootDir, "email_template_vespera_voo.html"),
+      "utf-8",
+    ),
+  );
+  TEMPLATE_VOLTA_HTML = replacePhonePlaceholders(
+    fs.readFileSync(path.join(rootDir, "email_template_volta.html"), "utf-8"),
+  );
+  console.log(
+    "[EmailGateway] Templates HTML de compra, véspera e volta carregados com sucesso",
+  );
 } catch (err) {
-  console.warn('[EmailGateway] Templates HTML não encontrados, usando fallback texto:', err.message);
+  console.warn(
+    "[EmailGateway] Templates HTML não encontrados, usando fallback texto:",
+    err.message,
+  );
 }
 
 class EmailGateway {
@@ -56,7 +80,9 @@ class EmailGateway {
 
   _initializeClient() {
     if (!EMAIL_CONFIG.apiKey) {
-      console.warn('[EmailGateway] EMAIL_API_KEY não configurada — emails desabilitados');
+      console.warn(
+        "[EmailGateway] EMAIL_API_KEY não configurada — emails desabilitados",
+      );
       return null;
     }
     return new Resend(EMAIL_CONFIG.apiKey);
@@ -70,23 +96,25 @@ class EmailGateway {
    */
   async sendWelcomeEmail(customerData, formLink) {
     try {
-      console.log('[EmailGateway] Enviando email para:', customerData.email);
+      console.log("[EmailGateway] Enviando email para:", customerData.email);
 
       const emailData = {
         to: customerData.email,
-        subject: 'Seu acesso ao ExactBag chegou!',
+        subject: "Seu acesso ao ExactBag chegou!",
         html: this._generateWelcomeEmailHTML(customerData, formLink),
-        text: this._generateWelcomeEmailText(customerData, formLink)
+        text: this._generateWelcomeEmailText(customerData, formLink),
       };
 
       await this._sendEmail(emailData);
 
-      console.log('[EmailGateway] Email enviado com sucesso para:', customerData.email);
+      console.log(
+        "[EmailGateway] Email enviado com sucesso para:",
+        customerData.email,
+      );
       return true;
-
     } catch (error) {
-      console.error('[EmailGateway] Erro ao enviar email:', error);
-      throw new Error('Erro ao enviar email de boas-vindas');
+      console.error("[EmailGateway] Erro ao enviar email:", error);
+      throw new Error("Erro ao enviar email de boas-vindas");
     }
   }
 
@@ -95,41 +123,43 @@ class EmailGateway {
 
     let html = textBody;
     if (TEMPLATE_COMPRA_HTML) {
-      html = TEMPLATE_COMPRA_HTML
-        .replace(/\{\{nome\}\}/g, escHtml(customerData.name) || 'Cliente')
-        .replace(/\{\{link_registro\}\}/g, encodeURI(registrationLink || '#'));
+      html = TEMPLATE_COMPRA_HTML.replace(
+        /\{\{nome\}\}/g,
+        escHtml(customerData.name) || "Cliente",
+      ).replace(/\{\{link_registro\}\}/g, encodeURI(registrationLink || "#"));
     }
 
     return this._sendEmail({
       to: customerData.email,
-      subject: 'Seu serviço ExactBag foi contratado! ✈️',
+      subject: "Seu serviço ExactBag foi contratado! ✈️",
       html,
-      text: textBody
+      text: textBody,
     });
   }
 
   async sendPurchaseConfirmationTemplateEmail(customerData, saleData = {}) {
     const formatDate = (value) => {
-      if (!value) return '';
+      if (!value) return "";
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return String(value);
-      return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+      return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
     };
     const outboundDate = formatDate(saleData.outboundDate);
     const returnDate = formatDate(saleData.returnDate);
-    const tripType = saleData.roundTrip ? 'Ida e volta' : 'Ida';
-    const isPhysicalTag = saleData.reservationType === 'physical-tag';
-    const deliveryText = saleData.reservationType === 'physical-tag'
-      ? 'O comprovante será enviado assim que faltarem 48 horas para a sua viagem. Basta apresentá-lo na loja da Protec Bag no aeroporto.'
-      : 'O link de ativação do serviço será enviado assim que faltarem 48 horas para a sua viagem. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.';
-    const textBody = `Olá, ${customerData.name}!\n\nSua compra e reserva do ExactBag foram confirmadas com sucesso.\n\nDetalhes da reserva:\n- Tipo de viagem: ${tripType}${outboundDate ? `\n- Data da ida: ${outboundDate}` : ''}${returnDate ? `\n- Data da volta: ${returnDate}` : ''}\n\n${deliveryText}\n\nPor enquanto, não é necessário fazer o registro. Aguarde nossa próxima mensagem e mantenha seus dados de contato atualizados.\n\nDúvidas? Estamos disponíveis 24h.\n${supportPhone}\ncontato@exactbag.com.br\n\nBoa viagem!\nEquipe ExactBag`;
+    const tripType = saleData.roundTrip ? "Ida e volta" : "Ida";
+    const isPhysicalTag = saleData.reservationType === "physical-tag";
+    const deliveryText =
+      saleData.reservationType === "physical-tag"
+        ? "O comprovante será enviado assim que faltarem 48 horas para a sua viagem. Basta apresentá-lo na loja da Protec Bag no aeroporto."
+        : "O link de ativação do serviço será enviado assim que faltarem 48 horas para a sua viagem. Você receberá as orientações e o link para registrar sua bagagem antes do embarque.";
+    const textBody = `Olá, ${customerData.name}!\n\nSua compra e reserva do ExactBag foram confirmadas com sucesso.\n\nDetalhes da reserva:\n- Tipo de viagem: ${tripType}${outboundDate ? `\n- Data da ida: ${outboundDate}` : ""}${returnDate ? `\n- Data da volta: ${returnDate}` : ""}\n\n${deliveryText}\n\nPor enquanto, não é necessário fazer o registro. Aguarde nossa próxima mensagem e mantenha seus dados de contato atualizados.\n\nDúvidas? Estamos disponíveis 24h.\n${supportPhone}\ncontato@exactbag.com.br\n\nBoa viagem!\nEquipe ExactBag`;
     let html = textBody;
     const confirmationTemplate = isPhysicalTag
       ? TEMPLATE_CONFIRMATION_TAG_FISICA_HTML
       : TEMPLATE_CONFIRMATION_COMPRA_HTML;
     if (confirmationTemplate) {
       html = confirmationTemplate
-        .replace(/\{\{nome\}\}/g, escHtml(customerData.name) || 'Cliente')
+        .replace(/\{\{nome\}\}/g, escHtml(customerData.name) || "Cliente")
         .replace(/\{\{tipo_viagem\}\}/g, escHtml(tripType))
         .replace(/\{\{data_ida\}\}/g, escHtml(outboundDate))
         .replace(/\{\{data_volta\}\}/g, escHtml(returnDate))
@@ -138,10 +168,10 @@ class EmailGateway {
     return this._sendEmail({
       to: customerData.email,
       subject: isPhysicalTag
-        ? 'Compra e reserva da sua TAG ExactBag confirmadas'
-        : 'Compra e reserva ExactBag confirmadas',
+        ? "Compra e reserva da sua TAG ExactBag confirmadas"
+        : "Compra e reserva ExactBag confirmadas",
       html,
-      text: textBody
+      text: textBody,
     });
   }
 
@@ -150,16 +180,17 @@ class EmailGateway {
 
     let html = textBody;
     if (TEMPLATE_VESPERA_HTML) {
-      html = TEMPLATE_VESPERA_HTML
-        .replace(/\{\{nome\}\}/g, escHtml(customerData.name) || 'Cliente')
-        .replace(/\{\{link_registro\}\}/g, encodeURI(registrationLink || '#'));
+      html = TEMPLATE_VESPERA_HTML.replace(
+        /\{\{nome\}\}/g,
+        escHtml(customerData.name) || "Cliente",
+      ).replace(/\{\{link_registro\}\}/g, encodeURI(registrationLink || "#"));
     }
 
     return this._sendEmail({
       to: customerData.email,
-      subject: 'Sua viagem é amanhã — não esqueça de registrar sua bagagem! ✈️',
+      subject: "Sua viagem é amanhã — não esqueça de registrar sua bagagem! ✈️",
       html,
-      text: textBody
+      text: textBody,
     });
   }
 
@@ -168,16 +199,17 @@ class EmailGateway {
 
     let html = textBody;
     if (TEMPLATE_VOLTA_HTML) {
-      html = TEMPLATE_VOLTA_HTML
-        .replace(/\{\{nome\}\}/g, escHtml(customerData.name) || 'Cliente')
-        .replace(/\{\{link_registro\}\}/g, encodeURI(registrationLink || '#'));
+      html = TEMPLATE_VOLTA_HTML.replace(
+        /\{\{nome\}\}/g,
+        escHtml(customerData.name) || "Cliente",
+      ).replace(/\{\{link_registro\}\}/g, encodeURI(registrationLink || "#"));
     }
 
     return this._sendEmail({
       to: customerData.email,
-      subject: 'Sua volta é amanhã — registre sua bagagem para o retorno! ✈️',
+      subject: "Sua volta é amanhã — registre sua bagagem para o retorno! ✈️",
       html,
-      text: textBody
+      text: textBody,
     });
   }
 
@@ -189,23 +221,28 @@ class EmailGateway {
    */
   async sendConfirmationEmail(customerData, submissionData) {
     try {
-      console.log('[EmailGateway] Enviando email de confirmação para:', customerData.email);
+      console.log(
+        "[EmailGateway] Enviando email de confirmação para:",
+        customerData.email,
+      );
 
       const emailData = {
         to: customerData.email,
-        subject: 'Bagagem registrada com sucesso - ExactBag',
+        subject: "Bagagem registrada com sucesso - ExactBag",
         html: this._generateConfirmationEmailHTML(customerData, submissionData),
-        text: this._generateConfirmationEmailText(customerData, submissionData)
+        text: this._generateConfirmationEmailText(customerData, submissionData),
       };
 
       await this._sendEmail(emailData);
 
-      console.log('[EmailGateway] Email de confirmação enviado');
+      console.log("[EmailGateway] Email de confirmação enviado");
       return true;
-
     } catch (error) {
-      console.error('[EmailGateway] Erro ao enviar email de confirmação:', error);
-      throw new Error('Erro ao enviar email de confirmação');
+      console.error(
+        "[EmailGateway] Erro ao enviar email de confirmação:",
+        error,
+      );
+      throw new Error("Erro ao enviar email de confirmação");
     }
   }
 
@@ -217,23 +254,25 @@ class EmailGateway {
    */
   async sendProductEmail(customerData, downloadLink) {
     try {
-      console.log('[EmailGateway] Enviando email com produto para:', customerData.email);
+      console.log(
+        "[EmailGateway] Enviando email com produto para:",
+        customerData.email,
+      );
 
       const emailData = {
         to: customerData.email,
-        subject: 'Seu produto ExactBag está pronto!',
+        subject: "Seu produto ExactBag está pronto!",
         html: this._generateProductEmailHTML(customerData, downloadLink),
-        text: this._generateProductEmailText(customerData, downloadLink)
+        text: this._generateProductEmailText(customerData, downloadLink),
       };
 
       await this._sendEmail(emailData);
 
-      console.log('[EmailGateway] Email com produto enviado');
+      console.log("[EmailGateway] Email com produto enviado");
       return true;
-
     } catch (error) {
-      console.error('[EmailGateway] Erro ao enviar email com produto:', error);
-      throw new Error('Erro ao enviar produto digital');
+      console.error("[EmailGateway] Erro ao enviar email com produto:", error);
+      throw new Error("Erro ao enviar produto digital");
     }
   }
 
@@ -247,11 +286,11 @@ class EmailGateway {
    * @param {object} order - { name, email, product, quantity, orderNumber, hasInsurance, notes }
    */
   async sendPhysicalTagReceiptEmail(order) {
-    const ins = order.hasInsurance ? 'Com seguro' : 'Sem seguro';
+    const ins = order.hasInsurance ? "Com seguro" : "Sem seguro";
     const outboundDate = order.outboundDate
-      ? order.outboundDate.split('-').reverse().join('/')
-      : '';
-    const text = `Olá, ${order.name}! Seu pedido #${order.orderNumber} foi confirmado.\n\nProduto: ${order.product}\nQuantidade: ${order.quantity}x\nSeguro: ${ins}${outboundDate ? `\nData de ida: ${outboundDate}` : ''}\n\nApresente este e-mail ao retirar sua tag. Informe o número do pedido #${order.orderNumber} ao atendente.\n\nExactBag — contato@exactbag.com.br`;
+      ? order.outboundDate.split("-").reverse().join("/")
+      : "";
+    const text = `Olá, ${order.name}! Seu pedido #${order.orderNumber} foi confirmado.\n\nProduto: ${order.product}\nQuantidade: ${order.quantity}x\nSeguro: ${ins}${outboundDate ? `\nData de ida: ${outboundDate}` : ""}\n\nApresente este e-mail ao retirar sua tag. Informe o número do pedido #${order.orderNumber} ao atendente.\n\nExactBag — contato@exactbag.com.br`;
 
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
       *{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f6f6;margin:0;padding:0}
@@ -292,7 +331,7 @@ class EmailGateway {
             <td><strong>${escHtml(order.product)}</strong></td>
             <td>${order.quantity}x</td>
             <td>${escHtml(ins)}</td>
-            <td>${escHtml(outboundDate || '—')}</td>
+            <td>${escHtml(outboundDate || "—")}</td>
           </tr></tbody>
         </table>
         <h2>Cliente</h2>
@@ -307,7 +346,7 @@ class EmailGateway {
           Informe o número do pedido <strong>#${order.orderNumber}</strong> e seu nome ao atendente.
         </div>
       </div>
-      <div class="ftr"><strong>ExactBag</strong> — Proteção para sua bagagem<br>📱 ${replacePhonePlaceholders('{{support_phone}}')} &nbsp;|&nbsp; 📧 contato@exactbag.com.br</div>
+      <div class="ftr"><strong>ExactBag</strong> — Proteção para sua bagagem<br>📱 ${replacePhonePlaceholders("{{support_phone}}")} &nbsp;|&nbsp; 📧 contato@exactbag.com.br</div>
     </div>
     </body></html>`;
 
@@ -315,14 +354,16 @@ class EmailGateway {
       to: order.email,
       subject: `Pedido #${order.orderNumber} confirmado — ${order.product}`,
       html,
-      text
+      text,
     });
   }
 
   // Método interno para envio via Resend
   async _sendEmail(emailData) {
     if (!this.client) {
-      console.warn('[EmailGateway] Email não enviado — client não inicializado (EMAIL_API_KEY ausente)');
+      console.warn(
+        "[EmailGateway] Email não enviado — client não inicializado (EMAIL_API_KEY ausente)",
+      );
       return false;
     }
 
@@ -331,15 +372,15 @@ class EmailGateway {
       to: emailData.to,
       subject: emailData.subject,
       html: emailData.html,
-      text: emailData.text
+      text: emailData.text,
     };
 
     if (emailData.attachments) {
       messageData.attachments = emailData.attachments;
     }
 
-    if (process.env.NODE_ENV === 'test') {
-      await new Promise(resolve => setTimeout(resolve, 300));
+    if (process.env.NODE_ENV === "test") {
+      await new Promise((resolve) => setTimeout(resolve, 300));
       return true;
     }
 
@@ -347,7 +388,7 @@ class EmailGateway {
       const result = await this.client.emails.send(messageData);
       return !!result.data?.id;
     } catch (error) {
-      console.error('[EmailGateway] Erro ao enviar via Resend:', error.message);
+      console.error("[EmailGateway] Erro ao enviar via Resend:", error.message);
       throw error;
     }
   }
@@ -389,7 +430,7 @@ Equipe ExactBag
 
   _generateConfirmationEmailHTML(customerData, submissionData) {
     const trip = submissionData?.customerData?.tripDetails || {};
-    const tripType = trip.roundTrip ? 'Ida e Volta' : 'Ida';
+    const tripType = trip.roundTrip ? "Ida e Volta" : "Ida";
     const outDate = trip.outboundDate || null;
     const retDate = trip.returnDate || null;
 
@@ -400,8 +441,8 @@ Equipe ExactBag
         <p>Confirmamos o registro da sua bagagem:</p>
         <ul>
           <li><strong>Viagem:</strong> ${tripType}</li>
-          ${outDate ? `<li><strong>Data de Ida:</strong> ${outDate}</li>` : ''}
-          ${retDate ? `<li><strong>Data de Volta:</strong> ${retDate}</li>` : ''}
+          ${outDate ? `<li><strong>Data de Ida:</strong> ${outDate}</li>` : ""}
+          ${retDate ? `<li><strong>Data de Volta:</strong> ${retDate}</li>` : ""}
         </ul>
         <p>Em breve você receberá o link para download do seu produto digital.</p>
         <p>Atenciosamente,<br>Equipe ExactBag</p>
@@ -411,7 +452,7 @@ Equipe ExactBag
 
   _generateConfirmationEmailText(customerData, submissionData) {
     const trip = submissionData?.customerData?.tripDetails || {};
-    const tripType = trip.roundTrip ? 'Ida e Volta' : 'Ida';
+    const tripType = trip.roundTrip ? "Ida e Volta" : "Ida";
     const outDate = trip.outboundDate || null;
     const retDate = trip.returnDate || null;
 
@@ -420,8 +461,8 @@ Olá ${customerData.name},
 
 Confirmamos o registro da sua bagagem:
 - Viagem: ${tripType}
-${outDate ? `- Data de Ida: ${outDate}` : ''}
-${retDate ? `- Data de Volta: ${retDate}` : ''}
+${outDate ? `- Data de Ida: ${outDate}` : ""}
+${retDate ? `- Data de Volta: ${retDate}` : ""}
 
 Em breve você receberá o link para download do seu produto digital.
 

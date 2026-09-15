@@ -2,14 +2,14 @@
 // Aceita dados do formulário do dashboard e os injeta no funil de automação
 // existente, sem adicionar nenhuma lógica de notificação ou geração de links.
 
-const crypto = require('crypto');
-const { enqueueUniqueJob } = require('../jobs/agendaJobService');
-const { validateAndSanitizePartnerSale } = require('../utils/validation');
-const partnerRepository = require('../repositories/partnerRepository');
+const crypto = require("crypto");
+const { enqueueUniqueJob } = require("../jobs/agendaJobService");
+const { validateAndSanitizePartnerSale } = require("../utils/validation");
+const partnerRepository = require("../repositories/partnerRepository");
 
 const SALE_EXPIRATION_MS = {
-  '31d': 31 * 24 * 60 * 60 * 1000,
-  '3m': 3 * 60 * 1000,
+  "31d": 31 * 24 * 60 * 60 * 1000,
+  "3m": 3 * 60 * 1000,
 };
 
 /**
@@ -19,7 +19,7 @@ const SALE_EXPIRATION_MS = {
  */
 function generateManualSaleId() {
   const ts = Date.now().toString(16).toUpperCase();
-  const rand = crypto.randomBytes(3).toString('hex').toUpperCase();
+  const rand = crypto.randomBytes(3).toString("hex").toUpperCase();
   return `MANUAL-${ts}-${rand}`;
 }
 
@@ -37,12 +37,12 @@ exports.handleDashboardManualSale = async (req, res) => {
   try {
     const body = req.body;
     // Para entradas via dashboard interno, o parceiro é informado no formulário
-    const partnerId = (body.partnerId || '').trim();
+    const partnerId = (body.partnerId || "").trim();
 
     if (!partnerId) {
       return res.status(400).json({
         success: false,
-        error: 'partnerId é obrigatório.',
+        error: "partnerId é obrigatório.",
       });
     }
 
@@ -59,25 +59,25 @@ exports.handleDashboardManualSale = async (req, res) => {
     // Normaliza booleans que podem chegar como string do form-urlencoded
     const roundTrip =
       body.roundTrip === true ||
-      body.roundTrip === 'true' ||
-      body.roundTrip === '1';
+      body.roundTrip === "true" ||
+      body.roundTrip === "1";
 
     const hasInsurance =
       body.hasInsurance === true ||
-      body.hasInsurance === 'true' ||
-      body.hasInsurance === '1';
+      body.hasInsurance === "true" ||
+      body.hasInsurance === "1";
 
     const baggageQty =
-      body.baggageQty !== undefined && body.baggageQty !== ''
+      body.baggageQty !== undefined && body.baggageQty !== ""
         ? Number(body.baggageQty)
         : 1;
 
-    const saleExpiration = body.saleExpiration || '31d';
+    const saleExpiration = body.saleExpiration || "31d";
     const expirationDurationMs = SALE_EXPIRATION_MS[saleExpiration];
     if (!expirationDurationMs) {
       return res.status(400).json({
         success: false,
-        error: 'Expiração da venda inválida.',
+        error: "Expiração da venda inválida.",
       });
     }
     const expirationDate = new Date(Date.now() + expirationDurationMs);
@@ -91,7 +91,7 @@ exports.handleDashboardManualSale = async (req, res) => {
       baggageQty,
       hasInsurance,
       outboundDate: body.outboundDate || null,
-      returnDate: roundTrip ? (body.returnDate || null) : null,
+      returnDate: roundTrip ? body.returnDate || null : null,
       notes: body.notes || null,
     };
 
@@ -101,7 +101,7 @@ exports.handleDashboardManualSale = async (req, res) => {
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
-        error: 'Dados inválidos. Verifique os campos e tente novamente.',
+        error: "Dados inválidos. Verifique os campos e tente novamente.",
         details: validation.errors,
       });
     }
@@ -111,7 +111,7 @@ exports.handleDashboardManualSale = async (req, res) => {
 
     // Enfileira o job com os mesmos parâmetros da rota /webhooks/sales
     const job = await enqueueUniqueJob({
-      name: 'processPartnerSale',
+      name: "processPartnerSale",
       data: {
         ...validation.data,
         saleId,
@@ -126,20 +126,20 @@ exports.handleDashboardManualSale = async (req, res) => {
     const jobId = String(job.attrs._id);
 
     console.info(
-      `[ManualSale] Venda manual enfileirada — operator=${req.dashboardUser?.email} partner=${partnerId} saleId=${saleId} jobId=${jobId}`
+      `[ManualSale] Venda manual enfileirada — operator=${req.dashboardUser?.email} partner=${partnerId} saleId=${saleId} jobId=${jobId}`,
     );
 
     return res.status(202).json({
       success: true,
-      message: 'Venda registrada com sucesso e em processamento.',
+      message: "Venda registrada com sucesso e em processamento.",
       saleId,
       jobId,
     });
   } catch (error) {
-    console.error('[ManualSale] Erro ao registrar venda manual:', error);
+    console.error("[ManualSale] Erro ao registrar venda manual:", error);
     return res.status(500).json({
       success: false,
-      error: 'Erro interno do servidor. Tente novamente em instantes.',
+      error: "Erro interno do servidor. Tente novamente em instantes.",
     });
   }
 };

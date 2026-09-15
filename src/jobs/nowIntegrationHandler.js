@@ -93,7 +93,9 @@ async function getProductTemplate(token) {
 
   const template = data?.produto?.jsonProposta;
   if (!template?.proposta) {
-    throw new Error("[Agenda][now-integration] NOW product did not return jsonProposta");
+    throw new Error(
+      "[Agenda][now-integration] NOW product did not return jsonProposta",
+    );
   }
 
   return JSON.parse(JSON.stringify(template));
@@ -181,7 +183,9 @@ async function buildProposalPayload(nrproposta, registration, token) {
             return { ...contact, descricao: EXACTBAG_CONTACT_EMAIL };
           }
 
-          if (["telefone", "phone", "celular", "mobile"].includes(contactType)) {
+          if (
+            ["telefone", "phone", "celular", "mobile"].includes(contactType)
+          ) {
             return { ...contact, descricao: supportPhone };
           }
 
@@ -239,7 +243,6 @@ async function recordNowRequestError(saleId, error) {
 }
 
 async function processNowIntegration(saleId, cpvNumber) {
-
   if (!cpvNumber) {
     throw new Error("[Agenda][now-integration] now requires a cpfv number:");
   }
@@ -254,7 +257,10 @@ async function processNowIntegration(saleId, cpvNumber) {
   });
 
   if (!sale) {
-    console.log("[Agenda][now-integration] skipping integration for unknown sale:", saleId);
+    console.log(
+      "[Agenda][now-integration] skipping integration for unknown sale:",
+      saleId,
+    );
     return;
   }
 
@@ -309,12 +315,15 @@ async function processNowIntegration(saleId, cpvNumber) {
         lookupResponse: existingProposal,
       });
 
-      console.log("[Agenda][now-integration] baggage proposal already exists; skipping:", {
-        cpv: cpvNumber,
-        baggageId: baggage.id,
-        nrproposta,
-        propostaid,
-      });
+      console.log(
+        "[Agenda][now-integration] baggage proposal already exists; skipping:",
+        {
+          cpv: cpvNumber,
+          baggageId: baggage.id,
+          nrproposta,
+          propostaid,
+        },
+      );
       continue;
     }
 
@@ -382,7 +391,10 @@ async function nowIntegrationHandler(job) {
     try {
       await recordNowRequestError(saleId, error);
     } catch (recordError) {
-      console.error("[Agenda][now-integration] failed to persist request error:", recordError.message);
+      console.error(
+        "[Agenda][now-integration] failed to persist request error:",
+        recordError.message,
+      );
     }
     throw error;
   }

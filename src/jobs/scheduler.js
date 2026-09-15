@@ -48,14 +48,32 @@ const recurringJobOptions = {
   lockLimit: 1,
 };
 
-agenda.define("outbound-notifications", outboundNotificationHandler, recurringJobOptions);
-agenda.define("return-flight-reminders", returnFlightReminderHandler, recurringJobOptions);
-agenda.define("weekly-sales-report", weeklySalesReportHandler, recurringJobOptions);
-agenda.define("monthly-sales-report", monthlySalesReportHandler, recurringJobOptions);
+agenda.define(
+  "outbound-notifications",
+  outboundNotificationHandler,
+  recurringJobOptions,
+);
+agenda.define(
+  "return-flight-reminders",
+  returnFlightReminderHandler,
+  recurringJobOptions,
+);
+agenda.define(
+  "weekly-sales-report",
+  weeklySalesReportHandler,
+  recurringJobOptions,
+);
+agenda.define(
+  "monthly-sales-report",
+  monthlySalesReportHandler,
+  recurringJobOptions,
+);
 
 const clampInteger = (value, fallback, min, max) => {
   const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
+  return Number.isInteger(parsed) && parsed >= min && parsed <= max
+    ? parsed
+    : fallback;
 };
 
 const parseTime = (value, fallback = "12:00") => {
@@ -69,9 +87,20 @@ const parseTime = (value, fallback = "12:00") => {
 
 agenda.initializeRecurringJobs = async () => {
   const timezone = process.env.AGENDA_TIMEZONE || "UTC";
-  const outboundInterval = process.env.OUTBOUND_NOTIFICATION_INTERVAL || "1 hour";
-  const returnHour = clampInteger(process.env.RETURN_REMINDER_HOUR_UTC, 12, 0, 23);
-  const returnMinute = clampInteger(process.env.RETURN_REMINDER_MINUTE_UTC, 0, 0, 59);
+  const outboundInterval =
+    process.env.OUTBOUND_NOTIFICATION_INTERVAL || "1 hour";
+  const returnHour = clampInteger(
+    process.env.RETURN_REMINDER_HOUR_UTC,
+    12,
+    0,
+    23,
+  );
+  const returnMinute = clampInteger(
+    process.env.RETURN_REMINDER_MINUTE_UTC,
+    0,
+    0,
+    59,
+  );
 
   // Agenda's JSON uniqueness lookup is not atomic on its own. This partial
   // expression index guarantees one persisted job per business dedupe key.
@@ -86,10 +115,15 @@ agenda.initializeRecurringJobs = async () => {
     timezone,
     skipImmediate: true,
   });
-  await agenda.every(`${returnMinute} ${returnHour} * * *`, "return-flight-reminders", undefined, {
-    timezone: "UTC",
-    skipImmediate: true,
-  });
+  await agenda.every(
+    `${returnMinute} ${returnHour} * * *`,
+    "return-flight-reminders",
+    undefined,
+    {
+      timezone: "UTC",
+      skipImmediate: true,
+    },
+  );
   await agenda.every("6 hours", "agenda-business-job-cleanup", undefined, {
     timezone,
     skipImmediate: true,
@@ -121,19 +155,29 @@ agenda.initializeRecurringJobs = async () => {
     const { hour, minute } = parseTime(reportConfig.weeklyTime);
     const configuredDay = dayMap[String(reportConfig.weeklyDay).toLowerCase()];
     const day = configuredDay === undefined ? 1 : configuredDay;
-    await agenda.every(`${minute} ${hour} * * ${day}`, "weekly-sales-report", undefined, {
-      timezone: reportTimezone,
-      skipImmediate: true,
-    });
+    await agenda.every(
+      `${minute} ${hour} * * ${day}`,
+      "weekly-sales-report",
+      undefined,
+      {
+        timezone: reportTimezone,
+        skipImmediate: true,
+      },
+    );
   }
 
   if (reportConfig.monthlyDay && reportConfig.monthlyTime) {
     const { hour, minute } = parseTime(reportConfig.monthlyTime);
     const day = clampInteger(reportConfig.monthlyDay, 1, 1, 28);
-    await agenda.every(`${minute} ${hour} ${day} * *`, "monthly-sales-report", undefined, {
-      timezone: reportTimezone,
-      skipImmediate: true,
-    });
+    await agenda.every(
+      `${minute} ${hour} ${day} * *`,
+      "monthly-sales-report",
+      undefined,
+      {
+        timezone: reportTimezone,
+        skipImmediate: true,
+      },
+    );
   }
 };
 

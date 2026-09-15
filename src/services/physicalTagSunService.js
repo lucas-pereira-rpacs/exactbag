@@ -1,14 +1,17 @@
-const { prisma } = require('../config');
-const QRCode = require('qrcode');
+const { prisma } = require("../config");
+const QRCode = require("qrcode");
 
 const TEST_SUNS = {
-  nonInsured: '-1',
-  insured: 'S-1'
+  nonInsured: "-1",
+  insured: "S-1",
 };
 
 const isTestSun = (value) => {
   const normalized = normalizeSun(value);
-  return normalized.value === TEST_SUNS.nonInsured || normalized.value === TEST_SUNS.insured;
+  return (
+    normalized.value === TEST_SUNS.nonInsured ||
+    normalized.value === TEST_SUNS.insured
+  );
 };
 
 const findFirstSunUsage = async (sunNumber) => {
@@ -24,46 +27,64 @@ const findFirstSunUsage = async (sunNumber) => {
 };
 
 const DEFAULT_CONFIG = {
-  InsuredSunNumberStarting: '9110001',
-  NonInsuredSunNumberStarting: 'S1010001',
-  InsuredSunNumberLast: 'S1024290',
-  NonInsuredSunNumberLast: '91208408'
+  InsuredSunNumberStarting: "9110001",
+  NonInsuredSunNumberStarting: "S1010001",
+  InsuredSunNumberLast: "S1024290",
+  NonInsuredSunNumberLast: "91208408",
 };
 
 const SUN_ERROR_MESSAGES = {
-  invalid: 'SUN inválido. Verifique se preencheu corretamente.',
-  expired: 'SUN vencido (mais de 1 ano). Informe uma TAG válida.'
+  invalid: "SUN inválido. Verifique se preencheu corretamente.",
+  expired: "SUN vencido (mais de 1 ano). Informe uma TAG válida.",
 };
 
 const normalizeSun = (value) => {
-  const sun = String(value || '').trim().toUpperCase();
-  const insured = sun.startsWith('S');
+  const sun = String(value || "")
+    .trim()
+    .toUpperCase();
+  const insured = sun.startsWith("S");
   const numeric = insured ? sun.slice(1) : sun;
   return { value: sun, numeric, insured };
 };
 
 const readConfig = async () => {
   if (!prisma) return DEFAULT_CONFIG;
-  const rows = await prisma.$queryRaw`SELECT * FROM "PhysicalTagFactory" WHERE id = 1 LIMIT 1`;
+  const rows =
+    await prisma.$queryRaw`SELECT * FROM "PhysicalTagFactory" WHERE id = 1 LIMIT 1`;
   return rows[0] || DEFAULT_CONFIG;
 };
 
 const getPhysicalTagFactory = readConfig;
 
 const generatePhysicalTagRegistrationQrCode = async () => {
-  const baseUrl = (process.env.APP_BASE_URL || 'https://app.exactbag.com.br').replace(/\/+$/, '');
+  const baseUrl = (
+    process.env.APP_BASE_URL || "https://app.exactbag.com.br"
+  ).replace(/\/+$/, "");
   return QRCode.toString(`${baseUrl}/registrodetagfisica`, {
-    type: 'svg', margin: 2, errorCorrectionLevel: 'H'
+    type: "svg",
+    margin: 2,
+    errorCorrectionLevel: "H",
   });
 };
 
-const updatePhysicalTagFactoryLastNumbers = async ({ insuredLast, nonInsuredLast }) => {
-  if (!prisma) return { success: false, error: 'Banco de dados indisponível' };
+const updatePhysicalTagFactoryLastNumbers = async ({
+  insuredLast,
+  nonInsuredLast,
+}) => {
+  if (!prisma) return { success: false, error: "Banco de dados indisponível" };
 
-  const insured = String(insuredLast || '').trim().toUpperCase();
-  const nonInsured = String(nonInsuredLast || '').trim().toUpperCase();
+  const insured = String(insuredLast || "")
+    .trim()
+    .toUpperCase();
+  const nonInsured = String(nonInsuredLast || "")
+    .trim()
+    .toUpperCase();
   if (!/^S\d+$/.test(insured) || !/^\d+$/.test(nonInsured)) {
-    return { success: false, error: 'Informe o último SUN segurado como S+números e o não segurado somente com números.' };
+    return {
+      success: false,
+      error:
+        "Informe o último SUN segurado como S+números e o não segurado somente com números.",
+    };
   }
 
   const rows = await prisma.$queryRaw`
@@ -78,10 +99,18 @@ const updatePhysicalTagFactoryLastNumbers = async ({ insuredLast, nonInsuredLast
 
 const endpointForType = (config, insured, kind) => {
   const values = Object.entries(config)
-    .filter(([key]) => key !== 'id' && key.toLowerCase().includes(kind))
-    .map(([, value]) => String(value || '').trim().toUpperCase())
+    .filter(([key]) => key !== "id" && key.toLowerCase().includes(kind))
+    .map(([, value]) =>
+      String(value || "")
+        .trim()
+        .toUpperCase(),
+    )
     .filter(Boolean);
-  return values.find((value) => insured ? value.startsWith('S') : !value.startsWith('S')) || null;
+  return (
+    values.find((value) =>
+      insured ? value.startsWith("S") : !value.startsWith("S"),
+    ) || null
+  );
 };
 
 const validateSun = async (value) => {
@@ -91,19 +120,27 @@ const validateSun = async (value) => {
       valid: true,
       insured: normalized.value === TEST_SUNS.insured,
       value: normalized.value,
-      normalized: normalized.value.slice(normalized.value.startsWith('S') ? 1 : 0)
+      normalized: normalized.value.slice(
+        normalized.value.startsWith("S") ? 1 : 0,
+      ),
     };
   }
 
   if (!normalized.numeric || !/^\d+$/.test(normalized.numeric)) {
-    return { valid: false, code: 'SUN_INVALID', insured: normalized.insured, value: normalized.value, error: SUN_ERROR_MESSAGES.invalid };
+    return {
+      valid: false,
+      code: "SUN_INVALID",
+      insured: normalized.insured,
+      value: normalized.value,
+      error: SUN_ERROR_MESSAGES.invalid,
+    };
   }
 
   const config = await readConfig();
   // Select endpoints by their actual prefix. This also tolerates the legacy
   // configuration column names whose default values are inverted.
-  const starting = endpointForType(config, normalized.insured, 'starting');
-  const ending = endpointForType(config, normalized.insured, 'last');
+  const starting = endpointForType(config, normalized.insured, "starting");
+  const ending = endpointForType(config, normalized.insured, "last");
   const number = BigInt(normalized.numeric);
   const first = starting ? BigInt(normalizeSun(starting).numeric) : null;
   const last = ending ? BigInt(normalizeSun(ending).numeric) : null;
@@ -118,7 +155,13 @@ const validateSun = async (value) => {
     number < first ||
     number > last
   ) {
-    return { valid: false, code: 'SUN_INVALID', insured: normalized.insured, value: normalized.value, error: SUN_ERROR_MESSAGES.invalid };
+    return {
+      valid: false,
+      code: "SUN_INVALID",
+      insured: normalized.insured,
+      value: normalized.value,
+      error: SUN_ERROR_MESSAGES.invalid,
+    };
   }
 
   const firstUsage = await findFirstSunUsage(normalized.value);
@@ -126,11 +169,22 @@ const validateSun = async (value) => {
     const expirationDate = new Date(firstUsage);
     expirationDate.setFullYear(expirationDate.getFullYear() + 1);
     if (expirationDate <= new Date()) {
-      return { valid: false, code: 'SUN_EXPIRED', insured: normalized.insured, value: normalized.value, error: SUN_ERROR_MESSAGES.expired };
+      return {
+        valid: false,
+        code: "SUN_EXPIRED",
+        insured: normalized.insured,
+        value: normalized.value,
+        error: SUN_ERROR_MESSAGES.expired,
+      };
     }
   }
 
-  return { valid: true, insured: normalized.insured, value: normalized.value, normalized: normalized.numeric };
+  return {
+    valid: true,
+    insured: normalized.insured,
+    value: normalized.value,
+    normalized: normalized.numeric,
+  };
 };
 
 module.exports = {
@@ -140,5 +194,5 @@ module.exports = {
   updatePhysicalTagFactoryLastNumbers,
   generatePhysicalTagRegistrationQrCode,
   TEST_SUNS,
-  isTestSun
+  isTestSun,
 };

@@ -1,7 +1,7 @@
 // Middleware de Autenticação para API
 // Valida API Key de parceiros e endpoints públicos
 
-const partnerRepository = require('../repositories/partnerRepository');
+const partnerRepository = require("../repositories/partnerRepository");
 
 // 🔴 P3: Cache de partners com TTL de 5 minutos
 class PartnerCache {
@@ -46,16 +46,10 @@ class PartnerCache {
 const partnerCache = new PartnerCache();
 
 // Endpoints públicos que NÃO precisam de autenticação
-const PUBLIC_ENDPOINTS = [
-  '/health',
-  '/docs',
-  '/api-docs',
-  '/swagger',
-  '/cost'
-];
+const PUBLIC_ENDPOINTS = ["/health", "/docs", "/api-docs", "/swagger", "/cost"];
 
 const isPublicEndpoint = (path) => {
-  return PUBLIC_ENDPOINTS.some(endpoint => path.startsWith(endpoint));
+  return PUBLIC_ENDPOINTS.some((endpoint) => path.startsWith(endpoint));
 };
 
 const authMiddleware = async (req, res, next) => {
@@ -67,22 +61,22 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Extrair API Key do header Authorization
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
       return res.status(401).json({
         success: false,
-        error: 'Missing Authorization header',
-        message: 'API Key is required. Use: Authorization: Bearer {API_KEY}'
+        error: "Missing Authorization header",
+        message: "API Key is required. Use: Authorization: Bearer {API_KEY}",
       });
     }
 
     // Formato esperado: "Bearer exactbag_xxxxxxxx"
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    const parts = authHeader.split(" ");
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
       return res.status(401).json({
         success: false,
-        error: 'Invalid Authorization format',
-        message: 'Use format: Bearer {API_KEY}'
+        error: "Invalid Authorization format",
+        message: "Use format: Bearer {API_KEY}",
       });
     }
 
@@ -96,12 +90,12 @@ const authMiddleware = async (req, res, next) => {
         partnerCache.set(apiKey, partner);
       }
     }
-    
+
     if (!partner) {
       return res.status(403).json({
         success: false,
-        error: 'Invalid API Key',
-        message: 'The provided API Key is not recognized'
+        error: "Invalid API Key",
+        message: "The provided API Key is not recognized",
       });
     }
 
@@ -109,8 +103,8 @@ const authMiddleware = async (req, res, next) => {
     if (!partner.isActive) {
       return res.status(403).json({
         success: false,
-        error: 'Partner inactive',
-        message: 'This partner account is not active. Contact support.'
+        error: "Partner inactive",
+        message: "This partner account is not active. Contact support.",
       });
     }
 
@@ -119,14 +113,15 @@ const authMiddleware = async (req, res, next) => {
     if (!isRateLimitOK) {
       return res.status(429).json({
         success: false,
-        error: 'Rate limit exceeded',
-        message: 'You have exceeded your request limit. Please try again later.'
+        error: "Rate limit exceeded",
+        message:
+          "You have exceeded your request limit. Please try again later.",
       });
     }
 
     // Persist request metadata sem bloquear a resposta principal.
-    partnerRepository.updateRequestMetadata(apiKey).catch(err => {
-      console.error('Error queuing metadata:', err);
+    partnerRepository.updateRequestMetadata(apiKey).catch((err) => {
+      console.error("Error queuing metadata:", err);
     });
 
     // Armazenar info do parceiro no request para uso posterior
@@ -135,13 +130,12 @@ const authMiddleware = async (req, res, next) => {
     req.apiKey = apiKey;
 
     next();
-
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error("Auth middleware error:", error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      message: 'Error authenticating request'
+      error: "Internal server error",
+      message: "Error authenticating request",
     });
   }
 };

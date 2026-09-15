@@ -1,4 +1,4 @@
-const partnerCallbackService = require('../services/partnerCallbackService');
+const partnerCallbackService = require("../services/partnerCallbackService");
 
 /** @param {import('agenda').Job} job */
 async function partnerCallbackHandler(job) {
@@ -12,7 +12,7 @@ async function partnerCallbackHandler(job) {
   });
 
   if (!result.success) {
-    const suffix = result.retry ? 'retry requested' : 'attempts exhausted';
+    const suffix = result.retry ? "retry requested" : "attempts exhausted";
     throw new Error(`Partner callback failed for ${data.partnerId}; ${suffix}`);
   }
 }

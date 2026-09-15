@@ -8,8 +8,7 @@ const {
 
 const router = express.Router();
 const nowApi = axios.create({
-  baseURL:
-    process.env.NOW_API_BASE_URL || "https://saas-dev.nowseguros.seg.br",
+  baseURL: process.env.NOW_API_BASE_URL || "https://saas-dev.nowseguros.seg.br",
   timeout: Number(process.env.NOW_API_TIMEOUT_MS) || 180000,
   headers: {
     "Content-Type": "application/json",
@@ -145,7 +144,10 @@ router.post(
 
       return res.json({ success: true, data: responses.now });
     } catch (err) {
-      console.error("[IntegrationsNOW] Erro ao cancelar proposta:", err.message);
+      console.error(
+        "[IntegrationsNOW] Erro ao cancelar proposta:",
+        err.message,
+      );
       if (prisma) {
         try {
           await prisma.$executeRaw`
@@ -155,7 +157,10 @@ router.post(
             WHERE id = ${requestId}
           `;
         } catch (recordError) {
-          console.error("[IntegrationsNOW] Erro ao salvar falha da requisição:", recordError.message);
+          console.error(
+            "[IntegrationsNOW] Erro ao salvar falha da requisição:",
+            recordError.message,
+          );
         }
       }
       return res.status(500).json({

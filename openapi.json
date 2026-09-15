@@ -85,8 +85,16 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Venda recebida e em processamento." },
-                    "jobId": { "type": "string", "format": "uuid", "example": "11111111-1111-4111-8111-111111111111", "description": "Use este ID para consultar o status em GET /jobs/{jobId}" }
+                    "message": {
+                      "type": "string",
+                      "example": "Venda recebida e em processamento."
+                    },
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "example": "11111111-1111-4111-8111-111111111111",
+                      "description": "Use este ID para consultar o status em GET /jobs/{jobId}"
+                    }
                   }
                 }
               }
@@ -99,15 +107,27 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": { "type": "string", "example": "Validation failed" },
-                    "details": { "type": "array", "items": { "type": "string" }, "example": ["customerEmail is required", "outboundDate must be a valid date"] }
+                    "error": {
+                      "type": "string",
+                      "example": "Validation failed"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "example": [
+                        "customerEmail is required",
+                        "outboundDate must be a valid date"
+                      ]
+                    }
                   }
                 }
               }
             }
           },
           "401": { "description": "API Key ausente ou inválida" },
-          "429": { "description": "Limite de requisições excedido (máx. 30/minuto)" }
+          "429": {
+            "description": "Limite de requisições excedido (máx. 30/minuto)"
+          }
         }
       }
     },
@@ -122,14 +142,22 @@
             "in": "query",
             "required": false,
             "description": "Data de início da viagem/pesquisa. Formato YYYY-MM-DD.",
-            "schema": { "type": "string", "format": "date", "example": "2026-12-01" }
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-12-01"
+            }
           },
           {
             "name": "end",
             "in": "query",
             "required": false,
             "description": "Data final da viagem/pesquisa. Formato YYYY-MM-DD.",
-            "schema": { "type": "string", "format": "date", "example": "2026-12-08" }
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-12-08"
+            }
           },
           {
             "name": "occupancy",
@@ -139,7 +167,11 @@
             "schema": {
               "oneOf": [
                 { "type": "integer", "example": 2 },
-                { "type": "array", "items": { "type": "string" }, "example": ["30", "30"] }
+                {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "example": ["30", "30"]
+                }
               ]
             },
             "style": "form",
@@ -157,7 +189,11 @@
             "in": "query",
             "required": false,
             "description": "Filtra um produto ExactBag específico pelo código. Valores válidos: `5383656` (Proteção Completa 1 bag), `5383657` (Proteção Essencial 1 bag), `5383658` (Proteção Completa 2 bags), `5383659` (Proteção Essencial 2 bags). Se omitido, retorna todos os produtos.",
-            "schema": { "type": "string", "enum": ["5383656", "5383657", "5383658", "5383659"], "example": "5383656" }
+            "schema": {
+              "type": "string",
+              "enum": ["5383656", "5383657", "5383658", "5383659"],
+              "example": "5383656"
+            }
           }
         ],
         "responses": {
@@ -165,7 +201,9 @@
             "description": "Disponibilidade retornada com sucesso",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/InsuranceAvailabilityResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/InsuranceAvailabilityResponse"
+                },
                 "example": {
                   "insuranceAvail": [
                     {
@@ -209,14 +247,23 @@
                       "fares": [
                         {
                           "type": "FARE",
-                          "price": { "currency": "BRL", "amount": 44.9, "exchange": 1.0 },
+                          "price": {
+                            "currency": "BRL",
+                            "amount": 44.9,
+                            "exchange": 1.0
+                          },
                           "priceSale": { "currency": "BRL", "amount": 44.9 },
                           "priceNet": { "currency": "BRL", "amount": 9.6 },
                           "discount": false
                         }
                       ],
                       "names": [
-                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                        {
+                          "age": 30,
+                          "type": "ADT",
+                          "gender": "UNDEFINED",
+                          "isMain": false
+                        }
                       ],
                       "cancellationPolicies": {
                         "refundable": false,
@@ -262,14 +309,23 @@
                       "fares": [
                         {
                           "type": "FARE",
-                          "price": { "currency": "BRL", "amount": 38.9, "exchange": 1.0 },
+                          "price": {
+                            "currency": "BRL",
+                            "amount": 38.9,
+                            "exchange": 1.0
+                          },
                           "priceSale": { "currency": "BRL", "amount": 38.9 },
                           "priceNet": { "currency": "BRL", "amount": 9.6 },
                           "discount": false
                         }
                       ],
                       "names": [
-                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                        {
+                          "age": 30,
+                          "type": "ADT",
+                          "gender": "UNDEFINED",
+                          "isMain": false
+                        }
                       ],
                       "cancellationPolicies": {
                         "refundable": false,
@@ -324,15 +380,29 @@
                       "fares": [
                         {
                           "type": "FARE",
-                          "price": { "currency": "BRL", "amount": 89.8, "exchange": 1.0 },
+                          "price": {
+                            "currency": "BRL",
+                            "amount": 89.8,
+                            "exchange": 1.0
+                          },
                           "priceSale": { "currency": "BRL", "amount": 89.8 },
                           "priceNet": { "currency": "BRL", "amount": 19.2 },
                           "discount": false
                         }
                       ],
                       "names": [
-                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false },
-                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                        {
+                          "age": 30,
+                          "type": "ADT",
+                          "gender": "UNDEFINED",
+                          "isMain": false
+                        },
+                        {
+                          "age": 30,
+                          "type": "ADT",
+                          "gender": "UNDEFINED",
+                          "isMain": false
+                        }
                       ],
                       "cancellationPolicies": {
                         "refundable": false,
@@ -378,15 +448,29 @@
                       "fares": [
                         {
                           "type": "FARE",
-                          "price": { "currency": "BRL", "amount": 77.8, "exchange": 1.0 },
+                          "price": {
+                            "currency": "BRL",
+                            "amount": 77.8,
+                            "exchange": 1.0
+                          },
                           "priceSale": { "currency": "BRL", "amount": 77.8 },
                           "priceNet": { "currency": "BRL", "amount": 19.2 },
                           "discount": false
                         }
                       ],
                       "names": [
-                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false },
-                        { "age": 30, "type": "ADT", "gender": "UNDEFINED", "isMain": false }
+                        {
+                          "age": 30,
+                          "type": "ADT",
+                          "gender": "UNDEFINED",
+                          "isMain": false
+                        },
+                        {
+                          "age": 30,
+                          "type": "ADT",
+                          "gender": "UNDEFINED",
+                          "isMain": false
+                        }
                       ],
                       "cancellationPolicies": {
                         "refundable": false,
@@ -422,7 +506,11 @@
             "in": "path",
             "required": true,
             "description": "ID do job retornado no POST /webhooks/sales",
-            "schema": { "type": "string", "format": "uuid", "example": "11111111-1111-4111-8111-111111111111" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "11111111-1111-4111-8111-111111111111"
+            }
           }
         ],
         "responses": {
@@ -433,8 +521,22 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string", "format": "uuid", "example": "11111111-1111-4111-8111-111111111111" },
-                    "status": { "type": "string", "enum": ["pending", "running", "retrying", "completed", "failed"], "example": "completed" },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "example": "11111111-1111-4111-8111-111111111111"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "running",
+                        "retrying",
+                        "completed",
+                        "failed"
+                      ],
+                      "example": "completed"
+                    },
                     "createdAt": { "type": "string", "format": "date-time" },
                     "completedAt": { "type": "string", "format": "date-time" }
                   }
@@ -503,8 +605,14 @@
                   "type": "object",
                   "properties": {
                     "status": { "type": "string", "example": "success" },
-                    "message": { "type": "string", "example": "Webhook registrado com sucesso" },
-                    "webhookUrl": { "type": "string", "example": "https://api.seusite.com.br/callbacks/exactbag" }
+                    "message": {
+                      "type": "string",
+                      "example": "Webhook registrado com sucesso"
+                    },
+                    "webhookUrl": {
+                      "type": "string",
+                      "example": "https://api.seusite.com.br/callbacks/exactbag"
+                    }
                   }
                 }
               }
@@ -529,9 +637,17 @@
                   "type": "object",
                   "properties": {
                     "status": { "type": "string", "example": "success" },
-                    "webhookUrl": { "type": "string", "nullable": true, "example": "https://api.seusite.com.br/callbacks/exactbag" },
+                    "webhookUrl": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "https://api.seusite.com.br/callbacks/exactbag"
+                    },
                     "configured": { "type": "boolean", "example": true },
-                    "isSandbox": { "type": "boolean", "example": false, "description": "Se true, notificações (email/WhatsApp) são simuladas e NÃO enviadas. Ideal para testes." }
+                    "isSandbox": {
+                      "type": "boolean",
+                      "example": false,
+                      "description": "Se true, notificações (email/WhatsApp) são simuladas e NÃO enviadas. Ideal para testes."
+                    }
                   }
                 }
               }
@@ -591,18 +707,34 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Venda cancelada com sucesso" },
+                    "message": {
+                      "type": "string",
+                      "example": "Venda cancelada com sucesso"
+                    },
                     "sale": {
                       "type": "object",
                       "properties": {
                         "id": { "type": "string" },
-                        "saleId": { "type": "string", "example": "RES-2026-78901" },
-                        "customerName": { "type": "string", "example": "Maria Santos" },
+                        "saleId": {
+                          "type": "string",
+                          "example": "RES-2026-78901"
+                        },
+                        "customerName": {
+                          "type": "string",
+                          "example": "Maria Santos"
+                        },
                         "status": { "type": "string", "example": "cancelada" },
-                        "cancelledAt": { "type": "string", "format": "date-time" }
+                        "cancelledAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
                       }
                     },
-                    "refundType": { "type": "string", "enum": ["integral", "parcial", "nenhum"], "example": "integral" }
+                    "refundType": {
+                      "type": "string",
+                      "enum": ["integral", "parcial", "nenhum"],
+                      "example": "integral"
+                    }
                   }
                 }
               }
@@ -629,7 +761,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "ExactBag API Online" },
+                    "status": {
+                      "type": "string",
+                      "example": "ExactBag API Online"
+                    },
                     "timestamp": { "type": "string", "format": "date-time" }
                   }
                 }
@@ -644,7 +779,13 @@
     "schemas": {
       "SaleRequest": {
         "type": "object",
-        "required": ["partnerId", "saleId", "customerName", "customerEmail", "customerPhone"],
+        "required": [
+          "partnerId",
+          "saleId",
+          "customerName",
+          "customerEmail",
+          "customerPhone"
+        ],
         "properties": {
           "partnerId": {
             "type": "string",
@@ -733,23 +874,53 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/InsuranceName" }
           },
-          "cancellationPolicies": { "$ref": "#/components/schemas/CancellationPolicies" }
+          "cancellationPolicies": {
+            "$ref": "#/components/schemas/CancellationPolicies"
+          }
         }
       },
       "InsuranceProduct": {
         "type": "object",
         "properties": {
           "provider": { "type": "string", "example": "ExactBag" },
-          "key": { "type": "string", "description": "Chave de sessão da disponibilidade", "example": "445DEHQ2U1VO8IID8S" },
-          "code": { "type": "string", "description": "Código do produto ExactBag", "example": "5383656" },
-          "name": { "type": "string", "example": "ASSISTENCIA DE BAGAGEM EXACTBAG COVER - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500" },
-          "startDate": { "type": "string", "format": "date-time", "example": "2026-12-01T00:00:00-03:00" },
-          "endDate": { "type": "string", "format": "date-time", "example": "2026-12-08T00:00:00-03:00" },
-          "description": { "type": "string", "description": "Descrição comercial do produto" },
-          "image": { "type": "string", "format": "uri", "description": "Imagem/arte do produto para exibição no parceiro" },
+          "key": {
+            "type": "string",
+            "description": "Chave de sessão da disponibilidade",
+            "example": "445DEHQ2U1VO8IID8S"
+          },
+          "code": {
+            "type": "string",
+            "description": "Código do produto ExactBag",
+            "example": "5383656"
+          },
+          "name": {
+            "type": "string",
+            "example": "ASSISTENCIA DE BAGAGEM EXACTBAG COVER - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-12-01T00:00:00-03:00"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-12-08T00:00:00-03:00"
+          },
+          "description": {
+            "type": "string",
+            "description": "Descrição comercial do produto"
+          },
+          "image": {
+            "type": "string",
+            "format": "uri",
+            "description": "Imagem/arte do produto para exibição no parceiro"
+          },
           "unique": { "type": "boolean", "example": false },
           "onRequest": { "type": "boolean", "example": false },
-          "providerDetail": { "$ref": "#/components/schemas/InsuranceProviderDetail" },
+          "providerDetail": {
+            "$ref": "#/components/schemas/InsuranceProviderDetail"
+          },
           "coverages": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/InsuranceCoverage" }
@@ -759,7 +930,11 @@
             "description": "Políticas de uso do produto ExactBag",
             "items": { "type": "string" }
           },
-          "keyDetail": { "type": "string", "description": "Chave de detalhe do produto para uso no fluxo de reserva", "example": "NTM4MzY1NiMy" }
+          "keyDetail": {
+            "type": "string",
+            "description": "Chave de detalhe do produto para uso no fluxo de reserva",
+            "example": "NTM4MzY1NiMy"
+          }
         }
       },
       "InsuranceProviderDetail": {
@@ -775,7 +950,10 @@
         "type": "object",
         "properties": {
           "code": { "type": "string", "example": "2898" },
-          "name": { "type": "string", "example": "assistencia de bagagem com seguro" },
+          "name": {
+            "type": "string",
+            "example": "assistencia de bagagem com seguro"
+          },
           "minPrice": { "type": "string", "example": "R$ 2.500,00" },
           "maxPrice": { "type": "string", "example": "R$ 2.500,00" }
         }
@@ -784,7 +962,9 @@
         "type": "object",
         "properties": {
           "type": { "type": "string", "example": "FARE" },
-          "price": { "$ref": "#/components/schemas/InsurancePriceWithExchange" },
+          "price": {
+            "$ref": "#/components/schemas/InsurancePriceWithExchange"
+          },
           "priceSale": { "$ref": "#/components/schemas/InsurancePrice" },
           "priceNet": { "$ref": "#/components/schemas/InsurancePrice" },
           "discount": { "type": "boolean", "example": false }
@@ -803,7 +983,11 @@
           {
             "type": "object",
             "properties": {
-              "exchange": { "type": "number", "format": "float", "example": 1.0 }
+              "exchange": {
+                "type": "number",
+                "format": "float",
+                "example": 1.0
+              }
             }
           }
         ]
@@ -812,7 +996,11 @@
         "type": "object",
         "properties": {
           "age": { "type": "integer", "example": 30 },
-          "type": { "type": "string", "enum": ["ADT", "CHD"], "example": "ADT" },
+          "type": {
+            "type": "string",
+            "enum": ["ADT", "CHD"],
+            "example": "ADT"
+          },
           "gender": { "type": "string", "example": "UNDEFINED" },
           "isMain": { "type": "boolean", "example": false }
         }
@@ -831,8 +1019,14 @@
       "CancellationPenalty": {
         "type": "object",
         "properties": {
-          "name": { "type": "string", "example": "Não reembolsável após emissão do CPV" },
-          "description": { "type": "string", "example": "O serviço não é reembolsável após a emissão do CPV." },
+          "name": {
+            "type": "string",
+            "example": "Não reembolsável após emissão do CPV"
+          },
+          "description": {
+            "type": "string",
+            "example": "O serviço não é reembolsável após a emissão do CPV."
+          },
           "price": { "$ref": "#/components/schemas/InsurancePrice" }
         }
       }

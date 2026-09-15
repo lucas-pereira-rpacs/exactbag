@@ -1,16 +1,16 @@
 // Middleware de Rate Limiting para proteção contra abuse
 // Limita requisições por API Key (protegido) ou IP (público)
 
-const rateLimit = require('express-rate-limit');
+const rateLimit = require("express-rate-limit");
 const ipKeyGenerator = rateLimit.ipKeyGenerator || ((ip) => ip);
 
 // Endpoints públicos (limitados por IP)
-const PUBLIC_ENDPOINTS = ['/health', '/cost'];
+const PUBLIC_ENDPOINTS = ["/health", "/cost"];
 
 // Função auxiliar para extrair API Key do header
 const getApiKeyFromRequest = (req) => {
-  const authHeader = req.headers.authorization || '';
-  if (authHeader.startsWith('Bearer ')) {
+  const authHeader = req.headers.authorization || "";
+  if (authHeader.startsWith("Bearer ")) {
     return authHeader.substring(7); // Remove "Bearer " prefix
   }
   return null;
@@ -28,9 +28,9 @@ const webhookLimiter = rateLimit({
   max: 5000, // Max 5000 requisições (era 1000)
   message: {
     success: false,
-    error: 'Rate limit exceeded for webhook endpoint',
-    message: 'Maximum 5000 webhook requests per hour per API Key',
-    retryAfter: 'Check X-RateLimit-Reset header'
+    error: "Rate limit exceeded for webhook endpoint",
+    message: "Maximum 5000 webhook requests per hour per API Key",
+    retryAfter: "Check X-RateLimit-Reset header",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -42,12 +42,14 @@ const webhookLimiter = rateLimit({
   handler: (req, res) => {
     res.status(429).json({
       success: false,
-      error: 'Rate limit exceeded',
-      message: 'Maximum 5000 webhook requests per hour per API Key',
-      retryAfter: req.rateLimit.resetTime ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000) : 3600,
-      remaining: 0
+      error: "Rate limit exceeded",
+      message: "Maximum 5000 webhook requests per hour per API Key",
+      retryAfter: req.rateLimit.resetTime
+        ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+        : 3600,
+      remaining: 0,
     });
-  }
+  },
 });
 
 // 2️⃣ Endpoint Público Geral (IP-based)
@@ -58,8 +60,8 @@ const publicLimiter = rateLimit({
   max: 100, // Max 100 requisições
   message: {
     success: false,
-    error: 'Rate limit exceeded',
-    message: 'Maximum 100 requests per 15 minutes per IP'
+    error: "Rate limit exceeded",
+    message: "Maximum 100 requests per 15 minutes per IP",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -68,11 +70,13 @@ const publicLimiter = rateLimit({
   handler: (req, res) => {
     res.status(429).json({
       success: false,
-      error: 'Rate limit exceeded',
-      message: 'Maximum 100 requests per 15 minutes per IP',
-      retryAfter: req.rateLimit.resetTime ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000) : 900
+      error: "Rate limit exceeded",
+      message: "Maximum 100 requests per 15 minutes per IP",
+      retryAfter: req.rateLimit.resetTime
+        ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+        : 900,
     });
-  }
+  },
 });
 
 // 3️⃣ Limiter para qualquer rota não mapeada (fallback)
@@ -82,7 +86,7 @@ const defaultLimiter = rateLimit({
   max: 50,
   message: {
     success: false,
-    error: 'Rate limit exceeded'
+    error: "Rate limit exceeded",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -94,10 +98,10 @@ const defaultLimiter = rateLimit({
   handler: (req, res) => {
     res.status(429).json({
       success: false,
-      error: 'Rate limit exceeded',
-      retryAfter: 60
+      error: "Rate limit exceeded",
+      retryAfter: 60,
     });
-  }
+  },
 });
 
 // ============================================================================
@@ -106,12 +110,14 @@ const defaultLimiter = rateLimit({
 
 const rateLimitLogger = (req, res, next) => {
   // Loga 429 DEPOIS que a resposta é enviada (statusCode só é setado pelo handler)
-  if (process.env.NODE_ENV === 'production') {
-    res.on('finish', () => {
+  if (process.env.NODE_ENV === "production") {
+    res.on("finish", () => {
       if (res.statusCode === 429) {
         const apiKey = getApiKeyFromRequest(req);
         const identifier = apiKey || req.ip;
-        console.warn(`[RateLimit] 429 - ${req.method} ${req.path} - ${identifier}`);
+        console.warn(
+          `[RateLimit] 429 - ${req.method} ${req.path} - ${identifier}`,
+        );
       }
     });
   }
@@ -125,7 +131,7 @@ const rateLimitLogger = (req, res, next) => {
 const createTestLimiter = (originalLimiter) => {
   return (req, res, next) => {
     // Em ambiente de teste, pular rate limiting
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === "test") {
       return next();
     }
     return originalLimiter(req, res, next);
@@ -142,19 +148,21 @@ const privacyLimiter = rateLimit({
   max: 10, // Max 10 requests per hour per IP
   message: {
     success: false,
-    error: 'Rate limit exceeded',
-    message: 'Maximum 10 privacy requests per hour per IP'
+    error: "Rate limit exceeded",
+    message: "Maximum 10 privacy requests per hour per IP",
   },
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
     res.status(429).json({
       success: false,
-      error: 'Rate limit exceeded',
-      message: 'Maximum 10 privacy requests per hour per IP',
-      retryAfter: req.rateLimit.resetTime ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000) : 3600
+      error: "Rate limit exceeded",
+      message: "Maximum 10 privacy requests per hour per IP",
+      retryAfter: req.rateLimit.resetTime
+        ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+        : 3600,
     });
-  }
+  },
 });
 
 module.exports = {
@@ -163,5 +171,5 @@ module.exports = {
   defaultLimiter: createTestLimiter(defaultLimiter),
   privacyLimiter: createTestLimiter(privacyLimiter),
   rateLimitLogger,
-  getApiKeyFromRequest
+  getApiKeyFromRequest,
 };

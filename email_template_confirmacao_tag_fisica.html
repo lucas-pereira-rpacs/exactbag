@@ -1,58 +1,190 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ExactBag - TAG física confirmada</title>
-  <style>
-    body{margin:0;padding:24px 0;background:#ecf0f1;font-family:Arial,Helvetica,sans-serif;color:#444}
-    .container{max-width:620px;margin:0 auto;background:#fff}
-    .header{background:#125ae2;color:#fff;padding:28px 32px;text-align:center}
-    .header h1{margin:0;font-size:24px}.header div{margin-top:6px;font-size:15px}
-    .body{padding:32px;font-size:16px;line-height:1.6}
-    .confirmation{background:#f0f7ff;border-left:4px solid #125ae2;padding:16px 20px;margin:22px 0}
-    .details{background:#f7f7f7;padding:16px 20px;margin:22px 0}
-    .airport-grid{width:calc(100% + 16px);border-collapse:separate;border-spacing:8px;margin:8px -8px 22px}
-    .airport-grid td{width:33.33%;background:#f7f9fc;border:1px solid #dbe5f2;border-radius:6px;padding:12px 10px;vertical-align:top;font-size:13px;line-height:1.35}
-    .airport{display:block;color:#125ae2;font-weight:bold;margin-bottom:3px}.store{display:block;color:#555}
-    .footer{padding:20px 32px;text-align:center;color:#888;font-size:12px}
-    @media screen and (max-width:520px){body{padding:0}.body{padding:24px 20px}.header{padding:24px 20px}.footer{padding:20px}.airport-grid td{padding:10px 7px;font-size:12px}}
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header"><h1>ExactBag</h1><div>Compra e reserva da sua TAG física confirmadas</div></div>
-    <div class="body">
-      <h2>Olá, {{nome}}!</h2>
-      <p>Sua compra e reserva da TAG física ExactBag foram confirmadas com sucesso.</p>
-      <div class="details"><strong>Detalhes da reserva</strong><br>Tipo de viagem: {{tipo_viagem}}<br>Data da ida: {{data_ida}}<br>Data da volta: {{data_volta}}</div>
-      <div class="confirmation"><strong>Quando vou retirar minha TAG?</strong><br>{{texto_entrega}}</div>
-      <p><strong>Onde retirar?</strong></p>
-      <p>Retire sua TAG em uma das lojas conveniadas da Protec Bag nos aeroportos abaixo. A loja conveniada será informada no comprovante de retirada, enviado até 48 horas antes da sua viagem.</p>
-      <center>
-      <table class="airport-grid" role="presentation" align="center" style="margin:8px auto 22px;">
-        <tr>
-          <td><span class="airport">Guarulhos (GRU)</span><span class="store">- [loja-conveniada]</span></td>
-          <td><span class="airport">Viracopos (VCP)</span><span class="store">- [loja-conveniada]</span></td>
-          <td><span class="airport">Curitiba (CWB)</span><span class="store">- [loja-conveniada]</span></td>
-        </tr>
-        <tr>
-          <td><span class="airport">Recife (REC)</span><span class="store">- [loja-conveniada]</span></td>
-          <td><span class="airport">Porto Alegre (POA)</span><span class="store">- [loja-conveniada]</span></td>
-          <td><span class="airport">Florianópolis (FLN)</span><span class="store">- [loja-conveniada]</span></td>
-        </tr>
-        <tr>
-          <td><span class="airport">João Pessoa (JPA)</span><span class="store">- [loja-conveniada]</span></td>
-          <td><span class="airport">Londrina (LDB)</span><span class="store">- [loja-conveniada]</span></td>
-          <td>&nbsp;</td>
-        </tr>
-      </table>
-      </center>
-      <p><strong>Importante:</strong> depois de retirar sua TAG, leia o QR Code no verso e registre as informações solicitadas antes do embarque.</p>
-      <p>Dúvidas? Estamos disponíveis 24 horas: {{support_phone}}<br>contato@exactbag.com.br</p>
-      <p>Boa viagem!<br><strong>Equipe ExactBag</strong></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExactBag - TAG física confirmada</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px 0;
+        background: #ecf0f1;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #444;
+      }
+      .container {
+        max-width: 620px;
+        margin: 0 auto;
+        background: #fff;
+      }
+      .header {
+        background: #125ae2;
+        color: #fff;
+        padding: 28px 32px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .header div {
+        margin-top: 6px;
+        font-size: 15px;
+      }
+      .body {
+        padding: 32px;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      .confirmation {
+        background: #f0f7ff;
+        border-left: 4px solid #125ae2;
+        padding: 16px 20px;
+        margin: 22px 0;
+      }
+      .details {
+        background: #f7f7f7;
+        padding: 16px 20px;
+        margin: 22px 0;
+      }
+      .airport-grid {
+        width: calc(100% + 16px);
+        border-collapse: separate;
+        border-spacing: 8px;
+        margin: 8px -8px 22px;
+      }
+      .airport-grid td {
+        width: 33.33%;
+        background: #f7f9fc;
+        border: 1px solid #dbe5f2;
+        border-radius: 6px;
+        padding: 12px 10px;
+        vertical-align: top;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      .airport {
+        display: block;
+        color: #125ae2;
+        font-weight: bold;
+        margin-bottom: 3px;
+      }
+      .store {
+        display: block;
+        color: #555;
+      }
+      .footer {
+        padding: 20px 32px;
+        text-align: center;
+        color: #888;
+        font-size: 12px;
+      }
+      @media screen and (max-width: 520px) {
+        body {
+          padding: 0;
+        }
+        .body {
+          padding: 24px 20px;
+        }
+        .header {
+          padding: 24px 20px;
+        }
+        .footer {
+          padding: 20px;
+        }
+        .airport-grid td {
+          padding: 10px 7px;
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>ExactBag</h1>
+        <div>Compra e reserva da sua TAG física confirmadas</div>
+      </div>
+      <div class="body">
+        <h2>Olá, {{nome}}!</h2>
+        <p>
+          Sua compra e reserva da TAG física ExactBag foram confirmadas com
+          sucesso.
+        </p>
+        <div class="details">
+          <strong>Detalhes da reserva</strong><br />Tipo de viagem:
+          {{tipo_viagem}}<br />Data da ida: {{data_ida}}<br />Data da volta:
+          {{data_volta}}
+        </div>
+        <div class="confirmation">
+          <strong>Quando vou retirar minha TAG?</strong><br />{{texto_entrega}}
+        </div>
+        <p><strong>Onde retirar?</strong></p>
+        <p>
+          Retire sua TAG em uma das lojas conveniadas da Protec Bag nos
+          aeroportos abaixo. A loja conveniada será informada no comprovante de
+          retirada, enviado até 48 horas antes da sua viagem.
+        </p>
+        <center>
+          <table
+            class="airport-grid"
+            role="presentation"
+            align="center"
+            style="margin: 8px auto 22px"
+          >
+            <tr>
+              <td>
+                <span class="airport">Guarulhos (GRU)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+              <td>
+                <span class="airport">Viracopos (VCP)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+              <td>
+                <span class="airport">Curitiba (CWB)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="airport">Recife (REC)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+              <td>
+                <span class="airport">Porto Alegre (POA)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+              <td>
+                <span class="airport">Florianópolis (FLN)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="airport">João Pessoa (JPA)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+              <td>
+                <span class="airport">Londrina (LDB)</span
+                ><span class="store">- [loja-conveniada]</span>
+              </td>
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+        </center>
+        <p>
+          <strong>Importante:</strong> depois de retirar sua TAG, leia o QR Code
+          no verso e registre as informações solicitadas antes do embarque.
+        </p>
+        <p>
+          Dúvidas? Estamos disponíveis 24 horas: {{support_phone}}<br />contato@exactbag.com.br
+        </p>
+        <p>Boa viagem!<br /><strong>Equipe ExactBag</strong></p>
+      </div>
+      <div class="footer">
+        ExactBag - Identificação, prevenção e proteção da sua bagagem
+      </div>
     </div>
-    <div class="footer">ExactBag - Identificação, prevenção e proteção da sua bagagem</div>
-  </div>
-</body>
+  </body>
 </html>

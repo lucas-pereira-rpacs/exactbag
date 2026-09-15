@@ -4,8 +4,8 @@
  * Deduplicação: marca returnReminderSentAt na NativeRegistration para não reenviar.
  */
 
-const { prisma } = require('../config');
-const nativeNotificationService = require('./nativeNotificationService');
+const { prisma } = require("../config");
+const nativeNotificationService = require("./nativeNotificationService");
 
 class ReturnFlightScheduler {
   constructor() {
@@ -16,10 +16,15 @@ class ReturnFlightScheduler {
    * Executa o ciclo: busca registros com returnDate = amanhã e envia lembretes
    */
   async run() {
-    if (this._isRunning) { console.log('[ReturnFlightScheduler] Ciclo já em execução, pulando'); return; }
+    if (this._isRunning) {
+      console.log("[ReturnFlightScheduler] Ciclo já em execução, pulando");
+      return;
+    }
     this._isRunning = true;
     try {
-      console.log('[ReturnFlightScheduler] Iniciando ciclo de lembrete de volta...');
+      console.log(
+        "[ReturnFlightScheduler] Iniciando ciclo de lembrete de volta...",
+      );
 
       // Calcula "amanhã" no fuso de Brasília (UTC-3)
       const now = new Date();
@@ -28,27 +33,50 @@ class ReturnFlightScheduler {
 
       const tomorrow = new Date(brasiliaTime);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStart = new Date(Date.UTC(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth(), tomorrow.getUTCDate(), 0, 0, 0));
-      const tomorrowEnd = new Date(Date.UTC(tomorrow.getUTCFullYear(), tomorrow.getUTCMonth(), tomorrow.getUTCDate(), 23, 59, 59, 999));
+      const tomorrowStart = new Date(
+        Date.UTC(
+          tomorrow.getUTCFullYear(),
+          tomorrow.getUTCMonth(),
+          tomorrow.getUTCDate(),
+          0,
+          0,
+          0,
+        ),
+      );
+      const tomorrowEnd = new Date(
+        Date.UTC(
+          tomorrow.getUTCFullYear(),
+          tomorrow.getUTCMonth(),
+          tomorrow.getUTCDate(),
+          23,
+          59,
+          59,
+          999,
+        ),
+      );
 
       // Busca registros nativos com voo de volta amanhã que NÃO receberam lembrete ainda
       const registrations = await prisma.nativeRegistration.findMany({
         where: {
           returnDate: {
             gte: tomorrowStart,
-            lte: tomorrowEnd
+            lte: tomorrowEnd,
           },
           returnReminderSentAt: null,
-          status: { in: ['cpv_generated', 'sent', 'completed'] }
-        }
+          status: { in: ["cpv_generated", "sent", "completed"] },
+        },
       });
 
       if (registrations.length === 0) {
-        console.log('[ReturnFlightScheduler] Nenhum voo de volta amanhã para notificar');
+        console.log(
+          "[ReturnFlightScheduler] Nenhum voo de volta amanhã para notificar",
+        );
         return;
       }
 
-      console.log(`[ReturnFlightScheduler] ${registrations.length} passageiro(s) com volta amanhã`);
+      console.log(
+        `[ReturnFlightScheduler] ${registrations.length} passageiro(s) com volta amanhã`,
+      );
 
       let sent = 0;
       for (const reg of registrations) {
@@ -58,39 +86,57 @@ class ReturnFlightScheduler {
 
           // Envia e-mail
           try {
-            await nativeNotificationService.sendReturnReminderByEmail(reg, registrationLink);
+            await nativeNotificationService.sendReturnReminderByEmail(
+              reg,
+              registrationLink,
+            );
           } catch (err) {
-            console.error(`[ReturnFlightScheduler] Erro e-mail para ${reg.passengerEmail}:`, err.message);
+            console.error(
+              `[ReturnFlightScheduler] Erro e-mail para ${reg.passengerEmail}:`,
+              err.message,
+            );
           }
 
           // Envia WhatsApp
           try {
-            await nativeNotificationService.sendReturnReminderByWhatsApp(reg, registrationLink);
+            await nativeNotificationService.sendReturnReminderByWhatsApp(
+              reg,
+              registrationLink,
+            );
           } catch (err) {
-            console.error(`[ReturnFlightScheduler] Erro WhatsApp para ${reg.passengerPhone}:`, err);
+            console.error(
+              `[ReturnFlightScheduler] Erro WhatsApp para ${reg.passengerPhone}:`,
+              err,
+            );
           }
 
           // Marca como enviado (deduplicação)
           await prisma.nativeRegistration.update({
             where: { id: reg.id },
-            data: { returnReminderSentAt: new Date() }
+            data: { returnReminderSentAt: new Date() },
           });
 
           sent++;
-          console.log(`[ReturnFlightScheduler] ✓ Lembrete de volta enviado para ${reg.passengerName} <${reg.passengerEmail}>`);
+          console.log(
+            `[ReturnFlightScheduler] ✓ Lembrete de volta enviado para ${reg.passengerName} <${reg.passengerEmail}>`,
+          );
         } catch (err) {
-          console.error(`[ReturnFlightScheduler] Erro ao notificar ${reg.passengerEmail}:`, err.message);
+          console.error(
+            `[ReturnFlightScheduler] Erro ao notificar ${reg.passengerEmail}:`,
+            err.message,
+          );
         }
       }
 
-      console.log(`[ReturnFlightScheduler] Ciclo concluído: ${sent}/${registrations.length} notificações enviadas`);
+      console.log(
+        `[ReturnFlightScheduler] Ciclo concluído: ${sent}/${registrations.length} notificações enviadas`,
+      );
     } catch (error) {
-      console.error('[ReturnFlightScheduler] Erro no ciclo:', error.message);
+      console.error("[ReturnFlightScheduler] Erro no ciclo:", error.message);
     } finally {
       this._isRunning = false;
     }
   }
-
 }
 
 module.exports = new ReturnFlightScheduler();

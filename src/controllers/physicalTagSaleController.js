@@ -2,20 +2,20 @@
 // Processa vendas de tags físicas (Exact Bag Essencial / Exact Bag Cover).
 // Registra o pedido e envia a confirmação de reserva por e-mail e WhatsApp.
 
-const crypto = require('crypto');
-const { prisma } = require('../config');
-const emailGateway = require('../gateways/emailGateway');
-const whatsappGateway = require('../gateways/whatsappGateway');
+const crypto = require("crypto");
+const { prisma } = require("../config");
+const emailGateway = require("../gateways/emailGateway");
+const whatsappGateway = require("../gateways/whatsappGateway");
 
 const PRODUCTS = {
-  'exactbag-essencial': {
-    label: 'Tag Exact Bag Essencial',
-    insuranceLocked: false
+  "exactbag-essencial": {
+    label: "Tag Exact Bag Essencial",
+    insuranceLocked: false,
   },
-  'exactbag-cover': {
-    label: 'Tag Exact Bag Cover',
-    insuranceLocked: true  // seguro sempre incluso
-  }
+  "exactbag-cover": {
+    label: "Tag Exact Bag Cover",
+    insuranceLocked: true, // seguro sempre incluso
+  },
 };
 
 const PHYSICAL_TAG_RECEIPT_WINDOW_MS = 48 * 60 * 60 * 1000;
@@ -27,7 +27,7 @@ function getErrorDetails(error) {
   const config = error.config;
   let requestBody = config?.data;
 
-  if (typeof requestBody === 'string') {
+  if (typeof requestBody === "string") {
     try {
       requestBody = JSON.parse(requestBody);
     } catch (_parseError) {
@@ -36,7 +36,9 @@ function getErrorDetails(error) {
   }
 
   const template = requestBody?.template;
-  const components = Array.isArray(template?.components) ? template.components : [];
+  const components = Array.isArray(template?.components)
+    ? template.components
+    : [];
 
   return {
     name: error.name,
@@ -44,27 +46,32 @@ function getErrorDetails(error) {
     code: error.code,
     status: response?.status ?? error.status,
     providerResponse: response?.data,
-    providerTraceId: response?.headers?.['x-fb-trace-id'] || response?.headers?.['x-fb-rev'],
+    providerTraceId:
+      response?.headers?.["x-fb-trace-id"] || response?.headers?.["x-fb-rev"],
     request: {
       method: config?.method,
       baseURL: config?.baseURL,
-      url: config?.url
+      url: config?.url,
     },
-    requestPayload: template ? {
-      messagingProduct: requestBody.messaging_product,
-      type: requestBody.type,
-      template: {
-        name: template.name,
-        language: template.language,
-        components: components.map((component) => ({
-          type: component.type,
-          parameterCount: Array.isArray(component.parameters) ? component.parameters.length : 0,
-          parameterTypes: Array.isArray(component.parameters)
-            ? component.parameters.map((parameter) => parameter.type)
-            : []
-        }))
-      }
-    } : undefined
+    requestPayload: template
+      ? {
+          messagingProduct: requestBody.messaging_product,
+          type: requestBody.type,
+          template: {
+            name: template.name,
+            language: template.language,
+            components: components.map((component) => ({
+              type: component.type,
+              parameterCount: Array.isArray(component.parameters)
+                ? component.parameters.length
+                : 0,
+              parameterTypes: Array.isArray(component.parameters)
+                ? component.parameters.map((parameter) => parameter.type)
+                : [],
+            })),
+          },
+        }
+      : undefined,
   };
 }
 
@@ -100,42 +107,63 @@ exports.handlePhysicalTagSale = async (req, res) => {
   try {
     const body = req.body;
 
-    const product = (body.product || '').trim();
-    const customerName = (body.customerName || '').trim();
-    const customerEmail = (body.customerEmail || '').trim().toLowerCase();
-    const customerPhone = (body.customerPhone || '').trim();
-    const outboundDateInput = (body.outboundDate || '').trim();
-    const quantity = Math.max(1, Math.min(50, parseInt(body.quantity, 10) || 1));
-    const notes = (body.notes || '').trim() || null;
-    const partnerId = (body.partnerId || '').trim() || null;
+    const product = (body.product || "").trim();
+    const customerName = (body.customerName || "").trim();
+    const customerEmail = (body.customerEmail || "").trim().toLowerCase();
+    const customerPhone = (body.customerPhone || "").trim();
+    const outboundDateInput = (body.outboundDate || "").trim();
+    const quantity = Math.max(
+      1,
+      Math.min(50, parseInt(body.quantity, 10) || 1),
+    );
+    const notes = (body.notes || "").trim() || null;
+    const partnerId = (body.partnerId || "").trim() || null;
 
     if (!PRODUCTS[product]) {
-      return res.status(400).json({ success: false, error: 'Produto inválido. Selecione um produto válido.' });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "Produto inválido. Selecione um produto válido.",
+        });
     }
     if (!customerName) {
-      return res.status(400).json({ success: false, error: 'Nome do cliente é obrigatório.' });
+      return res
+        .status(400)
+        .json({ success: false, error: "Nome do cliente é obrigatório." });
     }
     if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
-      return res.status(400).json({ success: false, error: 'E-mail inválido.' });
+      return res
+        .status(400)
+        .json({ success: false, error: "E-mail inválido." });
     }
-    if (customerPhone.replace(/\D/g, '').length < 10) {
-      return res.status(400).json({ success: false, error: 'Telefone inválido.' });
+    if (customerPhone.replace(/\D/g, "").length < 10) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Telefone inválido." });
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(outboundDateInput)) {
-      return res.status(400).json({ success: false, error: 'Data de ida é obrigatória.' });
+      return res
+        .status(400)
+        .json({ success: false, error: "Data de ida é obrigatória." });
     }
     const outboundDate = new Date(`${outboundDateInput}T12:00:00.000Z`);
-    if (Number.isNaN(outboundDate.getTime()) || outboundDate.toISOString().slice(0, 10) !== outboundDateInput) {
-      return res.status(400).json({ success: false, error: 'Data de ida inválida.' });
+    if (
+      Number.isNaN(outboundDate.getTime()) ||
+      outboundDate.toISOString().slice(0, 10) !== outboundDateInput
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Data de ida inválida." });
     }
 
     const productInfo = PRODUCTS[product];
     const hasInsurance = productInfo.insuranceLocked
       ? true
-      : (body.hasInsurance === true || body.hasInsurance === 'true');
+      : body.hasInsurance === true || body.hasInsurance === "true";
 
     const orderNumber = await getNextOrderNumber();
-    const id = crypto.randomBytes(10).toString('hex');
+    const id = crypto.randomBytes(10).toString("hex");
 
     if (prisma) {
       await prisma.$executeRaw`
@@ -150,23 +178,26 @@ exports.handlePhysicalTagSale = async (req, res) => {
       `;
     }
 
-    const isWithinReceiptWindow = outboundDate.getTime() - Date.now() <= PHYSICAL_TAG_RECEIPT_WINDOW_MS;
+    const isWithinReceiptWindow =
+      outboundDate.getTime() - Date.now() <= PHYSICAL_TAG_RECEIPT_WINDOW_MS;
     let notificationStatus;
     let responseMessage;
 
     if (isWithinReceiptWindow) {
       let receiptSent = false;
       try {
-        receiptSent = Boolean(await emailGateway.sendPhysicalTagReceiptEmail({
-          name: customerName,
-          email: customerEmail,
-          product: productInfo.label,
-          quantity,
-          orderNumber,
-          outboundDate: outboundDateInput,
-          hasInsurance,
-          notes
-        }));
+        receiptSent = Boolean(
+          await emailGateway.sendPhysicalTagReceiptEmail({
+            name: customerName,
+            email: customerEmail,
+            product: productInfo.label,
+            quantity,
+            orderNumber,
+            outboundDate: outboundDateInput,
+            hasInsurance,
+            notes,
+          }),
+        );
         if (receiptSent && prisma) {
           await prisma.$executeRaw`
             UPDATE "PhysicalTagOrder"
@@ -175,35 +206,52 @@ exports.handlePhysicalTagSale = async (req, res) => {
           `;
         }
       } catch (error) {
-        console.error('[PhysicalTagSale] Falha no envio imediato do comprovante:', {
-          orderNumber,
-          product,
-          customer: {
-            namePresent: Boolean(customerName),
-            emailPresent: Boolean(customerEmail),
-            phonePresent: Boolean(customerPhone)
+        console.error(
+          "[PhysicalTagSale] Falha no envio imediato do comprovante:",
+          {
+            orderNumber,
+            product,
+            customer: {
+              namePresent: Boolean(customerName),
+              emailPresent: Boolean(customerEmail),
+              phonePresent: Boolean(customerPhone),
+            },
+            errorDetails: JSON.stringify(getErrorDetails(error)),
           },
-          errorDetails: JSON.stringify(getErrorDetails(error))
-        });
+        );
       }
-      notificationStatus = { receipt: receiptSent, email: receiptSent, whatsapp: false };
+      notificationStatus = {
+        receipt: receiptSent,
+        email: receiptSent,
+        whatsapp: false,
+      };
       responseMessage = receiptSent
         ? `Pedido #${orderNumber} registrado e comprovante enviado imediatamente por e-mail.`
         : `Pedido #${orderNumber} registrado, mas o envio imediato do comprovante falhou.`;
     } else {
-      const customerData = { name: customerName, email: customerEmail, phone: customerPhone };
+      const customerData = {
+        name: customerName,
+        email: customerEmail,
+        phone: customerPhone,
+      };
       const reservationData = {
         outboundDate: outboundDateInput,
         roundTrip: false,
-        reservationType: 'physical-tag'
+        reservationType: "physical-tag",
       };
       const notifications = await Promise.allSettled([
-        emailGateway.sendPurchaseConfirmationTemplateEmail(customerData, reservationData),
-        whatsappGateway.sendReservationConfirmationMessage(customerData, reservationData)
+        emailGateway.sendPurchaseConfirmationTemplateEmail(
+          customerData,
+          reservationData,
+        ),
+        whatsappGateway.sendReservationConfirmationMessage(
+          customerData,
+          reservationData,
+        ),
       ]);
       notifications.forEach((result, index) => {
-        if (result.status === 'rejected') {
-          const channel = index === 0 ? 'e-mail' : 'WhatsApp';
+        if (result.status === "rejected") {
+          const channel = index === 0 ? "e-mail" : "WhatsApp";
           console.error(`[PhysicalTagSale] Falha no ${channel} de reserva:`, {
             orderNumber,
             id,
@@ -212,35 +260,45 @@ exports.handlePhysicalTagSale = async (req, res) => {
             customer: {
               namePresent: Boolean(customerData.name),
               emailPresent: Boolean(customerData.email),
-              phonePresent: Boolean(customerData.phone)
+              phonePresent: Boolean(customerData.phone),
             },
             reservation: reservationData,
-            errorDetails: JSON.stringify(getErrorDetails(result.reason))
+            errorDetails: JSON.stringify(getErrorDetails(result.reason)),
           });
         }
       });
       notificationStatus = {
         receipt: false,
-        email: notifications[0].status === 'fulfilled' && Boolean(notifications[0].value),
-        whatsapp: notifications[1].status === 'fulfilled' && Boolean(notifications[1].value)
+        email:
+          notifications[0].status === "fulfilled" &&
+          Boolean(notifications[0].value),
+        whatsapp:
+          notifications[1].status === "fulfilled" &&
+          Boolean(notifications[1].value),
       };
-      responseMessage = notificationStatus.email && notificationStatus.whatsapp
-        ? `Pedido #${orderNumber} registrado e confirmação de reserva enviada por e-mail e WhatsApp.`
-        : `Pedido #${orderNumber} registrado, mas um ou mais canais de confirmação falharam.`;
+      responseMessage =
+        notificationStatus.email && notificationStatus.whatsapp
+          ? `Pedido #${orderNumber} registrado e confirmação de reserva enviada por e-mail e WhatsApp.`
+          : `Pedido #${orderNumber} registrado, mas um ou mais canais de confirmação falharam.`;
     }
 
     console.info(
-      `[PhysicalTagSale] Pedido #${orderNumber} criado — operator=${req.dashboardUser?.email} product=${product} qty=${quantity} partner=${partnerId}`
+      `[PhysicalTagSale] Pedido #${orderNumber} criado — operator=${req.dashboardUser?.email} product=${product} qty=${quantity} partner=${partnerId}`,
     );
 
     return res.status(201).json({
       success: true,
       orderNumber,
       notifications: notificationStatus,
-      message: responseMessage
+      message: responseMessage,
     });
   } catch (err) {
-    console.error('[PhysicalTagSale] Erro:', err);
-    return res.status(500).json({ success: false, error: 'Erro interno. Tente novamente em instantes.' });
+    console.error("[PhysicalTagSale] Erro:", err);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        error: "Erro interno. Tente novamente em instantes.",
+      });
   }
 };
