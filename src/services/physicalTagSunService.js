@@ -108,7 +108,16 @@ const validateSun = async (value) => {
   const first = starting ? BigInt(normalizeSun(starting).numeric) : null;
   const last = ending ? BigInt(normalizeSun(ending).numeric) : null;
 
-  if (first === null || last === null || number < first || number > last) {
+  // SUNs must preserve the configured identifier width. A numeric range such
+  // as 9110001 -> 91208408 would otherwise accept shorter values simply
+  // because they are numerically between the endpoints.
+  if (
+    first === null ||
+    last === null ||
+    normalized.numeric.length !== normalizeSun(ending).numeric.length ||
+    number < first ||
+    number > last
+  ) {
     return { valid: false, code: 'SUN_INVALID', insured: normalized.insured, value: normalized.value, error: SUN_ERROR_MESSAGES.invalid };
   }
 
