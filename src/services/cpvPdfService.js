@@ -617,7 +617,7 @@ const generateCpvHtmlForPhysicalTag = async (registration) => {
       <p class="intro-text">Caso o passageiro tenha adquirido o combo TAG ExactBag Cover, declara estar ciente de que o seguro incluso possui caráter estritamente compensatório e não substitui qualquer obrigação da companhia aérea ou de terceiros. A cobertura do seguro somente será válida mediante o cumprimento integral das regras de utilização, registro da TAG e acionamento, conforme descrito em: Termos de Uso ExactBag Cover.</p>
       <p class="intro-text">Os dados informados são protegidos conforme a LGPD e utilizados exclusivamente para a prestação do serviço e comunicações relacionadas à bagagem, não sendo compartilhados com terceiros, salvo quando necessário.</p>
       <p class="intro-text">Ao enviar o formulário, o passageiro declara estar de acordo com estes termos e confirma a veracidade das informações.</p>
-      <p class="intro-text">Boa viagem com a ExactBag! ✈️👜</p>
+      <p class="intro-text">Boa viagem com a ExactBag! &#x2708;&#xFE0F;&#x1F45C;</p>
 
       <div class="field-group">
         <div class="field-label">Termos e Condições</div>
@@ -780,7 +780,7 @@ const generateCpvHtmlForPhysicalTag = async (registration) => {
       <p class="intro-text">If the passenger has purchased the ExactBag Cover TAG bundle, they acknowledge that the included insurance is strictly compensatory in nature and does not replace any obligation of the airline or third parties. Insurance coverage will only be valid upon full compliance with the rules for TAG usage, registration, and claim activation, as described in: ExactBag Cover Terms of Use.</p>
       <p class="intro-text">The data provided is protected in accordance with the LGPD (Brazilian General Data Protection Law) and used exclusively for the provision of the service and communications related to baggage, and will not be shared with third parties, except when necessary.</p>
       <p class="intro-text">By submitting the form, the passenger declares to agree to these terms and confirms the veracity of the information.</p>
-      <p class="intro-text">Have a good trip with ExactBag! ✈️👜</p>
+      <p class="intro-text">Have a good trip with ExactBag! &#x2708;&#xFE0F;&#x1F45C;</p>
 
       <div class="field-group">
         <div class="field-label">Terms and Conditions</div>
