@@ -217,7 +217,6 @@ const PRODUCTS = [
       ],
     },
   },
-  /*
   {
     code: '5383660',
     name: 'TAG EXACTBAG ESSENCIAL X2 - IDENTIFICAÇÃO E ASSISTÊNCIA PARA SUA BAGAGEM',
@@ -305,7 +304,6 @@ const PRODUCTS = [
       ]
     }
   }
-  */
 ];
 
 module.exports = {
