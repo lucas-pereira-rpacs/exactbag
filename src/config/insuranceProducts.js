@@ -26,15 +26,15 @@ const EXACTBAG_PROVIDER = {
 };
 
 const PHYSICAL_TAG_PRODUCT_CODES = ["5383660", "5383661", "5383662", "5383663"];
-const PHYSICAL_TAG_INSURED_PRODUCT_CODES = ["5383662", "5383663"];
+const PHYSICAL_TAG_INSURED_PRODUCT_CODES = ["5383661", "5383663"];
 
 const PHYSICAL_TAG_INSURANCE_COVERAGES = [
   {
-    code: '2898',
-    name: 'assistencia de bagagem com seguro',
-    minPrice: 'R$ 2.500,00',
-    maxPrice: 'R$ 2.500,00'
-  }
+    code: "2898",
+    name: "assistencia de bagagem com seguro",
+    minPrice: "R$ 2.500,00",
+    maxPrice: "R$ 2.500,00",
+  },
 ];
 
 const COMPLETE_PROTECTION_ONE_BAG_PRODUCT = {
@@ -46,7 +46,7 @@ const COMPLETE_PROTECTION_ONE_BAG_PRODUCT = {
     "Problemas com bagagem podem acontecer em qualquer viagem: extravios, atrasos, trocas, danos ou violações, " +
     "tanto em viagens nacionais quanto internacionais! " +
     "Com a Assistência de Bagagem ExactBag, o passageiro viaja com uma camada extra de proteção e " +
-    "conta com uma equipe especializada para ajudar na resolução de ocorrências." + 
+    "conta com uma equipe especializada para ajudar na resolução de ocorrências." +
     "Seguro garantido pela Now Seguros - SUSEP Processo SUSEP 15414.646978/ 2026-75",
   image:
     "https://app.exactbag.com.br/native/assets/produto-protecao-completa.png",
@@ -100,7 +100,7 @@ const COMPLETE_PROTECTION_TWO_BAGS_PRODUCT = {
     "Problemas com bagagem podem acontecer em qualquer viagem: extravios, atrasos, trocas, danos ou violações, " +
     "tanto em viagens nacionais quanto internacionais! " +
     "Com a Assistência de Bagagem ExactBag, o passageiro viaja com uma camada extra de proteção e " +
-    "conta com uma equipe especializada para ajudar na resolução de ocorrências." + 
+    "conta com uma equipe especializada para ajudar na resolução de ocorrências." +
     "Seguro garantido pela Now Seguros - SUSEP Processo SUSEP 15414.646978/ 2026-75",
   image:
     "https://app.exactbag.com.br/native/assets/produto-protecao-completa-x2.png",
@@ -233,9 +233,9 @@ const ESSENTIAL_PROTECTION_TWO_BAGS_PRODUCT = {
 };
 
 const TAG_ESSENTIAL_ONE_TAG_PRODUCT = {
-  code: '5383660',
-  name: 'TAG EXACTBAG ESSENCIAL x1 BAGAGEM - IDENTIFICAÇÃO E ASSISTÊNCIA PARA SUA BAGAGEM',
-  shortName: 'Tag ExactBag Essencial x1 Bagagem',
+  code: "5383660",
+  name: "TAG EXACTBAG ESSENCIAL x1 BAGAGEM - IDENTIFICAÇÃO E ASSISTÊNCIA PARA SUA BAGAGEM",
+  shortName: "Tag ExactBag Essencial x1 Bagagem",
   description: `
   Identificação e assistência para sua bagagem \n
   A TAG ExactBag Essencial oferece identificação física, registro digital com fotos e informações da bagagem e suporte humano especializado 24/7, em viagens nacionais e internacionais. O passageiro retira a TAG nas lojas conveniadas da Protec Bag, ativa o serviço pelo QR Code e registra sua bagagem antes de cada embarque ou despacho.\n
@@ -243,23 +243,24 @@ const TAG_ESSENTIAL_ONE_TAG_PRODUCT = {
   Retirada: Guarulhos (GRU), Viracopos (VCP), Curitiba (CWB), Recife (REC), Porto Alegre (POA), Florianópolis (FLN), João Pessoa (JPA), Londrina (LDB), Rio de Janeiro (SDU) e Rio de Janeiro (GIG). \n
   Vigência: até 12 meses | Utilização: ilimitada | Atendimento: Brasil e exterior | Seguro ou indenização por extravio: não incluso.
   `,
-  image: 'https://app.exactbag.com.br/native/assets/tag-exactbag-essencial-x1.png',
+  image:
+    "https://app.exactbag.com.br/native/assets/tag-exactbag-essencial-x1.png",
   salePrice: 79.9,
   netPrice: 55.93,
-  currency: 'BRL',
+  currency: "BRL",
   bagCount: 1,
   coverages: [],
   usagePolicy: [
-    'Uma TAG de identificação física exclusiva ExactBag.',
-    'Registro digital da bagagem com fotos e informações.',
-    'Identificação da bagagem antes do embarque.',
-    'Suporte humano especializado 24 horas por dia, 7 dias por semana.',
-    'Acompanhamento junto às companhias aéreas.',
-    'Auxílio na localização e recuperação da bagagem.',
-    'Retirada da TAG nas lojas conveniadas, consulte a descrição.',
-    'Após retirar a TAG, leia o QR Code no verso e registre as informações solicitadas.',
-    'Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.',
-    'Seguro extravio: não incluso.'
+    "Uma TAG de identificação física exclusiva ExactBag.",
+    "Registro digital da bagagem com fotos e informações.",
+    "Identificação da bagagem antes do embarque.",
+    "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+    "Acompanhamento junto às companhias aéreas.",
+    "Auxílio na localização e recuperação da bagagem.",
+    "Retirada da TAG nas lojas conveniadas, consulte a descrição.",
+    "Após retirar a TAG, leia o QR Code no verso e registre as informações solicitadas.",
+    "Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.",
+    "Seguro extravio: não incluso.",
   ],
   cancellationPolicy: {
     refundable: true,
@@ -267,41 +268,42 @@ const TAG_ESSENTIAL_ONE_TAG_PRODUCT = {
     immediateFine: false,
     penalties: [
       {
-        name: 'Não reembolsável dentro de 48 horas da utilização',
+        name: "Não reembolsável dentro de 48 horas da utilização",
         description:
-          'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
-        price: { currency: 'BRL', amount: 0 }
-      }
-    ]
-  }
+          "O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.",
+        price: { currency: "BRL", amount: 0 },
+      },
+    ],
+  },
 };
 
 const TAG_ESSENTIAL_TWO_TAGS_PRODUCT = {
-  code: '5383662',
-  name: 'TAG EXACTBAG ESSENCIAL X2 - IDENTIFICAÇÃO E ASSISTÊNCIA PARA SUA BAGAGEM',
-  shortName: 'Tag ExactBag Essencial X2',
+  code: "5383662",
+  name: "TAG EXACTBAG ESSENCIAL X2 - IDENTIFICAÇÃO E ASSISTÊNCIA PARA SUA BAGAGEM",
+  shortName: "Tag ExactBag Essencial X2",
   description: `Identificação e assistência para suas bagagens \n
   O ExactBag Essencial oferece 2 TAGs para identificação física das bagagens, registro digital com fotos e informações de cada bagagem e suporte humano especializado 24/7, em viagens nacionais e internacionais. O passageiro retira as TAGs nas lojas conveniadas da Protec Bag, ativa o serviço pelo QR Code e registra suas bagagens antes de cada embarque ou despacho.\n
   Em caso de atraso, extravio ou outros problemas, a equipe ExactBag acompanha ativamente o processo junto à companhia aérea, cruzando informações para auxiliar na localização e recuperação das bagagens. \n
   Retirada: Guarulhos (GRU), Viracopos (VCP), Curitiba (CWB), Recife (REC), Porto Alegre (POA), Florianópolis (FLN), João Pessoa (JPA), Londrina (LDB), Rio de Janeiro (SDU) e Rio de Janeiro (GIG). \n
   Vigência: até 12 meses | Utilização: ilimitada | Quantidade: 2 TAGs | Atendimento: Brasil e exterior | Seguro ou indenização por extravio: não incluso.`,
-  image: 'https://app.exactbag.com.br/native/assets/tag-exactbag-essencial-x2.png',
+  image:
+    "https://app.exactbag.com.br/native/assets/tag-exactbag-essencial-x2.png",
   salePrice: 159.8,
   netPrice: 111.86,
-  currency: 'BRL',
+  currency: "BRL",
   bagCount: 2,
-  coverages: PHYSICAL_TAG_INSURANCE_COVERAGES,
+  coverages: [],
   usagePolicy: [
-    'Duas TAGs de identificação física exclusivas ExactBag.',
-    'Registro digital das bagagens com fotos e informações.',
-    'Identificação das bagagens antes do embarque.',
-    'Suporte humano especializado 24 horas por dia, 7 dias por semana.',
-    'Acompanhamento junto às companhias aéreas.',
-    'Auxílio na localização e recuperação das bagagens.',
-    'Retirada da TAG nas lojas conveniadas, consulte a descrição.',
-    'Após retirar as TAGs, leia o QR Code no verso e registre as informações solicitadas.',
-    'Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.',
-    'Seguro extravio de R$ 2.500,00 em caso de não localização, conforme as condições da cobertura contratada.'
+    "Duas TAGs de identificação física exclusivas ExactBag.",
+    "Registro digital das bagagens com fotos e informações.",
+    "Identificação das bagagens antes do embarque.",
+    "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+    "Acompanhamento junto às companhias aéreas.",
+    "Auxílio na localização e recuperação das bagagens.",
+    "Retirada da TAG nas lojas conveniadas, consulte a descrição.",
+    "Após retirar as TAGs, leia o QR Code no verso e registre as informações solicitadas.",
+    "Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.",
+    "Seguro extravio de R$ 2.500,00 em caso de não localização, conforme as condições da cobertura contratada.",
   ],
   cancellationPolicy: {
     refundable: true,
@@ -309,19 +311,19 @@ const TAG_ESSENTIAL_TWO_TAGS_PRODUCT = {
     immediateFine: false,
     penalties: [
       {
-        name: 'Não reembolsável dentro de 48 horas da utilização',
+        name: "Não reembolsável dentro de 48 horas da utilização",
         description:
-          'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
-        price: { currency: 'BRL', amount: 0 }
-      }
-    ]
-  }
+          "O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.",
+        price: { currency: "BRL", amount: 0 },
+      },
+    ],
+  },
 };
 
 const TAG_COVER_ONE_TAG_PRODUCT = {
-  code: '5383661',
-  name: 'TAG EXACTBAG COVER X1 - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500',
-  shortName: 'Tag ExactBag Cover X1',
+  code: "5383661",
+  name: "TAG EXACTBAG COVER X1 - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500",
+  shortName: "Tag ExactBag Cover X1",
   description: `
   Proteção completa com seguro extravio de R$ 2.500 \n 
   A TAG ExactBag Cover combina identificação física, registro digital com fotos e informações da bagagem e suporte humano especializado 24/7, em viagens nacionais e internacionais. O passageiro retira a TAG nas lojas conveniadas da Protec Bag, ativa o serviço pelo QR Code e registra sua bagagem antes de cada embarque ou despacho. \n
@@ -330,30 +332,23 @@ const TAG_COVER_ONE_TAG_PRODUCT = {
   Retirada: Guarulhos (GRU), Viracopos (VCP), Curitiba (CWB), Recife (REC), Porto Alegre (POA), Florianópolis (FLN), João Pessoa (JPA), Londrina (LDB), Rio de Janeiro (SDU) e Rio de Janeiro (GIG). \n
   Vigência: até 12 meses | Utilização: ilimitada | Atendimento: Brasil e exterior | Cobertura: Seguro extravio de R$ 2.500,00*.\n
   Conforme condições da cobertura contratada. \n Seguro garantido pela Now Seguros - SUSEP Processo SUSEP 15414.646978/ 2026-75`,
-  image: 'https://app.exactbag.com.br/native/assets/tag-exactbag-cover-x1.png',
+  image: "https://app.exactbag.com.br/native/assets/tag-exactbag-cover-x1.png",
   salePrice: 99.9,
   netPrice: 69.93,
-  currency: 'BRL',
+  currency: "BRL",
   bagCount: 1,
-  coverages: [
-    {
-      code: '2898',
-      name: 'assistencia de bagagem com seguro',
-      minPrice: 'R$ 2.500,00',
-      maxPrice: 'R$ 2.500,00'
-    }
-  ],
+  coverages: [PHYSICAL_TAG_INSURANCE_COVERAGES],
   usagePolicy: [
-    'Uma TAG de identificação física exclusiva ExactBag.',
-    'Registro digital da bagagem com fotos e informações.',
-    'Identificação da bagagem antes do embarque.',
-    'Suporte humano especializado 24 horas por dia, 7 dias por semana.',
-    'Acompanhamento junto às companhias aéreas.',
-    'Auxílio na localização e recuperação da bagagem.',
-    'Seguro extravio de R$ 2.500,00 em caso de não localização, conforme as condições da cobertura contratada.',
-    'Retirada da TAG nas lojas conveniadas, consulte a descrição.',
-    'Após retirar a TAG, leia o QR Code no verso e registre as informações solicitadas.',
-    'Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.'
+    "Uma TAG de identificação física exclusiva ExactBag.",
+    "Registro digital da bagagem com fotos e informações.",
+    "Identificação da bagagem antes do embarque.",
+    "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+    "Acompanhamento junto às companhias aéreas.",
+    "Auxílio na localização e recuperação da bagagem.",
+    "Seguro extravio de R$ 2.500,00 em caso de não localização, conforme as condições da cobertura contratada.",
+    "Retirada da TAG nas lojas conveniadas, consulte a descrição.",
+    "Após retirar a TAG, leia o QR Code no verso e registre as informações solicitadas.",
+    "Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.",
   ],
   cancellationPolicy: {
     refundable: true,
@@ -361,19 +356,19 @@ const TAG_COVER_ONE_TAG_PRODUCT = {
     immediateFine: false,
     penalties: [
       {
-        name: 'Não reembolsável dentro de 48 horas da utilização',
+        name: "Não reembolsável dentro de 48 horas da utilização",
         description:
-          'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
-        price: { currency: 'BRL', amount: 0 }
-      }
-    ]
-  }
+          "O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.",
+        price: { currency: "BRL", amount: 0 },
+      },
+    ],
+  },
 };
 
 const TAG_COVER_TWO_TAGS_PRODUCT = {
-  code: '5383663',
-  name: 'TAG EXACTBAG COVER X2 - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500',
-  shortName: 'Tag ExactBag Cover X2',
+  code: "5383663",
+  name: "TAG EXACTBAG COVER X2 - PROTEÇÃO COMPLETA COM SEGURO EXTRAVIO R$ 2.500",
+  shortName: "Tag ExactBag Cover X2",
   description: `Proteção completa com seguro extravio de R$ 2.500 \n
   O ExactBag Cover oferece 2 TAGs e combina identificação física, registro digital com fotos e informações de cada bagagem e suporte humano especializado 24/7, em viagens nacionais e internacionais. O passageiro retira as TAGs nas lojas conveniadas da Protec Bag, ativa o serviço pelo QR Code e registra suas bagagens antes de cada embarque ou despacho.\n
   Em caso de atraso, extravio ou outros problemas, a equipe ExactBag acompanha ativamente o processo junto à companhia aérea, cruzando informações para auxiliar na localização e recuperação das bagagens. \n
@@ -382,23 +377,23 @@ const TAG_COVER_TWO_TAGS_PRODUCT = {
   Vigência: até 12 meses | Utilização: ilimitada | Quantidade: 2 TAGs | Atendimento: Brasil e exterior | Cobertura: Seguro extravio de R$ 2.500,00*.\n
   *Conforme condições da cobertura contratada. \n Seguro garantido pela Now Seguros - SUSEP Processo SUSEP 15414.646978/ 2026-75.
   `,
-  image: 'https://app.exactbag.com.br/native/assets/tag-exactbag-cover-x2.png',
+  image: "https://app.exactbag.com.br/native/assets/tag-exactbag-cover-x2.png",
   salePrice: 199.8,
   netPrice: 139.86,
-  currency: 'BRL',
+  currency: "BRL",
   bagCount: 2,
-  coverages: PHYSICAL_TAG_INSURANCE_COVERAGES,
+  coverages: [PHYSICAL_TAG_INSURANCE_COVERAGES],
   usagePolicy: [
-    'Duas TAGs de identificação física exclusivas ExactBag.',
-    'Registro digital das bagagens com fotos e informações.',
-    'Identificação das bagagens antes do embarque.',
-    'Suporte humano especializado 24 horas por dia, 7 dias por semana.',
-    'Acompanhamento junto às companhias aéreas.',
-    'Auxílio na localização e recuperação das bagagens.',
-    'Seguro extravio de R$ 2.500,00 em caso de não localização, conforme as condições da cobertura contratada.',
-    'Retirada da TAG nas lojas conveniadas, consulte a descrição.',
-    'Após retirar as TAGs, leia o QR Code no verso e registre as informações solicitadas.',
-    'Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.'
+    "Duas TAGs de identificação física exclusivas ExactBag.",
+    "Registro digital das bagagens com fotos e informações.",
+    "Identificação das bagagens antes do embarque.",
+    "Suporte humano especializado 24 horas por dia, 7 dias por semana.",
+    "Acompanhamento junto às companhias aéreas.",
+    "Auxílio na localização e recuperação das bagagens.",
+    "Seguro extravio de R$ 2.500,00 em caso de não localização, conforme as condições da cobertura contratada.",
+    "Retirada da TAG nas lojas conveniadas, consulte a descrição.",
+    "Após retirar as TAGs, leia o QR Code no verso e registre as informações solicitadas.",
+    "Vigência: até 12 meses. Utilização: ilimitada durante o período de validade. Atendimento: Brasil e exterior.",
   ],
   cancellationPolicy: {
     refundable: true,
@@ -406,13 +401,13 @@ const TAG_COVER_TWO_TAGS_PRODUCT = {
     immediateFine: false,
     penalties: [
       {
-        name: 'Não reembolsável dentro de 48 horas da utilização',
+        name: "Não reembolsável dentro de 48 horas da utilização",
         description:
-          'O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.',
-        price: { currency: 'BRL', amount: 0 }
-      }
-    ]
-  }
+          "O serviço é reembolsável para cancelamentos realizados com pelo menos 48 horas de antecedência da data de utilização. Cancelamentos realizados dentro das 48 horas anteriores à utilização não são reembolsáveis.",
+        price: { currency: "BRL", amount: 0 },
+      },
+    ],
+  },
 };
 
 const PRODUCTS = [
