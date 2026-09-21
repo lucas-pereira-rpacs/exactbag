@@ -4,7 +4,10 @@ const partnerRepository = require("../repositories/partnerRepository");
 const {
   buildNativeRegistrationLink,
 } = require("./nativeRegistrationLinkService");
-const { PHYSICAL_TAG_PRODUCT_CODES } = require("../config/insuranceProducts");
+const {
+  PHYSICAL_TAG_INSURED_PRODUCT_CODES,
+  PHYSICAL_TAG_PRODUCT_CODES,
+} = require("../config/insuranceProducts");
 
 const REGISTRATION_WINDOW_MS = 48 * 60 * 60 * 1000;
 
@@ -31,9 +34,14 @@ const processPartnerSale = async (salePayload) => {
     productCode,
     isManualSale: manualSaleFlag,
   } = salePayload;
+  const normalizedProductCode = String(productCode || "");
   const isPhysicalTag = PHYSICAL_TAG_PRODUCT_CODES.includes(
-    String(productCode || ""),
+    normalizedProductCode,
   );
+  const isInsuredPhysicalTag = PHYSICAL_TAG_INSURED_PRODUCT_CODES.includes(
+    normalizedProductCode,
+  );
+  const effectiveHasInsurance = hasInsurance || isInsuredPhysicalTag;
 
   // Agenda may retry after a process restart. Resume the persisted sale instead
   // of creating a second record for the same partner business identifier.
@@ -56,7 +64,7 @@ const processPartnerSale = async (salePayload) => {
       partnerId,
       roundTrip,
       baggageQty,
-      hasInsurance,
+      hasInsurance: effectiveHasInsurance,
       expirationDate,
       outboundDate,
       returnDate,
@@ -101,7 +109,7 @@ const processPartnerSale = async (salePayload) => {
       partnerId,
       roundTrip,
       baggageQty,
-      hasInsurance,
+      hasInsurance: effectiveHasInsurance,
       outboundDate,
       returnDate,
       productCode,
