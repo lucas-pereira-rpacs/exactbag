@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pedido confirmado — ExactBag</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px 0;
+        background: #ecf0f1;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #444;
+      }
+      .container {
+        max-width: 620px;
+        margin: 0 auto;
+        background: #fff;
+      }
+      .header {
+        background: #125ae2;
+        color: #fff;
+        padding: 28px 32px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .header div {
+        margin-top: 6px;
+        font-size: 15px;
+      }
+      .body {
+        padding: 32px;
+        font-size: 16px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .confirmation {
+        background: #f0f7ff;
+        border-left: 4px solid #125ae2;
+        padding: 16px 20px;
+        margin: 22px 0;
+      }
+      .details {
+        background: #f7f7f7;
+        padding: 16px 20px;
+        margin: 22px 0;
+      }
+      .order-number {
+        color: #125ae2;
+        font-size: 24px;
+        font-weight: bold;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      a {
+        color: #125ae2;
+        text-decoration: none;
+      }
+      .footer {
+        padding: 20px 32px;
+        text-align: center;
+        color: #888;
+        font-size: 12px;
+      }
+      @media screen and (max-width: 520px) {
+        body {
+          padding: 0;
+        }
+        .body {
+          padding: 24px 20px;
+        }
+        .header {
+          padding: 24px 20px;
+        }
+        .footer {
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a
+        href="https://www.exactbag.com.br/"
+        target="_blank"
+        style="text-decoration: none"
+      >
+        <img
+          src="https://i.imgur.com/RUpSwlu.jpeg"
+          alt="ExactBag - Soluções estruturadas para identificação, suporte e proteção de bagagens"
+          width="620"
+          style="display: block; width: 100%; max-width: 620px; height: auto; border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic"
+        />
+      </a>
+      <div class="header">
+        <h1>ExactBag</h1>
+        <div>Pedido confirmado</div>
+      </div>
+      <div class="body">
+        <h2>Olá, {{name}}!</h2>
+
+        <p>Seu pedido foi registrado com sucesso.</p>
+        <div class="details">
+          <strong>Número do pedido</strong>
+          <div class="order-number">#{{order_number}}</div>
+        </div>
+        <div class="details">
+          <strong>Detalhes do pedido</strong>
+          <p><strong>Produto:</strong> {{product}}<br />
+            <strong>Quantidade:</strong> {{quantity}}x<br />
+            <strong>Seguro:</strong> {{insurance}}<br />
+            <strong>Data de ida:</strong> {{outbound_date}}</p>
+        </div>
+        <div class="details">
+          <strong>Cliente</strong>
+          <p><strong>Nome:</strong> {{name}}<br />
+            <strong>E-mail:</strong> {{email}}</p>
+        </div>
+        <div class="confirmation">
+          <strong>Apresente este e-mail</strong> ao retirar sua tag em nosso parceiro.<br />
+          Informe o número do pedido <strong>#{{order_number}}</strong> e seu nome ao atendente.
+        </div>
+        <p>
+          <strong>Precisa de ajuda?</strong><br />
+          📱
+          <a href="https://wa.me/{{support_phone_raw}}">{{support_phone}}</a>
+          (WhatsApp 24h)<br />
+          📧
+          <a href="mailto:contato@exactbag.com.br">contato@exactbag.com.br</a>
+        </p>
+        <p>Boa viagem!<br /><strong>Equipe ExactBag</strong></p>
+      </div>
+      <div class="footer">
+        ExactBag - Identificação, prevenção e proteção da sua bagagem
+      </div>
+    </div>
+  </body>
+</html>

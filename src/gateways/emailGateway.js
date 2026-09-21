@@ -3,6 +3,7 @@
 
 const { Resend } = require("resend");
 const fs = require("fs");
+const Handlebars = require("handlebars");
 const path = require("path");
 const { supportPhone, supportPhoneRaw } = require("../config");
 
@@ -71,6 +72,17 @@ try {
     "[EmailGateway] Templates HTML não encontrados, usando fallback texto:",
     err.message,
   );
+}
+
+let renderPhysicalTagReceipt = null;
+try {
+  const template = fs.readFileSync(
+    path.resolve(__dirname, "..", "..", "email_template_recibo_tag_fisica.html"),
+    "utf-8",
+  );
+  renderPhysicalTagReceipt = Handlebars.compile(template);
+} catch (err) {
+  console.warn("[EmailGateway] Receipt template unavailable, using plain text:", err.message);
 }
 
 class EmailGateway {
@@ -282,7 +294,7 @@ class EmailGateway {
   }
 
   /**
-   * Envia recibo de venda de tag física (estilo Shopify) — sem WhatsApp.
+   * Envia recibo de venda de tag física com o template HTML da marca.
    * @param {object} order - { name, email, product, quantity, orderNumber, hasInsurance, notes }
    */
   async sendPhysicalTagReceiptEmail(order) {
@@ -292,63 +304,20 @@ class EmailGateway {
       : "";
     const text = `Olá, ${order.name}! Seu pedido #${order.orderNumber} foi confirmado.\n\nProduto: ${order.product}\nQuantidade: ${order.quantity}x\nSeguro: ${ins}${outboundDate ? `\nData de ida: ${outboundDate}` : ""}\n\nApresente este e-mail ao retirar sua tag. Informe o número do pedido #${order.orderNumber} ao atendente.\n\nExactBag — contato@exactbag.com.br`;
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-      *{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f6f6f6;margin:0;padding:0}
-      .w{max-width:600px;margin:32px auto;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10)}
-      .hdr{background:#1a1a2e;padding:28px 40px;text-align:center}
-      .hdr h1{color:#fff;margin:0;font-size:22px;letter-spacing:1px;font-weight:800}
-      .hdr p{color:#94a3b8;margin:4px 0 0;font-size:13px}
-      .body{padding:36px 40px}
-      .badge{background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;padding:18px 24px;text-align:center;margin-bottom:28px}
-      .badge-lbl{font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:1px}
-      .badge-num{font-size:38px;font-weight:900;color:#15803d;margin:4px 0 0;letter-spacing:-1px}
-      p.intro{font-size:15px;color:#374151;margin:0 0 24px}
-      h2{font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #f3f4f6;padding-bottom:8px;margin:0 0 14px}
-      table{width:100%;border-collapse:collapse;margin-bottom:24px}
-      table th{text-align:left;font-size:11px;color:#9ca3af;text-transform:uppercase;padding:0 0 8px;font-weight:600}
-      table td{padding:10px 0;border-top:1px solid #f3f4f6;font-size:14px;color:#374151;vertical-align:top}
-      table td strong{color:#111827}
-      .info{background:#f9fafb;border-radius:8px;padding:16px 20px;margin-bottom:24px}
-      .info-row{display:flex;gap:32px}
-      .info-item .lbl{font-size:11px;color:#9ca3af;text-transform:uppercase;margin-bottom:2px}
-      .info-item .val{font-size:14px;color:#111827;font-weight:600}
-      .note{background:#fefce8;border:1.5px solid #fde047;border-radius:8px;padding:14px 18px;font-size:13px;color:#713f12;line-height:1.5}
-      .ftr{background:#f9fafb;padding:20px 40px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #f3f4f6}
-      .ftr strong{color:#374151}
-    </style></head><body>
-    <div class="w">
-      <div class="hdr"><h1>ExactBag</h1><p>Proteção para sua bagagem</p></div>
-      <div class="body">
-        <div class="badge">
-          <div class="badge-lbl">✅ Pedido Confirmado</div>
-          <div class="badge-num">#${order.orderNumber}</div>
-        </div>
-        <p class="intro">Olá, <strong>${escHtml(order.name)}</strong>! Seu pedido foi registrado com sucesso.</p>
-        <h2>Detalhes do Pedido</h2>
-        <table>
-          <thead><tr><th>Produto</th><th>Qtd.</th><th>Seguro</th><th>Data de ida</th></tr></thead>
-          <tbody><tr>
-            <td><strong>${escHtml(order.product)}</strong></td>
-            <td>${order.quantity}x</td>
-            <td>${escHtml(ins)}</td>
-            <td>${escHtml(outboundDate || "—")}</td>
-          </tr></tbody>
-        </table>
-        <h2>Cliente</h2>
-        <div class="info">
-          <div class="info-row">
-            <div class="info-item"><div class="lbl">Nome</div><div class="val">${escHtml(order.name)}</div></div>
-            <div class="info-item"><div class="lbl">E-mail</div><div class="val">${escHtml(order.email)}</div></div>
-          </div>
-        </div>
-        <div class="note">
-          📋 <strong>Apresente este e-mail</strong> ao retirar sua tag em nosso parceiro.<br>
-          Informe o número do pedido <strong>#${order.orderNumber}</strong> e seu nome ao atendente.
-        </div>
-      </div>
-      <div class="ftr"><strong>ExactBag</strong> — Proteção para sua bagagem<br>📱 ${replacePhonePlaceholders("{{support_phone}}")} &nbsp;|&nbsp; 📧 contato@exactbag.com.br</div>
-    </div>
-    </body></html>`;
+    const templateValues = {
+      name: order.name,
+      email: order.email,
+      product: order.product,
+      quantity: order.quantity,
+      order_number: order.orderNumber,
+      insurance: ins,
+      outbound_date: outboundDate || "\u2014",
+      support_phone_raw: supportPhoneRaw,
+      support_phone: supportPhone,
+    };
+    const html = renderPhysicalTagReceipt
+      ? renderPhysicalTagReceipt(templateValues)
+      : undefined;
 
     return this._sendEmail({
       to: order.email,
