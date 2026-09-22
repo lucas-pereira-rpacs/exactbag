@@ -227,6 +227,12 @@ const initializeDatabase = async () => {
     'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "receiptSentAt" TIMESTAMP(3)',
   );
   await prisma.$executeRawUnsafe(
+    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "deliveredAt" TIMESTAMP(3)',
+  );
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE "PhysicalTagOrder" ADD COLUMN IF NOT EXISTS "deliveredByEmail" TEXT',
+  );
+  await prisma.$executeRawUnsafe(
     'CREATE UNIQUE INDEX IF NOT EXISTS "PhysicalTagOrder_orderNumber_key" ON "PhysicalTagOrder"("orderNumber")',
   );
   await prisma.$executeRawUnsafe(
@@ -234,6 +240,9 @@ const initializeDatabase = async () => {
   );
   await prisma.$executeRawUnsafe(
     'CREATE INDEX IF NOT EXISTS "PhysicalTagOrder_outboundDate_receiptSentAt_idx" ON "PhysicalTagOrder"("outboundDate", "receiptSentAt")',
+  );
+  await prisma.$executeRawUnsafe(
+    'CREATE INDEX IF NOT EXISTS "PhysicalTagOrder_deliveredAt_idx" ON "PhysicalTagOrder"("deliveredAt")',
   );
 
   // Seed default admin if table is empty

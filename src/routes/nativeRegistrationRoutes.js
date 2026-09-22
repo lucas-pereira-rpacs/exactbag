@@ -166,35 +166,50 @@ router.get("/cpv/:cpvNumber", controller.getPublicCpv);
 router.get(
   "/registro/cpv/:cpvNumber",
   dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
   controller.getRegistrationByCpv,
 );
 
 // POST /native/manual-sale — Entrada manual de venda via dashboard interno
 // Requer login de operador (gestor ou atendente). Injeta no mesmo funil de automação
 // que as vendas recebidas via /webhooks/sales, sem duplicar nenhuma lógica.
-router.post("/manual-sale", dashboardAuthMiddleware, handleDashboardManualSale);
+router.post(
+  "/manual-sale",
+  dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
+  handleDashboardManualSale,
+);
 
 // GET /native/partners — Lista parceiros ativos para o dropdown do formulário manual
-router.get("/partners", dashboardAuthMiddleware, async (req, res) => {
-  try {
-    const partners = await partnerRepository.findAllActive();
-    return res.json({
-      success: true,
-      partners: partners.map((p) => ({ partnerId: p.partnerId, name: p.name })),
-    });
-  } catch (err) {
-    console.error("[Dashboard] Erro ao listar parceiros:", err);
-    return res
-      .status(500)
-      .json({ success: false, error: "Erro ao listar parceiros." });
-  }
-});
+router.get(
+  "/partners",
+  dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
+  async (req, res) => {
+    try {
+      const partners = await partnerRepository.findAllActive();
+      return res.json({
+        success: true,
+        partners: partners.map((p) => ({
+          partnerId: p.partnerId,
+          name: p.name,
+        })),
+      });
+    } catch (err) {
+      console.error("[Dashboard] Erro ao listar parceiros:", err);
+      return res
+        .status(500)
+        .json({ success: false, error: "Erro ao listar parceiros." });
+    }
+  },
+);
 
 // POST /native/physical-tag-sale — Venda de tag física (Essencial / Cover) via dashboard
 // Gera recibo por e-mail com número de pedido sequencial — não aciona funil WhatsApp.
 router.post(
   "/physical-tag-sale",
   dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
   handlePhysicalTagSale,
 );
 
@@ -480,6 +495,138 @@ router.get("/auth/me", dashboardAuthMiddleware, (req, res) => {
   });
 });
 
+// ==================== PARTNERS DASHBOARD API ====================
+// POS-facing endpoints. Partner role only; never rely on frontend-only guards.
+router.get(
+  "/partners-dashboard/orders/search",
+  dashboardAuthMiddleware,
+  requireRole("partner"),
+  async (req, res) => {
+    try {
+      const { prisma } = require("../config");
+      if (!prisma) {
+        return res
+          .status(503)
+          .json({ success: false, error: "Banco de dados indisponível." });
+      }
+
+      const query = String(req.query.q || "").trim();
+      if (!query) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Informe o número do pedido." });
+      }
+
+      const numericQuery = Number(query.replace(/^#/, ""));
+      if (!Number.isInteger(numericQuery) || numericQuery <= 0) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Número do pedido inválido." });
+      }
+
+      const rows = await prisma.$queryRaw`
+        SELECT id, "orderNumber", product, "customerName", "customerEmail",
+               "customerPhone", "outboundDate", quantity, "hasInsurance",
+               notes, "partnerId", "createdAt", "deliveredAt", "deliveredByEmail"
+        FROM "PhysicalTagOrder"
+        WHERE "orderNumber" = ${numericQuery}
+        LIMIT 1
+      `;
+
+      const order = rows[0];
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          error: "Pedido não encontrado.",
+        });
+      }
+
+      return res.json({
+        success: true,
+        order: {
+          ...order,
+          orderNumber: Number(order.orderNumber),
+          delivered: Boolean(order.deliveredAt),
+        },
+      });
+    } catch (error) {
+      console.error("[PartnersDashboard] Erro ao buscar pedido:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Erro ao buscar pedido." });
+    }
+  },
+);
+
+router.post(
+  "/partners-dashboard/orders/:id/deliver",
+  dashboardAuthMiddleware,
+  requireRole("partner"),
+  async (req, res) => {
+    try {
+      const { prisma } = require("../config");
+      if (!prisma) {
+        return res
+          .status(503)
+          .json({ success: false, error: "Banco de dados indisponível." });
+      }
+
+      const rows = await prisma.$queryRaw`
+        UPDATE "PhysicalTagOrder"
+        SET "deliveredAt" = NOW(),
+            "deliveredByEmail" = ${req.dashboardUser.email}
+        WHERE id = ${req.params.id}
+          AND "deliveredAt" IS NULL
+        RETURNING id, "orderNumber", product, "customerName", "customerEmail",
+                  "customerPhone", "outboundDate", quantity, "hasInsurance",
+                  notes, "partnerId", "createdAt", "deliveredAt", "deliveredByEmail"
+      `;
+
+      if (rows[0]) {
+        return res.json({
+          success: true,
+          message: "Pedido marcado como entregue.",
+          order: {
+            ...rows[0],
+            orderNumber: Number(rows[0].orderNumber),
+            delivered: true,
+          },
+        });
+      }
+
+      const existing = await prisma.$queryRaw`
+        SELECT id, "orderNumber", product, "customerName", "customerEmail",
+               "customerPhone", "outboundDate", quantity, "hasInsurance",
+               notes, "partnerId", "createdAt", "deliveredAt", "deliveredByEmail"
+        FROM "PhysicalTagOrder"
+        WHERE id = ${req.params.id}
+        LIMIT 1
+      `;
+
+      if (!existing[0]) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Pedido não encontrado." });
+      }
+
+      return res.status(409).json({
+        success: false,
+        error: "Este pedido já foi marcado como entregue.",
+        order: {
+          ...existing[0],
+          orderNumber: Number(existing[0].orderNumber),
+          delivered: Boolean(existing[0].deliveredAt),
+        },
+      });
+    } catch (error) {
+      console.error("[PartnersDashboard] Erro ao entregar pedido:", error);
+      return res
+        .status(500)
+        .json({ success: false, error: "Erro ao marcar pedido como entregue." });
+    }
+  },
+);
+
 router.post("/auth/logout", dashboardAuthMiddleware, (req, res) => {
   const token = (req.headers.authorization || "").split(" ")[1];
   if (token) logout(token);
@@ -490,7 +637,12 @@ router.post("/auth/logout", dashboardAuthMiddleware, (req, res) => {
 // Acesso exclusivo para gestor e atendente via JWT — partners NÃO têm acesso
 
 // GET /native/registros — Lista paginada com filtros (gestor + atendente)
-router.get("/registros", dashboardAuthMiddleware, controller.listRegistrations);
+router.get(
+  "/registros",
+  dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
+  controller.listRegistrations,
+);
 
 // GET /native/stats — Estatísticas (apenas gestor)
 router.get(
@@ -510,6 +662,7 @@ router.get(
 router.get(
   "/registro/:id",
   dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
   controller.getRegistration,
 );
 
@@ -517,6 +670,7 @@ router.get(
 router.get(
   "/registro/:id/cpv",
   dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
   controller.getCpvPreview,
 );
 
@@ -524,6 +678,7 @@ router.get(
 router.get(
   "/registro/:id/cpv/pdf",
   dashboardAuthMiddleware,
+  requireRole("gestor", "atendente", "admin"),
   controller.downloadCpvPdf,
 );
 

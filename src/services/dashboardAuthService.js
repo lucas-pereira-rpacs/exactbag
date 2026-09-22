@@ -27,7 +27,7 @@ setInterval(() => {
   if (revokedTokens.size > 10000) revokedTokens.clear();
 }, REVOKED_CLEANUP_INTERVAL).unref();
 
-const VALID_ROLES = ["gestor", "atendente", "admin"];
+const VALID_ROLES = ["gestor", "atendente", "admin", "partner"];
 
 /**
  * Login com email + senha → retorna JWT token + dados do usuário
@@ -210,7 +210,10 @@ const createUser = async ({ name, email, password, role }) => {
     return { success: false, error: "Senha deve ter no mínimo 6 caracteres" };
   }
   if (!VALID_ROLES.includes(role)) {
-    return { success: false, error: "Role inválida. Use: gestor ou atendente" };
+    return {
+      success: false,
+      error: "Role inválida. Use: gestor, atendente, admin ou partner",
+    };
   }
 
   const emailNorm = email.toLowerCase().trim();

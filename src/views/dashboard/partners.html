@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1220" />
+    <title>ExactBag - Parceiros</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #f0f2f5;
+        color: #1a1a2e;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      .login-screen {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: #0b1220;
+      }
+      .login-box {
+        width: 100%;
+        max-width: 390px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 34px 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+      .brand img {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+      }
+      .brand h1 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.1;
+      }
+      .brand span {
+        display: block;
+        margin-top: 2px;
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 500;
+      }
+      .field {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 14px;
+      }
+      label {
+        color: #374151;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      input {
+        width: 100%;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        padding: 13px 14px;
+        color: #111827;
+        background: #fff;
+        outline: none;
+      }
+      input:focus {
+        border-color: #0f62fe;
+        box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.12);
+      }
+      .btn {
+        border: 0;
+        border-radius: 8px;
+        min-height: 46px;
+        padding: 0 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-weight: 800;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          transform 0.15s,
+          opacity 0.15s;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn-primary {
+        background: #0f62fe;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #0b4fd4;
+      }
+      .btn-success {
+        background: #16a34a;
+        color: #fff;
+        width: 100%;
+        min-height: 58px;
+        font-size: 17px;
+      }
+      .btn-success:hover {
+        background: #15803d;
+      }
+      .btn-ghost {
+        background: transparent;
+        color: #4b5563;
+      }
+      .btn[disabled] {
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+      }
+      .error,
+      .notice {
+        display: none;
+        border-radius: 8px;
+        padding: 11px 12px;
+        margin-bottom: 14px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .error {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+      }
+      .notice {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #bbf7d0;
+      }
+      .app {
+        display: none;
+        min-height: 100vh;
+      }
+      .topbar {
+        background: #0b1220;
+        color: #fff;
+        padding: 16px 22px;
+      }
+      .topbar-inner {
+        max-width: 980px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .topbar .brand {
+        margin: 0;
+      }
+      .topbar .brand span {
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .topbar-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 13px;
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 28px 20px 40px;
+      }
+      .search-panel,
+      .order-panel,
+      .empty-panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+      }
+      .search-panel {
+        padding: 20px;
+        margin-bottom: 18px;
+      }
+      .search-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .search-title h2 {
+        margin: 0;
+        font-size: 19px;
+      }
+      .search-title p {
+        margin: 3px 0 0;
+        color: #6b7280;
+        font-size: 13px;
+      }
+      .search-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 150px;
+        gap: 10px;
+      }
+      .search-row input {
+        min-height: 52px;
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .empty-panel {
+        padding: 34px 20px;
+        text-align: center;
+        color: #6b7280;
+      }
+      .order-panel {
+        display: none;
+        overflow: hidden;
+      }
+      .order-head {
+        padding: 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+      .order-number {
+        color: #0f62fe;
+        font-size: 13px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+      .order-head h2 {
+        margin: 3px 0 0;
+        font-size: 26px;
+        line-height: 1.18;
+      }
+      .status {
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .status-delivered {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .order-body {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr 290px;
+        gap: 20px;
+      }
+      .details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .detail {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 12px;
+        min-height: 74px;
+      }
+      .detail strong {
+        display: block;
+        color: #6b7280;
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+      .detail span {
+        color: #111827;
+        font-size: 15px;
+        font-weight: 750;
+        overflow-wrap: anywhere;
+      }
+      .action-box {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        border-left: 1px solid #e5e7eb;
+        padding-left: 20px;
+      }
+      .delivered-box {
+        display: none;
+        border-radius: 8px;
+        background: #ecfdf5;
+        border: 1px solid #bbf7d0;
+        color: #047857;
+        padding: 14px;
+        font-size: 14px;
+        font-weight: 750;
+      }
+      @media (max-width: 760px) {
+        .topbar-inner,
+        .order-head {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .topbar-user {
+          justify-content: space-between;
+        }
+        .search-row,
+        .order-body,
+        .details {
+          grid-template-columns: 1fr;
+        }
+        .action-box {
+          border-left: 0;
+          border-top: 1px solid #e5e7eb;
+          padding-left: 0;
+          padding-top: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="login-screen" id="loginScreen">
+      <form class="login-box" id="loginForm">
+        <div class="brand">
+          <img src="/native/logo-exactbag.png" alt="ExactBag" />
+          <div>
+            <h1>Parceiros ExactBag</h1>
+            <span>Entrega de TAG física</span>
+          </div>
+        </div>
+        <div class="error" id="loginError"></div>
+        <div class="field">
+          <label for="loginEmail">E-mail</label>
+          <input id="loginEmail" autocomplete="email" type="email" required />
+        </div>
+        <div class="field">
+          <label for="loginPassword">Senha</label>
+          <input
+            id="loginPassword"
+            autocomplete="current-password"
+            type="password"
+            required
+          />
+        </div>
+        <button class="btn btn-primary" id="loginButton" type="submit">
+          Entrar
+        </button>
+      </form>
+    </section>
+
+    <section class="app" id="app">
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <img src="/native/logo-exactbag.png" alt="ExactBag" />
+            <div>
+              <h1>Parceiros ExactBag</h1>
+              <span>Confirmação rápida de retirada</span>
+            </div>
+          </div>
+          <div class="topbar-user">
+            <span id="userLabel"></span>
+            <button class="btn btn-ghost" id="logoutButton" type="button">
+              Sair
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="search-panel">
+          <div class="search-title">
+            <div>
+              <h2>Buscar pedido</h2>
+              <p>Digite o número informado pelo cliente.</p>
+            </div>
+          </div>
+          <div class="notice" id="notice"></div>
+          <div class="error" id="searchError"></div>
+          <form class="search-row" id="searchForm">
+            <input
+              id="orderSearch"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="Ex: 1001"
+              aria-label="Número do pedido"
+              required
+            />
+            <button class="btn btn-primary" id="searchButton" type="submit">
+              Buscar
+            </button>
+          </form>
+        </section>
+
+        <section class="empty-panel" id="emptyPanel">
+          Busque um pedido para confirmar os dados e registrar a entrega.
+        </section>
+
+        <section class="order-panel" id="orderPanel">
+          <div class="order-head">
+            <div>
+              <div class="order-number" id="orderNumber"></div>
+              <h2 id="customerName"></h2>
+            </div>
+            <div class="status" id="orderStatus"></div>
+          </div>
+          <div class="order-body">
+            <div class="details">
+              <div class="detail">
+                <strong>Produto</strong>
+                <span id="product"></span>
+              </div>
+              <div class="detail">
+                <strong>Quantidade</strong>
+                <span id="quantity"></span>
+              </div>
+              <div class="detail">
+                <strong>E-mail</strong>
+                <span id="customerEmail"></span>
+              </div>
+              <div class="detail">
+                <strong>Telefone</strong>
+                <span id="customerPhone"></span>
+              </div>
+              <div class="detail">
+                <strong>Data de ida</strong>
+                <span id="outboundDate"></span>
+              </div>
+              <div class="detail">
+                <strong>Seguro</strong>
+                <span id="insurance"></span>
+              </div>
+            </div>
+            <aside class="action-box">
+              <button class="btn btn-success" id="deliverButton" type="button">
+                Marcar como entregue
+              </button>
+              <div class="delivered-box" id="deliveredBox"></div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <script>
+      const API = "";
+      const TOKEN_KEY = "exactbag_partner_token";
+      let currentOrder = null;
+      let currentUser = null;
+
+      const $ = (id) => document.getElementById(id);
+
+      function setLoading(button, loading, label) {
+        button.disabled = loading;
+        button.textContent = loading ? "Aguarde..." : label;
+      }
+
+      function showError(id, message) {
+        const el = $(id);
+        el.textContent = message || "";
+        el.style.display = message ? "block" : "none";
+      }
+
+      function showNotice(message) {
+        const el = $("notice");
+        el.textContent = message || "";
+        el.style.display = message ? "block" : "none";
+      }
+
+      async function apiFetch(url, options = {}) {
+        const token = localStorage.getItem(TOKEN_KEY);
+        const headers = {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const response = await fetch(API + url, { ...options, headers });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.success === false) {
+          const error = new Error(data.error || "Erro na solicitação.");
+          error.status = response.status;
+          error.data = data;
+          throw error;
+        }
+        return data;
+      }
+
+      function formatDate(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "-";
+        return date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "-";
+        return date.toLocaleString("pt-BR");
+      }
+
+      function renderOrder(order) {
+        currentOrder = order;
+        $("emptyPanel").style.display = "none";
+        $("orderPanel").style.display = "block";
+        $("orderNumber").textContent = `Pedido #${order.orderNumber}`;
+        $("customerName").textContent = order.customerName || "Cliente";
+        $("product").textContent = order.product || "-";
+        $("quantity").textContent = `${order.quantity || 1} TAG`;
+        $("customerEmail").textContent = order.customerEmail || "-";
+        $("customerPhone").textContent = order.customerPhone || "-";
+        $("outboundDate").textContent = formatDate(order.outboundDate);
+        $("insurance").textContent = order.hasInsurance ? "Com seguro" : "Sem seguro";
+
+        const delivered = Boolean(order.deliveredAt || order.delivered);
+        const status = $("orderStatus");
+        status.textContent = delivered ? "Entregue" : "Pendente";
+        status.className = `status ${delivered ? "status-delivered" : "status-pending"}`;
+
+        const deliverButton = $("deliverButton");
+        const deliveredBox = $("deliveredBox");
+        deliverButton.style.display = delivered ? "none" : "inline-flex";
+        deliveredBox.style.display = delivered ? "block" : "none";
+        deliveredBox.textContent = delivered
+          ? `Entregue em ${formatDateTime(order.deliveredAt)} por ${order.deliveredByEmail || "parceiro"}.`
+          : "";
+      }
+
+      async function checkSession() {
+        const token = localStorage.getItem(TOKEN_KEY);
+        if (!token) return false;
+        try {
+          const data = await apiFetch("/native/auth/me");
+          if (data.user?.role !== "partner") {
+            localStorage.removeItem(TOKEN_KEY);
+            showError("loginError", "Este acesso é exclusivo para parceiros.");
+            return false;
+          }
+          currentUser = data.user;
+          $("userLabel").textContent = data.user.name || data.user.email;
+          $("loginScreen").style.display = "none";
+          $("app").style.display = "block";
+          setTimeout(() => $("orderSearch").focus(), 50);
+          return true;
+        } catch (_error) {
+          localStorage.removeItem(TOKEN_KEY);
+          return false;
+        }
+      }
+
+      $("loginForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showError("loginError", "");
+        const button = $("loginButton");
+        setLoading(button, true, "Entrar");
+        try {
+          const data = await fetch(API + "/native/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: $("loginEmail").value.trim(),
+              password: $("loginPassword").value,
+            }),
+          }).then((res) => res.json().then((body) => ({ ok: res.ok, body })));
+
+          if (!data.ok || !data.body.success) {
+            throw new Error(data.body.error || "E-mail ou senha inválidos.");
+          }
+          if (data.body.user?.role !== "partner") {
+            throw new Error("Este acesso é exclusivo para parceiros.");
+          }
+          localStorage.setItem(TOKEN_KEY, data.body.token);
+          await checkSession();
+        } catch (error) {
+          showError("loginError", error.message);
+        } finally {
+          setLoading(button, false, "Entrar");
+        }
+      });
+
+      $("searchForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showError("searchError", "");
+        showNotice("");
+        const query = $("orderSearch").value.trim();
+        const button = $("searchButton");
+        setLoading(button, true, "Buscar");
+        try {
+          const data = await apiFetch(
+            `/native/partners-dashboard/orders/search?q=${encodeURIComponent(query)}`,
+          );
+          renderOrder(data.order);
+        } catch (error) {
+          $("orderPanel").style.display = "none";
+          $("emptyPanel").style.display = "block";
+          showError("searchError", error.message);
+        } finally {
+          setLoading(button, false, "Buscar");
+        }
+      });
+
+      $("deliverButton").addEventListener("click", async () => {
+        if (!currentOrder) return;
+        showError("searchError", "");
+        showNotice("");
+        const button = $("deliverButton");
+        setLoading(button, true, "Marcar como entregue");
+        try {
+          const data = await apiFetch(
+            `/native/partners-dashboard/orders/${encodeURIComponent(currentOrder.id)}/deliver`,
+            { method: "POST", body: "{}" },
+          );
+          renderOrder(data.order);
+          showNotice(data.message || "Pedido marcado como entregue.");
+        } catch (error) {
+          if (error.data?.order) renderOrder(error.data.order);
+          showError("searchError", error.message);
+        } finally {
+          setLoading(button, false, "Marcar como entregue");
+        }
+      });
+
+      $("logoutButton").addEventListener("click", async () => {
+        try {
+          await apiFetch("/native/auth/logout", { method: "POST", body: "{}" });
+        } catch (_error) {
+          // Local logout is enough if the token is already expired.
+        }
+        localStorage.removeItem(TOKEN_KEY);
+        location.reload();
+      });
+
+      checkSession();
+    </script>
+  </body>
+</html>

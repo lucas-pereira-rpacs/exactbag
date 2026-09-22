@@ -331,6 +331,9 @@ if (process.env.NATIVE_REGISTRATION_ENABLED !== "false") {
   app.get("/native/dashboard", publicLimiter, (req, res) => {
     res.sendFile(path.join(nativePath, "dashboard.html"));
   });
+  app.get("/partners", publicLimiter, (req, res) => {
+    res.sendFile(path.join(nativePath, "partners.html"));
+  });
 
   // Arquivos estáticos (CSS, JS, imagens dentro de /public) — cache de 7 dias
   // Product assets are public. Handle this namespace explicitly and do not

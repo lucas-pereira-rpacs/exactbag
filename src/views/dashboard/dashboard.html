@@ -1501,6 +1501,10 @@
         background: #fef3c7;
         color: #92400e;
       }
+      .badge-partner {
+        background: #dcfce7;
+        color: #166534;
+      }
       .badge-active {
         background: #d1fae5;
         color: #065f46;
@@ -2854,6 +2858,7 @@
             <select id="userFormRole">
               <option value="atendente">Atendente</option>
               <option value="gestor">Gestor</option>
+              <option value="partner">Partner</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -4761,9 +4766,15 @@
                   ? "Admin"
                   : u.role === "gestor"
                     ? "Gestor"
+                    : u.role === "partner"
+                      ? "Partner"
                     : "Atendente";
               const roleBadgeClass =
-                u.role === "gestor" ? "badge-gestor" : "badge-atendente";
+                u.role === "gestor"
+                  ? "badge-gestor"
+                  : u.role === "partner"
+                    ? "badge-partner"
+                    : "badge-atendente";
               const statusBadge = u.isActive
                 ? '<span class="badge badge-role badge-active">Ativo</span>'
                 : '<span class="badge badge-role badge-inactive">Inativo</span>';
